@@ -24,3 +24,5 @@
 coverage*
 *.exe
 build/
+**/dist
+**/node_modules

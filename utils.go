@@ -23,8 +23,10 @@ const (
 
 // ListOptions ...
 type ListOptions struct {
-	Start, End         int
-	SortOrder, SortKey string
+	Start     int    `json:"start" form:"start"`
+	End       int    `json:"end" form:"end"`
+	SortOrder string `json:"sort_order" form:"sort_order"`
+	SortKey   string `json:"sort_key" form:"sort_key"`
 }
 
 func escape(s string) string {
@@ -62,13 +64,13 @@ func (m *LDAPManager) updateLastID(cn string, newID int) error {
 func (m *LDAPManager) getHighestID(attribute string) (int, error) {
 	var highestID int
 	var entryBaseDN, entryFilter, entryAttribute string
-	switch attribute {
-	case m.GroupAttribute:
+	switch strings.ToUpper(attribute) {
+	case strings.ToUpper(m.GroupAttribute):
 		highestID = MinGID
 		entryBaseDN = m.GroupsDN
 		entryFilter = "(objectClass=posixGroup)"
 		entryAttribute = "gidNumber"
-	case m.AccountAttribute:
+	case strings.ToUpper(m.AccountAttribute):
 		highestID = MinUID
 		entryBaseDN = m.UserGroupDN
 		entryFilter = fmt.Sprintf("(%s=*)", m.AccountAttribute)
@@ -77,7 +79,7 @@ func (m *LDAPManager) getHighestID(attribute string) (int, error) {
 		return highestID, fmt.Errorf("unknown id attribute %q", attribute)
 	}
 
-	filter := fmt.Sprintf("(&(objectClass=device)(cn=last%s))", attribute)
+	filter := fmt.Sprintf("(&(objectClass=device)(cn=last%s))", strings.ToUpper(attribute))
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,

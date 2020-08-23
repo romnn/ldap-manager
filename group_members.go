@@ -2,11 +2,34 @@ package ldapmanager
 
 import (
 	"fmt"
+	"net/http"
 	"sort"
 
 	"github.com/go-ldap/ldap"
 	log "github.com/sirupsen/logrus"
 )
+
+// ZeroOrMultipleGroupsError ...
+type ZeroOrMultipleGroupsError struct {
+	Group string
+	Count int
+}
+
+// Status ...
+func (e *ZeroOrMultipleGroupsError) Status() int {
+	if e.Count > 1 {
+		return http.StatusConflict
+	}
+	return http.StatusNotFound
+}
+
+// Error ...
+func (e *ZeroOrMultipleGroupsError) Error() string {
+	if e.Count > 1 {
+		return fmt.Sprintf("multiple (%d) groups with name %q", e.Count, e.Group)
+	}
+	return fmt.Sprintf("no group with name %q", e.Group)
+}
 
 // IsGroupMember ...
 func (m *LDAPManager) IsGroupMember(username, groupName string) (bool, error) {
@@ -43,7 +66,7 @@ func (m *LDAPManager) GetGroupMembers(groupName string, start, end int, sortOrde
 		return nil, err
 	}
 	if len(result.Entries) != 1 {
-		return nil, fmt.Errorf("zero or multiple groups with name %q", groupName)
+		return nil, &ZeroOrMultipleGroupsError{Group: groupName, Count: len(result.Entries)}
 	}
 	var members []string
 	group := result.Entries[0]

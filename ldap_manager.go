@@ -62,6 +62,7 @@ func (m *LDAPManager) Close() {
 func (m *LDAPManager) Setup() error {
 	var err error
 	URI := m.OpenLDAPConfig.URI()
+	log.Debugf("connecting to OpenLDAP at %s", URI)
 	m.ldap, err = ldap.DialURL(URI)
 	if err != nil {
 		return err

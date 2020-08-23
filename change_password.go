@@ -27,7 +27,7 @@ func (m *LDAPManager) ChangePassword(username, newPassword string, algorithm lda
 		return err
 	}
 	if len(result.Entries) != 1 {
-		return fmt.Errorf("zero or multiple (%d) accounts with username %q", len(result.Entries), username)
+		return &ZeroOrMultipleAccountsError{Username: username, Count: len(result.Entries)}
 	}
 	userDN := result.Entries[0].DN
 	hashedPassword, err := ldaphash.Password(newPassword, algorithm)

@@ -3,6 +3,7 @@ package ldapmanager
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"sort"
 	"strconv"
@@ -12,28 +13,97 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+
+// AccountAlreadyExistsError ...
+type AccountAlreadyExistsError struct {
+	Username string
+}
+
+// Error ...
+func (e *AccountAlreadyExistsError) Error() string {
+	return fmt.Sprintf("account with username %q already exists", e.Username)
+}
+
+// ZeroOrMultipleAccountsError ...
+type ZeroOrMultipleAccountsError struct {
+	Username string
+	Count    int
+}
+
+// Status ...
+func (e *ZeroOrMultipleAccountsError) Status() int {
+	if e.Count > 1 {
+		return http.StatusConflict
+	}
+	return http.StatusNotFound
+}
+
+// Error ...
+func (e *ZeroOrMultipleAccountsError) Error() string {
+	if e.Count > 1 {
+		return fmt.Sprintf("multiple (%d) accounts with username %q", e.Count, e.Username)
+	}
+	return fmt.Sprintf("no account with username %q", e.Username)
+}
+
+// AccountValidationError ...
+type AccountValidationError struct {
+	Invalid []string
+}
+
+// Error ...
+func (e *AccountValidationError) Error() string {
+	return fmt.Sprintf("invalid account request. missing or invalid: %v", e.Invalid)
+}
+
 // NewAccountRequest ...
 type NewAccountRequest struct {
-	FirstName, LastName, Username, Password, Email string
-	HashingAlgorithm                               ldaphash.LDAPPasswordHashingAlgorithm
+	FirstName        string `json:"first_name" form:"first_name"`
+	LastName         string `json:"last_name" form:"last_name"`
+	Username         string `json:"username" form:"username"`
+	Password         string `json:"password" form:"password"`
+	Email            string `json:"email" form:"email"`
+	HashingAlgorithm ldaphash.LDAPPasswordHashingAlgorithm
+}
+
+func validEmail(e string) bool {
+	if len(e) < 3 && len(e) > 254 {
+		return false
+	}
+	return emailRegex.MatchString(e)
+}
+
+func validPassword(pw string) bool {
+	// TODO: maybe we enforce some password length in the future
+	return true
+}
+
+func validUsername(un string) bool {
+	// TODO: maybe we enforce some username regex in the future
+	return true
 }
 
 // Validate ...
 func (req *NewAccountRequest) Validate() error {
-	if req.Username == "" {
-		return errors.New("Must specify username")
+	var invalid []string
+	if req.Username == "" || !validUsername(req.Username) {
+		invalid = append(invalid, "username")
 	}
-	if req.Password == "" {
-		return errors.New("Must specify password")
+	if req.Password == "" || !validPassword(req.Password) {
+		invalid = append(invalid, "password")
 	}
-	if req.Email == "" {
-		return errors.New("Must specify email")
+	if req.Email == "" || !validEmail(req.Email) {
+		invalid = append(invalid, "email")
 	}
 	if req.FirstName == "" {
-		return errors.New("Must specify first name")
+		invalid = append(invalid, "first name")
 	}
 	if req.LastName == "" {
-		return errors.New("Must specify last name")
+		invalid = append(invalid, "last name")
+	}
+	if len(invalid) > 0 {
+		return &AccountValidationError{Invalid: invalid}
 	}
 	return nil
 }
@@ -45,10 +115,23 @@ type GetUserListRequest struct {
 	Fields  []string
 }
 
+// DefaultUserFields ...
+func (m *LDAPManager) DefaultUserFields() []string {
+	return []string{m.AccountAttribute, "givenname", "sn", "mail"}
+}
+
+func parseUser(entry *ldap.Entry) map[string]string {
+	user := make(map[string]string)
+	for _, attr := range entry.Attributes {
+		user[attr.Name] = entry.GetAttributeValue(attr.Name)
+	}
+	return user
+}
+
 // GetUserList ...
 func (m *LDAPManager) GetUserList(req *GetUserListRequest) ([]map[string]string, error) {
 	if len(req.Fields) < 1 {
-		req.Fields = []string{m.AccountAttribute, "givenname", "sn", "mail"}
+		req.Fields = m.DefaultUserFields()
 	}
 	if req.SortKey == "" {
 		req.SortKey = m.AccountAttribute
@@ -66,13 +149,8 @@ func (m *LDAPManager) GetUserList(req *GetUserListRequest) ([]map[string]string,
 	}
 	users := make(map[string]map[string]string)
 	for _, entry := range result.Entries {
-		log.Info(entry)
 		if entryKey := entry.GetAttributeValue(req.SortKey); entryKey != "" {
-			user := make(map[string]string)
-			for _, attr := range entry.Attributes {
-				user[attr.Name] = entry.GetAttributeValue(attr.Name)
-			}
-			users[entryKey] = user
+			users[entryKey] = parseUser(entry)
 		}
 	}
 	// Sort for deterministic clipping
@@ -119,7 +197,7 @@ func (m *LDAPManager) AuthenticateUser(username string, password string) (string
 		return "", err
 	}
 	if len(result.Entries) != 1 {
-		return "", fmt.Errorf("zero or multiple (%d) accounts with username %q", len(result.Entries), username)
+		return "", &ZeroOrMultipleAccountsError{Username: username, Count: len(result.Entries)}
 	}
 	// Make sure to always re-bind as admin afterwards
 	defer m.BindAdmin()
@@ -160,6 +238,28 @@ func (m *LDAPManager) getNewAccountGroup(username, dn string) (string, int, erro
 	return group, userGroupGID, nil
 }
 
+// GetAccount ...
+func (m *LDAPManager) GetAccount(username string) (map[string]string, error) {
+	if username == "" {
+		return nil, errors.New("account username must not be empty")
+	}
+	// Check for existing user with the same username
+	result, err := m.ldap.Search(ldap.NewSearchRequest(
+		m.UserGroupDN,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, escape(username), m.UserGroupDN),
+		m.DefaultUserFields(),
+		[]ldap.Control{},
+	))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get account %q: %v", username, err)
+	}
+	if len(result.Entries) != 1 {
+		return nil, &ZeroOrMultipleAccountsError{Username: username, Count: len(result.Entries)}
+	}
+	return parseUser(result.Entries[0]), nil
+}
+
 // NewAccount ...
 func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 	// Validate
@@ -174,7 +274,6 @@ func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 		[]string{},
 		[]ldap.Control{},
 	))
-	// fmt.Printf("(%s=%s,%s)\n", m.AccountAttribute, escape(req.Username), m.UserGroupDN)
 	if err != nil {
 		return fmt.Errorf("failed to check for existing user %q: %v", req.Username, err)
 	}
@@ -183,7 +282,14 @@ func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 	}
 	highestUID, err := m.getHighestID(m.AccountAttribute)
 	if err != nil {
-		return fmt.Errorf("failed to get highest %s: %v", m.AccountAttribute, err)
+		if isErr(err, ldap.LDAPResultNoSuchObject) {
+			// Try to recover by running the setup
+			_ = m.setupLastUID()
+			highestUID, err = m.getHighestID(m.AccountAttribute)
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get highest %s: %v", m.AccountAttribute, err)
+		}
 	}
 	newUID := highestUID + 1
 	userDN := fmt.Sprintf("%s=%s,%s", m.AccountAttribute, req.Username, m.UserGroupDN)
@@ -200,8 +306,6 @@ func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %v", err)
 	}
-	log.Info(hashedPassword)
-
 	fullName := fmt.Sprintf("%s %s", req.FirstName, req.LastName)
 	userAttributes := []ldap.Attribute{
 		{Type: "objectClass", Vals: []string{"person", "inetOrgPerson", "posixAccount"}},
@@ -225,6 +329,9 @@ func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 	}
 	log.Debug(addUserRequest)
 	if err := m.ldap.Add(addUserRequest); err != nil {
+		if isErr(err, ldap.LDAPResultEntryAlreadyExists) {
+			return &AccountAlreadyExistsError{Username: req.Username}
+		}
 		return fmt.Errorf("failed to add user %q: %v", userDN, err)
 	}
 	if err := m.AddGroupMember(group, req.Username); err != nil && !isErr(err, ldap.LDAPResultAttributeOrValueExists) {

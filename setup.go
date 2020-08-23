@@ -49,7 +49,7 @@ func (m *LDAPManager) setupLastID(attribute, cn string, desc string) error {
 		DN: fmt.Sprintf("cn=%s,%s", cn, m.BaseDN),
 		Attributes: []ldap.Attribute{
 			{Type: "objectClass", Vals: []string{"device", "top"}},
-			{Type: "serialnumber", Vals: []string{strconv.Itoa(highestID)}},
+			{Type: "serialNumber", Vals: []string{strconv.Itoa(highestID)}},
 			{Type: "description", Vals: []string{desc}},
 		},
 		Controls: []ldap.Control{},
@@ -96,18 +96,39 @@ func (m *LDAPManager) setupAuth(adminPassword string) error {
 
 // SetupLDAP ...
 func (m *LDAPManager) SetupLDAP() error {
-	if err := m.setupGroupsOU(); err != nil && !isErr(err, ldap.LDAPResultEntryAlreadyExists) {
-		return fmt.Errorf("failed to setup groups organizational unit (OU): %v", err)
+	if err := m.setupGroupsOU(); err != nil {
+		if !isErr(err, ldap.LDAPResultEntryAlreadyExists) {
+			return fmt.Errorf("failed to setup groups organizational unit (OU): %v", err)
+		}
+	} else {
+		log.Debug("completed setup of groups organizational unit")
 	}
-	if err := m.setupUsersOU(); err != nil && !isErr(err, ldap.LDAPResultEntryAlreadyExists) {
-		return fmt.Errorf("failed to setup users organizational unit (OU): %v", err)
+
+	if err := m.setupUsersOU(); err != nil {
+		if !isErr(err, ldap.LDAPResultEntryAlreadyExists) {
+			return fmt.Errorf("failed to setup users organizational unit (OU): %v", err)
+		}
+	} else {
+		log.Debug("completed setup of users organizational unit")
 	}
-	if err := m.setupLastGID(); err != nil && !isErr(err, ldap.LDAPResultEntryAlreadyExists) {
-		return fmt.Errorf("failed to setup the last GID: %v", err)
+
+	if err := m.setupLastGID(); err != nil {
+		if !isErr(err, ldap.LDAPResultEntryAlreadyExists) && !isErr(err, ldap.LDAPResultNoSuchObject) {
+			return fmt.Errorf("failed to setup the last GID: %v", err)
+		}
+	} else {
+		log.Debug("completed setup of the last GID")
 	}
-	if err := m.setupLastUID(); err != nil && !isErr(err, ldap.LDAPResultEntryAlreadyExists) {
-		return fmt.Errorf("failed to setup the last UID: %v", err)
+
+	if err := m.setupLastUID(); err != nil {
+		if !isErr(err, ldap.LDAPResultEntryAlreadyExists) && !isErr(err, ldap.LDAPResultNoSuchObject) {
+			return fmt.Errorf("failed to setup the last UID: %v", err)
+		}
+	} else {
+		log.Debug("completed setup of the last UID")
 	}
+
+	// Unfortunately, we cannot setup groups here without initial members
 	/*
 		if err := m.setupDefaultGroup(); err != nil && !isErr(err, ldap.LDAPResultEntryAlreadyExists) {
 			return fmt.Errorf("failed to setup the default user group: %v", err)

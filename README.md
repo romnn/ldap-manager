@@ -90,10 +90,17 @@ This project is still in the alpha stage and should not be considered production
 
 #### TODO
 
-- Resilient creation of groups (setup)
-- Serve static content
-- Update dockerfile
 - Implement frontend
+- Implement token based authentication
+- Rename users to accounts
+- Fully configure travis
 - Write tests using testcontainers
 - Restructure to allow usage via GRPC API?
 - Restructure to allow CLI usage
+    - new acc
+    - change password
+    - add group
+    - add member to group
+    - list users
+    - verify?
+- Implement missing password hashing algorithms

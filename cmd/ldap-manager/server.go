@@ -59,6 +59,12 @@ func main() {
 
 	cliFlags := []cli.Flag{
 		&flags.LogLevelFlag,
+		&cli.IntFlag{
+			Name:    "port",
+			Value:   80,
+			EnvVars: []string{"PORT"},
+			Usage:   "service port",
+		},
 		/*
 			&cli.GenericFlag{
 				Name: "format",
@@ -82,11 +88,29 @@ func main() {
 			EnvVars: []string{"LDAP_URI", "LDAP_CONNECTION_URI"},
 			Usage:   "ldap connection URI",
 		},
+		&cli.StringFlag{
+			Name:    "openldap-host",
+			Value:   "localhost",
+			EnvVars: []string{"OPENLDAP_HOST"},
+			Usage:   "openldap host",
+		},
 		&cli.IntFlag{
-			Name:    "port",
-			Value:   80,
-			EnvVars: []string{"PORT"},
-			Usage:   "service port",
+			Name:    "openldap-port",
+			Value:   389,
+			EnvVars: []string{"OPENLDAP_PORT"},
+			Usage:   "openldap port",
+		},
+		&cli.StringFlag{
+			Name:    "openldap-protocol",
+			Value:   "ldap",
+			EnvVars: []string{"OPENLDAP_PROTOCOL"},
+			Usage:   "openldap protocol",
+		},
+		&cli.StringFlag{
+			Name:    "openldap-admin-password",
+			Value:   "admin",
+			EnvVars: []string{"OPENLDAP_ADMIN_PASSWORD"},
+			Usage:   "openldap admin password",
 		},
 	}
 
@@ -107,28 +131,31 @@ func main() {
 				},
 				manager: &ldapmanager.LDAPManager{
 					OpenLDAPConfig: ldapconfig.OpenLDAPConfig{
-						Host:          "localhost",
-						Port:          ctx.Int("port"),
-						Protocol:      "ldap",
-						AdminPassword: "admin",
+						Host:                 ctx.String("openldap-host"),
+						Port:                 ctx.Int("openldap-port"),
+						Protocol:             ctx.String("openldap-protocol"),
+						Organization:         "Example Inc.",
+						Domain:               "example.org",
+						BaseDN:               "dc=example,dc=org",
+						AdminPassword:        ctx.String("openldap-admin-password"),
+						ConfigPassword:       "config",
+						ReadonlyUser:         true,
+						ReadonlyUserUsername: "readonly",
+						ReadonlyUserPassword: "readonly",
+						TLS:                  false,
+						UseRFC2307BISSchema:  true,
 					},
-					GroupsOU: "groups",
-					UsersOU:  "users",
-					// BaseDN:                   "dc=example,dc=org",
+					GroupsOU:                 "groups",
+					UsersOU:                  "users",
 					GroupsDN:                 "ou=groups,dc=example,dc=org",
 					UserGroupDN:              "ou=users,dc=example,dc=org",
 					GroupMembershipAttribute: "uniqueMember", // uniquemember or memberUID
 					GroupMembershipUsesUID:   false,
-					// AdminBindUsername:        "admin",
-					// AdminBindPassword:        "admin",
-					// ReadonlyBindUsername:     "readonly",
-					// ReadonlyBindPassword:     "readonly",
-					AccountAttribute:  "uid",
-					GroupAttribute:    "gid",
-					DefaultUserGroup:  "users",
-					DefaultAdminGroup: "admins",
-					DefaultUserShell:  "/bin/bash",
-					// RequireStartTLS:          false,
+					AccountAttribute:         "uid",
+					GroupAttribute:           "gid",
+					DefaultUserGroup:         "users",
+					DefaultAdminGroup:        "admins",
+					DefaultUserShell:         "/bin/bash",
 				},
 			}
 
@@ -162,8 +189,23 @@ func (s *LDAPManagerServer) BootstrapHTTP(cliCtx *cli.Context) error {
 		}
 		return nil
 	})
+	// Authentication
 	s.echoServer.POST("/api/login", s.login)
 	s.echoServer.POST("/api/logout", s.logout)
+
+	// Account management (admin only)
+	s.echoServer.POST("/api/accounts/list", s.listAccounts)
+	s.echoServer.POST("/api/accounts/new", s.newAccount)
+
+	// Group management (admin only)
+	// s.echoServer.POST("/api/groups/list", s.listGroups)
+	// s.echoServer.POST("/api/groups/new", s.newGroup)
+	// s.echoServer.POST("/api/groups/:gid", s.getGroup)
+
+	// Edit personal account
+	s.echoServer.POST("/api/account/:username", s.getAccount)
+	s.echoServer.POST("/api/account/delete/:username", s.deleteAccount)
+
 	s.echoServer.Static("/", "./frontend/dist")
 
 	return s.Service.Bootstrap(cliCtx)
