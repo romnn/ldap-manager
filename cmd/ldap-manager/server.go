@@ -14,6 +14,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	ldapmanager "github.com/romnnn/ldap-manager"
+	ldapconfig "github.com/romnnn/ldap-manager/config"
 
 	"github.com/romnnn/flags4urfavecli/flags"
 	// "github.com/romnnn/flags4urfavecli/values"
@@ -43,7 +44,6 @@ type LDAPManagerServer struct {
 func (s *LDAPManagerServer) Shutdown() {
 	s.Service.GracefulStop()
 	s.echoServer.Shutdown(context.Background())
-	// Disconnet download service
 	if s.manager != nil {
 		s.manager.Close()
 	}
@@ -106,23 +106,29 @@ func main() {
 					HTTPHealthCheckURL: "health/healthz",
 				},
 				manager: &ldapmanager.LDAPManager{
-					GroupsOU:                 "groups",
-					UsersOU:                  "users",
-					BaseDN:                   "dc=example,dc=org",
+					OpenLDAPConfig: ldapconfig.OpenLDAPConfig{
+						Host:          "localhost",
+						Port:          ctx.Int("port"),
+						Protocol:      "ldap",
+						AdminPassword: "admin",
+					},
+					GroupsOU: "groups",
+					UsersOU:  "users",
+					// BaseDN:                   "dc=example,dc=org",
 					GroupsDN:                 "ou=groups,dc=example,dc=org",
 					UserGroupDN:              "ou=users,dc=example,dc=org",
 					GroupMembershipAttribute: "uniqueMember", // uniquemember or memberUID
 					GroupMembershipUsesUID:   false,
-					AdminBindUsername:        "admin",
-					AdminBindPassword:        "admin",
-					ReadonlyBindUsername:     "readonly",
-					ReadonlyBindPassword:     "readonly",
-					AccountAttribute:         "uid",
-					GroupAttribute:           "gid",
-					DefaultUserGroup:         "users",
-					DefaultAdminGroup:        "admins",
-					DefaultUserShell:         "/bin/bash",
-					RequireStartTLS:          false,
+					// AdminBindUsername:        "admin",
+					// AdminBindPassword:        "admin",
+					// ReadonlyBindUsername:     "readonly",
+					// ReadonlyBindPassword:     "readonly",
+					AccountAttribute:  "uid",
+					GroupAttribute:    "gid",
+					DefaultUserGroup:  "users",
+					DefaultAdminGroup: "admins",
+					DefaultUserShell:  "/bin/bash",
+					// RequireStartTLS:          false,
 				},
 			}
 
@@ -165,7 +171,7 @@ func (s *LDAPManagerServer) BootstrapHTTP(cliCtx *cli.Context) error {
 
 // Setup prepares the service
 func (s *LDAPManagerServer) Setup(ctx *cli.Context) error {
-	if err := s.manager.Setup(ctx.String("ldap-uri")); err != nil {
+	if err := s.manager.Setup(); err != nil {
 		return err
 	}
 	return nil

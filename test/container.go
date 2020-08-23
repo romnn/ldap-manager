@@ -35,19 +35,19 @@ func StartOpenLDAPContainer(ctx context.Context, options ContainerOptions) (open
 	tc.MergeOptions(&defaultOptions, options)
 
 	var env = make(map[string]string)
-	env["LDAP_ORGANISATION"] = defaultOptions.LDAPOrganization
-	env["LDAP_DOMAIN"] = defaultOptions.LDAPDomain
-	env["LDAP_BASE_DN"] = defaultOptions.LDAPBaseDN
+	env["LDAP_ORGANISATION"] = defaultOptions.Organization
+	env["LDAP_DOMAIN"] = defaultOptions.Domain
+	env["LDAP_BASE_DN"] = defaultOptions.BaseDN
 
-	env["LDAP_ADMIN_PASSWORD"] = defaultOptions.LDAPAdminPassword
-	env["LDAP_CONFIG_PASSWORD"] = defaultOptions.LDAPConfigPassword
+	env["LDAP_ADMIN_PASSWORD"] = defaultOptions.AdminPassword
+	env["LDAP_CONFIG_PASSWORD"] = defaultOptions.ConfigPassword
 
-	env["LDAP_READONLY_USER"] = strconv.FormatBool(defaultOptions.LDAPReadonlyUser)
-	env["LDAP_READONLY_USER_USERNAME"] = defaultOptions.LDAPReadonlyUserUsername
-	env["LDAP_READONLY_USER_PASSWORD"] = defaultOptions.LDAPReadonlyUserPassword
+	env["LDAP_READONLY_USER"] = strconv.FormatBool(defaultOptions.ReadonlyUser)
+	env["LDAP_READONLY_USER_USERNAME"] = defaultOptions.ReadonlyUserUsername
+	env["LDAP_READONLY_USER_PASSWORD"] = defaultOptions.ReadonlyUserPassword
 
-	env["LDAP_TLS"] = strconv.FormatBool(defaultOptions.LDAPTLS)
-	env["LDAP_RFC2307BIS_SCHEMA"] = strconv.FormatBool(defaultOptions.LDAPRFC2307BISSchema)
+	env["LDAP_TLS"] = strconv.FormatBool(defaultOptions.TLS)
+	env["LDAP_RFC2307BIS_SCHEMA"] = strconv.FormatBool(defaultOptions.UseRFC2307BISSchema)
 
 	timeout := options.ContainerOptions.StartupTimeout
 	if int64(timeout) < 1 {

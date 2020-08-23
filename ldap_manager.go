@@ -5,25 +5,28 @@ import (
 	"strings"
 
 	"github.com/go-ldap/ldap"
+	ldapconfig "github.com/romnnn/ldap-manager/config"
 	log "github.com/sirupsen/logrus"
 )
 
 // LDAPManager ...
 type LDAPManager struct {
+	ldapconfig.OpenLDAPConfig
+
 	ldap ldap.Client
 
 	GroupsDN    string
 	UserGroupDN string
-	BaseDN      string
+	// BaseDN      string
 
 	GroupsOU string
 	UsersOU  string
 
-	AdminBindUsername string
-	AdminBindPassword string
+	// AdminBindUsername string
+	// AdminBindPassword string
 
-	ReadonlyBindUsername string
-	ReadonlyBindPassword string
+	// ReadonlyBindUsername string
+	// ReadonlyBindPassword string
 
 	DefaultUserGroup  string
 	DefaultAdminGroup string
@@ -34,8 +37,26 @@ type LDAPManager struct {
 	GroupAttribute           string
 
 	GroupMembershipUsesUID bool
-	UseNISSchema           bool
-	RequireStartTLS        bool
+	// UseNISSchema           bool
+	// RequireStartTLS        bool
+}
+
+// NewLDAPManager ...
+func NewLDAPManager(cfg ldapconfig.OpenLDAPConfig) LDAPManager {
+	return LDAPManager{
+		OpenLDAPConfig:           cfg,
+		GroupsDN:                 "ou=groups," + cfg.BaseDN,
+		UserGroupDN:              "ou=users," + cfg.BaseDN,
+		GroupsOU:                 "groups",
+		UsersOU:                  "users",
+		DefaultUserGroup:         "users",
+		DefaultAdminGroup:        "admins",
+		DefaultUserShell:         "/bin/bash",
+		GroupMembershipAttribute: "uniqueMember", // uniqueMember or memberUID
+		AccountAttribute:         "uid",
+		GroupAttribute:           "gid",
+		GroupMembershipUsesUID:   false,
+	}
 }
 
 // Close ...
@@ -46,18 +67,19 @@ func (m *LDAPManager) Close() {
 }
 
 // Setup ...
-func (m *LDAPManager) Setup(uri string) error {
+func (m *LDAPManager) Setup() error {
 	var err error
-	m.ldap, err = ldap.DialURL(uri)
+	URI := m.OpenLDAPConfig.URI()
+	m.ldap, err = ldap.DialURL(URI)
 	if err != nil {
 		return err
 	}
 
 	// Check for TLS
-	if strings.HasPrefix(uri, "ldaps:") || m.RequireStartTLS {
+	if strings.HasPrefix(URI, "ldaps:") || m.OpenLDAPConfig.TLS {
 		if err := m.ldap.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
 			log.Warnf("failed to connect via TLS: %v", err)
-			if m.RequireStartTLS {
+			if m.OpenLDAPConfig.TLS {
 				return err
 			}
 		}

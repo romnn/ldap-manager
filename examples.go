@@ -4,7 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (s *LDAPManager) examples() {
+func (m *LDAPManager) examples() {
 	/*
 		if err := s.BindReadOnly(); err != nil {
 			return err
@@ -34,7 +34,7 @@ func (s *LDAPManager) examples() {
 	*/
 
 	// Add a sample user
-	if err := s.NewAccount(&NewAccountRequest{
+	if err := m.NewAccount(&NewAccountRequest{
 		Username: "romnn",
 		Password: "Hallo Welt",
 	}); err != nil {
