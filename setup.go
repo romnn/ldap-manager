@@ -41,7 +41,7 @@ func (m *LDAPManager) setupUsersOU() error {
 }
 
 func (m *LDAPManager) setupLastID(attribute, cn string, desc string) error {
-	highestID, err := m.GetHighestID(attribute)
+	highestID, err := m.getHighestID(attribute)
 	if err != nil {
 		return err
 	}

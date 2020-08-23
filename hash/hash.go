@@ -39,6 +39,22 @@ const (
 	CLEAR
 )
 
+// LDAPPasswordHashingAlgorithms ...
+var LDAPPasswordHashingAlgorithms = map[string]LDAPPasswordHashingAlgorithm{
+	"Default":     Default,
+	"SHA512CRYPT": SHA512CRYPT,
+	"SHA256CRYPT": SHA256CRYPT,
+	"BLOWFISH":    BLOWFISH,
+	"EXTDES":      EXTDES,
+	"MD5CRYPT":    MD5CRYPT,
+	"SMD5":        SMD5,
+	"MD5":         MD5,
+	"SHA":         SHA,
+	"SSHA":        SSHA,
+	"CRYPT":       CRYPT,
+	"CLEAR":       CLEAR,
+}
+
 func generateSaltDeprecated(l int) (string, error) {
 	permitted := []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ./")
 	var salt []rune

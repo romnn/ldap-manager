@@ -9,6 +9,24 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	// MinUID for POSIX accounts
+	MinUID = 2000
+	// MinGID for POSIX accounts
+	MinGID = 2000
+
+	// SortAscending ...
+	SortAscending = "asc"
+	// SortDescending ...
+	SortDescending = "desc"
+)
+
+// ListOptions ...
+type ListOptions struct {
+	Start, End         int
+	SortOrder, SortKey string
+}
+
 func escape(s string) string {
 	return s
 }
@@ -39,4 +57,63 @@ func (m *LDAPManager) updateLastID(cn string, newID int) error {
 	}
 	log.Debugf("updated cn=%s with %d", cn, newID)
 	return nil
+}
+
+func (m *LDAPManager) getHighestID(attribute string) (int, error) {
+	var highestID int
+	var entryBaseDN, entryFilter, entryAttribute string
+	switch attribute {
+	case m.GroupAttribute:
+		highestID = MinGID
+		entryBaseDN = m.GroupsDN
+		entryFilter = "(objectClass=posixGroup)"
+		entryAttribute = "gidNumber"
+	case m.AccountAttribute:
+		highestID = MinUID
+		entryBaseDN = m.UserGroupDN
+		entryFilter = fmt.Sprintf("(%s=*)", m.AccountAttribute)
+		entryAttribute = "uidNumber"
+	default:
+		return highestID, fmt.Errorf("unknown id attribute %q", attribute)
+	}
+
+	filter := fmt.Sprintf("(&(objectClass=device)(cn=last%s))", attribute)
+	result, err := m.ldap.Search(ldap.NewSearchRequest(
+		m.BaseDN,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		filter,
+		[]string{"serialNumber"},
+		[]ldap.Control{},
+	))
+	if err != nil {
+		return highestID, err
+	}
+	// Check for cached lastUID / lastGID value first
+	if len(result.Entries) > 0 {
+		if fetchedID, err := strconv.Atoi(result.Entries[0].GetAttributeValue("serialNumber")); err == nil && fetchedID >= highestID {
+			return fetchedID, nil
+		}
+	}
+
+	// cache miss requires traversing all entries
+	result, err = m.ldap.Search(ldap.NewSearchRequest(
+		entryBaseDN,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		entryFilter,
+		[]string{entryAttribute},
+		[]ldap.Control{},
+	))
+	if err != nil {
+		return highestID, err
+	}
+	for _, entry := range result.Entries {
+		if entryAttrValue := entry.GetAttributeValue(entryAttribute); entryAttrValue != "" {
+			if entryAttrNumericValue, err := strconv.Atoi(entryAttrValue); err == nil {
+				if entryAttrNumericValue > highestID {
+					highestID = entryAttrNumericValue
+				}
+			}
+		}
+	}
+	return highestID, nil
 }
