@@ -73,18 +73,18 @@ func (m *LDAPManager) setupLastUID() error {
 }
 
 func (m *LDAPManager) setupDefaultGroup() error {
-	return m.NewGroup(m.DefaultUserGroup, []string{})
+	return m.NewGroup(&NewGroupRequest{Name: m.DefaultUserGroup})
 }
 
 func (m *LDAPManager) setupAdminsGroup() error {
-	if err := m.NewGroup(m.DefaultAdminGroup, []string{}); err != nil {
+	if err := m.NewGroup(&NewGroupRequest{Name: m.DefaultAdminGroup}); err != nil {
 		return err
 	}
-	admins, err := m.GetGroupMembers(m.DefaultAdminGroup, 0, 0, "")
+	adminGroup, err := m.GetGroup(m.DefaultAdminGroup, &ListOptions{})
 	if err != nil {
 		return err
 	}
-	if len(admins) < 1 {
+	if len(adminGroup.Members) < 1 {
 		return errors.New("no admin user created")
 	}
 	return nil

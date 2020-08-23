@@ -17,7 +17,7 @@ type loginResponse struct {
 	Email string `json:"email" xml:"email"`
 }
 
-func (s *LDAPManagerServer) login(c echo.Context) error {
+func (s *LDAPManagerServer) loginHandler(c echo.Context) error {
 	var req loginRequest
 	if err := c.Bind(&req); err != nil {
 		log.Error(err)
@@ -45,7 +45,7 @@ func (s *LDAPManagerServer) login(c echo.Context) error {
 	return c.JSONPretty(http.StatusOK, u, "  ")
 }
 
-func (s *LDAPManagerServer) logout(c echo.Context) error {
+func (s *LDAPManagerServer) logoutHandler(c echo.Context) error {
 	if s.Service.Healthy {
 		c.String(http.StatusOK, "ok")
 	} else {

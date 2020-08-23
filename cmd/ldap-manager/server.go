@@ -8,11 +8,15 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	// "crypto/tls"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	glog "github.com/labstack/gommon/log"
+	logmiddleware "github.com/neko-neko/echo-logrus/v2"
+	echolog "github.com/neko-neko/echo-logrus/v2/log"
 	ldapmanager "github.com/romnnn/ldap-manager"
 	ldapconfig "github.com/romnnn/ldap-manager/config"
 
@@ -122,6 +126,15 @@ func main() {
 		Usage:   "manages ldap user accounts",
 		Flags:   cliFlags,
 		Action: func(ctx *cli.Context) error {
+
+			echolog.Logger().SetOutput(os.Stdout)
+			echolog.Logger().SetLevel(glog.INFO)
+			if false {
+				echolog.Logger().SetFormatter(&log.JSONFormatter{
+					TimestampFormat: time.RFC3339,
+				})
+			}
+
 			server = LDAPManagerServer{
 				Service: gogrpcservice.Service{
 					Name:               name,
@@ -178,7 +191,8 @@ func main() {
 // BootstrapHTTP prepares an http service
 func (s *LDAPManagerServer) BootstrapHTTP(cliCtx *cli.Context) error {
 	s.echoServer = echo.New()
-	// s.echoServer.Use(middleware.Logger())
+	s.echoServer.Logger = echolog.Logger()
+	s.echoServer.Use(logmiddleware.Logger())
 	s.echoServer.Use(middleware.Recover())
 
 	s.echoServer.GET("/healthz", func(c echo.Context) error {
@@ -190,21 +204,27 @@ func (s *LDAPManagerServer) BootstrapHTTP(cliCtx *cli.Context) error {
 		return nil
 	})
 	// Authentication
-	s.echoServer.POST("/api/login", s.login)
-	s.echoServer.POST("/api/logout", s.logout)
+	s.echoServer.POST("/api/login", s.loginHandler)
+	s.echoServer.POST("/api/logout", s.logoutHandler)
 
 	// Account management (admin only)
-	s.echoServer.POST("/api/accounts/list", s.listAccounts)
-	s.echoServer.POST("/api/accounts/new", s.newAccount)
+	s.echoServer.GET("/api/accounts", s.listAccountsHandler)
+	s.echoServer.PUT("/api/accounts", s.newAccountHandler)
 
 	// Group management (admin only)
-	// s.echoServer.POST("/api/groups/list", s.listGroups)
-	// s.echoServer.POST("/api/groups/new", s.newGroup)
-	// s.echoServer.POST("/api/groups/:gid", s.getGroup)
+	s.echoServer.GET("/api/groups", s.listGroupsHandler)
+	s.echoServer.DELETE("/api/group/:group", s.deleteGroupHandler)
+	s.echoServer.PUT("/api/groups", s.newGroupHandler)
+	s.echoServer.POST("/api/group/:group/add", s.addGroupMemberHandler)
+	s.echoServer.POST("/api/group/:group/remove", s.removeGroupMemberHandler)
+	s.echoServer.POST("/api/group/:group/rename", s.renameGroupHandler)
+	s.echoServer.GET("/api/group/:group", s.getGroupHandler)
 
 	// Edit personal account
-	s.echoServer.POST("/api/account/:username", s.getAccount)
-	s.echoServer.POST("/api/account/delete/:username", s.deleteAccount)
+	s.echoServer.GET("/api/account/:username", s.getAccountHandler)
+	s.echoServer.DELETE("/api/account/:username", s.deleteAccountHandler)
+	s.echoServer.PUT("/api/account/:username", s.updateAccountHandler)
+	s.echoServer.PUT("/api/account/:username/password", s.updatePasswordHandler)
 
 	s.echoServer.Static("/", "./frontend/dist")
 

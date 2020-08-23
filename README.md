@@ -104,3 +104,4 @@ This project is still in the alpha stage and should not be considered production
     - list users
     - verify?
 - Implement missing password hashing algorithms
+- Embed crypt(3) as vendored?

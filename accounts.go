@@ -108,13 +108,6 @@ func (req *NewAccountRequest) Validate() error {
 	return nil
 }
 
-// GetUserListRequest ...
-type GetUserListRequest struct {
-	ListOptions
-	Filters string
-	Fields  []string
-}
-
 // DefaultUserFields ...
 func (m *LDAPManager) DefaultUserFields() []string {
 	return []string{m.AccountAttribute, "givenname", "sn", "mail"}
@@ -126,6 +119,13 @@ func parseUser(entry *ldap.Entry) map[string]string {
 		user[attr.Name] = entry.GetAttributeValue(attr.Name)
 	}
 	return user
+}
+
+// GetUserListRequest ...
+type GetUserListRequest struct {
+	ListOptions
+	Filters string
+	Fields  []string
 }
 
 // GetUserList ...
@@ -216,22 +216,22 @@ func (m *LDAPManager) AuthenticateUser(username string, password string) (string
 // NewAccount ...
 func (m *LDAPManager) getNewAccountGroup(username, dn string) (string, int, error) {
 	group := m.DefaultUserGroup
-	if defaultGID, err := m.GetGroupGID(m.DefaultUserGroup); err == nil {
+	if defaultGID, err := m.getGroupGID(m.DefaultUserGroup); err == nil {
 		return group, defaultGID, nil
 	}
 	// The default user group might not yet exist
 	// Note that a group can only be created with at least one member when using RFC2307BIS
-	if err := m.NewGroup(m.DefaultUserGroup, []string{dn}); err != nil {
+	if err := m.NewGroup(&NewGroupRequest{Name: m.DefaultUserGroup, Members: []string{dn}}); err != nil {
 		// Fall back to create a new group group for the user
-		if err := m.NewGroup(username, []string{dn}); err != nil {
-			if _, ok := err.(*GroupExistsError); !ok {
+		if err := m.NewGroup(&NewGroupRequest{Name: username, Members: []string{dn}}); err != nil {
+			if _, ok := err.(*GroupAlreadyExistsError); !ok {
 				return group, 0, fmt.Errorf("failed to create group for user %q: %v", username, err)
 			}
 		}
 		group = username
 	}
 
-	userGroupGID, err := m.GetGroupGID(group)
+	userGroupGID, err := m.getGroupGID(group)
 	if err != nil {
 		return group, 0, fmt.Errorf("failed to get GID for group %q: %v", group, err)
 	}

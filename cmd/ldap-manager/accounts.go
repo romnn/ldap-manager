@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (s *LDAPManagerServer) listAccounts(c echo.Context) error {
+func (s *LDAPManagerServer) listAccountsHandler(c echo.Context) error {
 	var options ldapmanager.ListOptions
 	if err := c.Bind(&options); err != nil {
 		log.Error(err)
@@ -24,7 +24,7 @@ func (s *LDAPManagerServer) listAccounts(c echo.Context) error {
 	return c.JSONPretty(http.StatusOK, users, "  ")
 }
 
-func (s *LDAPManagerServer) getAccount(c echo.Context) error {
+func (s *LDAPManagerServer) getAccountHandler(c echo.Context) error {
 	username := c.Param("username")
 	user, err := s.manager.GetAccount(username)
 	if err != nil {
@@ -38,26 +38,38 @@ func (s *LDAPManagerServer) getAccount(c echo.Context) error {
 	return c.JSONPretty(http.StatusOK, user, "  ")
 }
 
-func (s *LDAPManagerServer) deleteAccount(c echo.Context) error {
-	username := c.Param("username")
+func (s *LDAPManagerServer) updateAccountHandler(c echo.Context) error {
+	var req ldapmanager.NewAccountRequest
+	if err := c.Bind(&req); err != nil {
+		log.Error(err)
+		return err
+	}
+	// Delete existing account
+	if err := s.deleteAccount(c, c.Param("username")); err != nil {
+		return err
+	}
+	// Insert the updated account
+	return s.newAccount(c, &req)
+}
+
+func (s *LDAPManagerServer) deleteAccount(c echo.Context, username string) error {
 	if err := s.manager.DeleteAccount(username); err != nil {
 		switch err.(type) {
 		case *ldapmanager.ZeroOrMultipleAccountsError:
 			return echo.NewHTTPError(err.(*ldapmanager.ZeroOrMultipleAccountsError).Status(), err.Error())
 		}
 		log.Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get account")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete account")
 	}
 	return c.JSONPretty(http.StatusOK, nil, "  ")
 }
 
-func (s *LDAPManagerServer) newAccount(c echo.Context) error {
-	var req ldapmanager.NewAccountRequest
-	if err := c.Bind(&req); err != nil {
-		log.Error(err)
-		return err
-	}
-	if err := s.manager.NewAccount(&req); err != nil {
+func (s *LDAPManagerServer) deleteAccountHandler(c echo.Context) error {
+	return s.deleteAccount(c, c.Param("username"))
+}
+
+func (s *LDAPManagerServer) newAccount(c echo.Context, req *ldapmanager.NewAccountRequest) error {
+	if err := s.manager.NewAccount(req); err != nil {
 		switch err.(type) {
 		case *ldapmanager.AccountValidationError:
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -68,4 +80,13 @@ func (s *LDAPManagerServer) newAccount(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to add new account")
 	}
 	return nil
+}
+
+func (s *LDAPManagerServer) newAccountHandler(c echo.Context) error {
+	var req ldapmanager.NewAccountRequest
+	if err := c.Bind(&req); err != nil {
+		log.Error(err)
+		return err
+	}
+	return s.newAccount(c, &req)
 }

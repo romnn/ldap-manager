@@ -2,34 +2,11 @@ package ldapmanager
 
 import (
 	"fmt"
-	"net/http"
 	"sort"
 
 	"github.com/go-ldap/ldap"
 	log "github.com/sirupsen/logrus"
 )
-
-// ZeroOrMultipleGroupsError ...
-type ZeroOrMultipleGroupsError struct {
-	Group string
-	Count int
-}
-
-// Status ...
-func (e *ZeroOrMultipleGroupsError) Status() int {
-	if e.Count > 1 {
-		return http.StatusConflict
-	}
-	return http.StatusNotFound
-}
-
-// Error ...
-func (e *ZeroOrMultipleGroupsError) Error() string {
-	if e.Count > 1 {
-		return fmt.Sprintf("multiple (%d) groups with name %q", e.Count, e.Group)
-	}
-	return fmt.Sprintf("no group with name %q", e.Group)
-}
 
 // IsGroupMember ...
 func (m *LDAPManager) IsGroupMember(username, groupName string) (bool, error) {
@@ -38,7 +15,7 @@ func (m *LDAPManager) IsGroupMember(username, groupName string) (bool, error) {
 		return false, err
 	}
 	if len(result.Entries) != 1 {
-		return false, fmt.Errorf("user %q does not exist or too many entries returned", username)
+		return false, &ZeroOrMultipleGroupsError{Group: groupName, Count: len(result.Entries)}
 	}
 	if !m.GroupMembershipUsesUID {
 		// "${LDAP['account_attribute']}=$username,${LDAP['user_dn']}";
@@ -53,8 +30,15 @@ func (m *LDAPManager) IsGroupMember(username, groupName string) (bool, error) {
 	return false, nil
 }
 
-// GetGroupMembers ...
-func (m *LDAPManager) GetGroupMembers(groupName string, start, end int, sortOrder string) ([]string, error) {
+// Group ...
+type Group struct {
+	Members []string `json:"members" form:"members"`
+	Name    string   `json:"name" form:"name"`
+	DN      string   `json:"dn" form:"dn"`
+}
+
+// GetGroup ...
+func (m *LDAPManager) getGroup(groupName string) (*Group, error) {
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
@@ -72,34 +56,67 @@ func (m *LDAPManager) GetGroupMembers(groupName string, start, end int, sortOrde
 	group := result.Entries[0]
 	for _, member := range group.GetAttributeValues(m.GroupMembershipAttribute) {
 		log.Info(member)
+		members = append(members, member)
+	}
+	return &Group{
+		Members: members,
+		Name:    groupName,
+		DN:      group.DN,
+	}, nil
+}
+
+// GetGroup ...
+func (m *LDAPManager) GetGroup(groupName string, options *ListOptions) (*Group, error) {
+	/*result, err := m.ldap.Search(ldap.NewSearchRequest(
+		m.GroupsDN,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		fmt.Sprintf("(cn=%s)", escape(groupName)),
+		[]string{m.GroupMembershipAttribute},
+		[]ldap.Control{},
+	))
+	if err != nil {
+		return nil, err
+	}
+	if len(result.Entries) != 1 {
+		return nil, &ZeroOrMultipleGroupsError{Group: groupName, Count: len(result.Entries)}
+	}
+	var members []string
+	group := result.Entries[0]
+	for _, member := range group.GetAttributeValues(m.GroupMembershipAttribute) {
+		log.Info(member)
 		// TODO
-		/*
 			reg, err := regexp.Compile(fmt.Sprintf("%s=(.*?),", m.AccountAttribute))
 			if err != nil {
 				return "", errors.New("failed to compile regex")
 			}
 			matchedDN := reg.FindString(userDN)
-		*/
+
 
 		// if member.Key != "count" && member.Value != "" {
-		// $this_member = preg_replace("/^.*?=(.*?),.*/", "$1", $value);
+		// $this_member = preg_replace("/^.*?=(.*?),.*", "$1", $value);
 		// array_push($records, $this_member);
 		// }
 	}
+	*/
+	group, err := m.getGroup(groupName)
+	if err != nil {
+		return nil, err
+	}
 
 	// Sort
-	sort.Slice(members, func(i, j int) bool {
-		asc := members[i] < members[j]
-		if sortOrder == SortDescending {
+	sort.Slice(group.Members, func(i, j int) bool {
+		asc := group.Members[i] < group.Members[j]
+		if options.SortOrder == SortDescending {
 			return !asc
 		}
 		return asc
 	})
 	// Clip
-	if start >= 0 && end < len(members) && start < end {
-		return members[start:end], nil
+	if options.Start >= 0 && options.End < len(group.Members) && options.Start < options.End {
+		group.Members = group.Members[options.Start:options.End]
+		return group, nil
 	}
-	return members, nil
+	return group, nil
 }
 
 // AddGroupMember ...
