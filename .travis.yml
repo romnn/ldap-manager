@@ -1,0 +1,47 @@
+dist: bionic
+language: go
+go:
+  - 1.13.x
+  - master
+  - tip
+os:
+  - linux
+  - osx
+env: MOD=github.com/romnnn/ldap-manager BINARY=ldap-manager
+
+jobs:
+  allow_failures:
+    - go: tip
+  fast_finish: true
+  include:
+    - stage: deploy
+      name: Publish release
+      os: linux
+      go: master
+      script:
+        - invoke cc
+      deploy:
+        provider: releases
+        token:
+          secure: REPLACE_ME
+        file_glob: true
+        file: build/*
+        skip_cleanup: true
+        on:
+          repo: romnnn/ldap-manager
+          tags: true
+  
+install: true
+notifications:
+  email: false
+before_script:
+  - pip install -U pip && pip install pre-commit invoke ruamel.yaml
+  - go get -u golang.org/x/lint/golint
+  - go get github.com/fzipp/gocyclo
+  - go get github.com/mitchellh/gox
+script:
+  - env GO111MODULE=on go build ${MOD}
+  - invoke pre-commit
+  - env GO111MODULE=on go test -v -race -coverprofile=coverage.txt -coverpkg=all -covermode=atomic ./...
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

@@ -1,0 +1,50 @@
+version: "3.6"
+
+services:
+  
+  openldap:
+    # image: osixia/openldap
+    build:
+      context: .
+    ports:
+      - 389:389
+      - 636:636
+    # volumes:
+    #   - ./pre-configured-users/add_group.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/add_group.ldif:ro
+    environment:
+      LDAP_ORGANISATION: Example Inc.
+      LDAP_DOMAIN: example.org
+      LDAP_BASE_DN: dc=example,dc=org
+
+      LDAP_ADMIN_PASSWORD: admin
+      LDAP_CONFIG_PASSWORD: config
+
+      LDAP_READONLY_USER: "true"
+      LDAP_READONLY_USER_USERNAME: readonly
+      LDAP_READONLY_USER_PASSWORD: readonly
+
+      LDAP_TLS: "false"
+      LDAP_RFC2307BIS_SCHEMA: "true"
+
+  ldap-user-manager:
+    # image: wheelybird/ldap-user-manager:v1.2
+    build:
+      context: ../../ldap-user-manager
+    ports:
+      - 8888:80
+    environment:
+      SERVER_HOSTNAME: localhost
+      LDAP_URI: ldap://openldap:389
+      LDAP_BASE_DN: dc=example,dc=org
+      LDAP_REQUIRE_STARTTLS: "FALSE"
+      LDAP_ADMINS_GROUP: admins
+      LDAP_ADMIN_BIND_DN: cn=admin,dc=example,dc=org
+      LDAP_ADMIN_BIND_PWD: admin
+      LDAP_GROUP_MEMBERSHIP_USES_UID: "true"
+      LDAP_GROUP_MEMBERSHIP_ATTRIBUTE: uniquemember
+      DEFAULT_USER_GROUP: users
+      LDAP_USER_OU: users
+      # LDAP_USES_NIS_SCHEMA: "false"
+      LDAP_USES_NIS_SCHEMA: "false"
+      NO_HTTPS: "true"
+      EMAIL_DOMAIN: example.com
