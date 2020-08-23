@@ -28,7 +28,7 @@ type ListOptions struct {
 }
 
 func escape(s string) string {
-	return s
+	return ldap.EscapeFilter(s)
 }
 
 func isErr(err error, code uint16) bool {

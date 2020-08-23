@@ -72,7 +72,10 @@ ldapmodify -h localhost -p 389 -D cn=admin,dc=example,dc=org -w "admin" -f dev/p
 #### Generate LDAP passwords
 
 ```bash
+# This will use the default SSHA (Salted SHA1)
 docker run --entrypoint slappasswd  mlan/openldap -s <my-password>
+# You can generate SHA512 or others, see UNIX crypt(3) or PHP $crypt() for reference
+docker run --entrypoint slappasswd  mlan/openldap -s 123456 -c '$6$%.16s'
 ```
 
 #### Development deployment

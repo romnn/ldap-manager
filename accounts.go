@@ -111,7 +111,7 @@ func (m *LDAPManager) AuthenticateUser(username string, password string) (string
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, escape(username), m.UserGroupDN),
+		fmt.Sprintf("(%s=%s)", m.AccountAttribute, escape(username)),
 		[]string{"dn"},
 		[]ldap.Control{},
 	))
@@ -119,8 +119,10 @@ func (m *LDAPManager) AuthenticateUser(username string, password string) (string
 		return "", err
 	}
 	if len(result.Entries) != 1 {
-		return "", fmt.Errorf("zero or multiple accounts with username %q", username)
+		return "", fmt.Errorf("zero or multiple (%d) accounts with username %q", len(result.Entries), username)
 	}
+	// Make sure to always re-bind as admin afterwards
+	defer m.BindAdmin()
 	userDN := result.Entries[0].DN
 	if err := m.ldap.Bind(userDN, password); err != nil {
 		return "", fmt.Errorf("unable to bind as %q", username)
@@ -172,8 +174,9 @@ func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 		[]string{},
 		[]ldap.Control{},
 	))
+	// fmt.Printf("(%s=%s,%s)\n", m.AccountAttribute, escape(req.Username), m.UserGroupDN)
 	if err != nil {
-		return fmt.Errorf("failed to check for existing user: %v", err)
+		return fmt.Errorf("failed to check for existing user %q: %v", req.Username, err)
 	}
 	if len(result.Entries) > 0 {
 		return fmt.Errorf("account with username %q already exists", req.Username)
@@ -189,35 +192,30 @@ func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 		return err
 	}
 
+	if req.HashingAlgorithm == ldaphash.Default {
+		req.HashingAlgorithm = m.HashingAlgorithm
+	}
+
 	hashedPassword, err := ldaphash.Password(req.Password, req.HashingAlgorithm)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %v", err)
 	}
 	log.Info(hashedPassword)
 
+	fullName := fmt.Sprintf("%s %s", req.FirstName, req.LastName)
 	userAttributes := []ldap.Attribute{
 		{Type: "objectClass", Vals: []string{"person", "inetOrgPerson", "posixAccount"}},
 		{Type: "uid", Vals: []string{req.Username}},
+		{Type: "givenName", Vals: []string{req.FirstName}},
+		{Type: "sn", Vals: []string{req.LastName}},
+		{Type: "cn", Vals: []string{fullName}},
+		{Type: "displayName", Vals: []string{fullName}},
 		{Type: "uidNumber", Vals: []string{strconv.Itoa(newUID)}},
 		{Type: "gidNumber", Vals: []string{strconv.Itoa(GID)}},
 		{Type: "loginShell", Vals: []string{m.DefaultUserShell}},
 		{Type: "homeDirectory", Vals: []string{fmt.Sprintf("/home/%s", req.Username)}},
 		{Type: "userPassword", Vals: []string{hashedPassword}},
 		{Type: "mail", Vals: []string{req.Email}},
-	}
-
-	if req.FirstName != "" {
-		userAttributes = append(userAttributes, ldap.Attribute{Type: "givenName", Vals: []string{req.FirstName}})
-	}
-	if req.LastName != "" {
-		userAttributes = append(userAttributes, ldap.Attribute{Type: "sn", Vals: []string{req.LastName}})
-	}
-	if req.FirstName != "" && req.LastName != "" {
-		fullName := fmt.Sprintf("%s %s", req.FirstName, req.LastName)
-		userAttributes = append(userAttributes, []ldap.Attribute{
-			{Type: "cn", Vals: []string{fullName}},
-			{Type: "displayName", Vals: []string{fullName}},
-		}...)
 	}
 
 	addUserRequest := &ldap.AddRequest{

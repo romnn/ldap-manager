@@ -3,6 +3,7 @@ module github.com/romnnn/ldap-manager
 go 1.14
 
 require (
+	github.com/GehirnInc/crypt v0.0.0-20200316065508-bb7000b8a962
 	github.com/docker/go-connections v0.4.0
 	github.com/go-ldap/ldap v3.0.3+incompatible
 	github.com/labstack/echo/v4 v4.1.16
@@ -13,5 +14,6 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/stretchr/testify v1.5.1 // indirect
 	github.com/urfave/cli/v2 v2.2.0
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 )

@@ -6,28 +6,22 @@ import (
 
 	"github.com/go-ldap/ldap"
 	ldapconfig "github.com/romnnn/ldap-manager/config"
+	ldaphash "github.com/romnnn/ldap-manager/hash"
 	log "github.com/sirupsen/logrus"
 )
 
 // LDAPManager ...
 type LDAPManager struct {
 	ldapconfig.OpenLDAPConfig
-
 	ldap ldap.Client
 
 	GroupsDN    string
 	UserGroupDN string
-	// BaseDN      string
 
 	GroupsOU string
 	UsersOU  string
 
-	// AdminBindUsername string
-	// AdminBindPassword string
-
-	// ReadonlyBindUsername string
-	// ReadonlyBindPassword string
-
+	HashingAlgorithm  ldaphash.LDAPPasswordHashingAlgorithm
 	DefaultUserGroup  string
 	DefaultAdminGroup string
 	DefaultUserShell  string
@@ -37,8 +31,6 @@ type LDAPManager struct {
 	GroupAttribute           string
 
 	GroupMembershipUsesUID bool
-	// UseNISSchema           bool
-	// RequireStartTLS        bool
 }
 
 // NewLDAPManager ...
