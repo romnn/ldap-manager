@@ -1,4 +1,4 @@
-package main
+package ldapmanager
 
 import (
 	"testing"
@@ -12,10 +12,12 @@ func TestAddNewUser(t *testing.T) {
 	test := new(ldaptest.Test).Setup(t)
 	defer test.Teardown()
 
-	database, err := Connect(&test.MongoConfig)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(database)
+	/*
+		database, err := Connect(&test.MongoConfig)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(database)
+	*/
 	t.Fatalf("not implemented")
 }

@@ -1,4 +1,4 @@
-package main
+package ldapmanager
 
 import (
 	"errors"
@@ -25,9 +25,9 @@ const (
 )
 
 // DeleteGroup ...
-func (s *LDAPManager) DeleteGroup(groupName string) error {
-	if err := s.ldap.Del(ldap.NewDelRequest(
-		fmt.Sprintf("cn=%s,%s", escape(groupName), s.GroupsDN),
+func (m *LDAPManager) DeleteGroup(groupName string) error {
+	if err := m.ldap.Del(ldap.NewDelRequest(
+		fmt.Sprintf("cn=%s,%s", escape(groupName), m.GroupsDN),
 		[]ldap.Control{},
 	)); err != nil {
 		return err
@@ -37,12 +37,12 @@ func (s *LDAPManager) DeleteGroup(groupName string) error {
 }
 
 // DeleteAccount ...
-func (s *LDAPManager) DeleteAccount(username string) error {
+func (m *LDAPManager) DeleteAccount(username string) error {
 	if username == "" {
 		return errors.New("username must not be empty")
 	}
-	if err := s.ldap.Del(ldap.NewDelRequest(
-		fmt.Sprintf("%s=%s,%s", s.AccountAttribute, escape(username), s.UserGroupDN),
+	if err := m.ldap.Del(ldap.NewDelRequest(
+		fmt.Sprintf("%s=%s,%s", m.AccountAttribute, escape(username), m.UserGroupDN),
 		[]ldap.Control{},
 	)); err != nil {
 		return err
@@ -52,8 +52,8 @@ func (s *LDAPManager) DeleteAccount(username string) error {
 }
 
 // GetGroupGID ...
-func (s *LDAPManager) GetGroupGID(groupName string) (int, error) {
-	result, err := s.findGroup(groupName, []string{"gidNumber"})
+func (m *LDAPManager) GetGroupGID(groupName string) (int, error) {
+	result, err := m.findGroup(groupName, []string{"gidNumber"})
 	if err != nil {
 		return 0, err
 	}
@@ -68,20 +68,20 @@ func (s *LDAPManager) GetGroupGID(groupName string) (int, error) {
 }
 
 // IsGroupMember ...
-func (s *LDAPManager) IsGroupMember(username, groupName string) (bool, error) {
-	result, err := s.findGroup(groupName, []string{"dn", s.GroupMembershipAttribute})
+func (m *LDAPManager) IsGroupMember(username, groupName string) (bool, error) {
+	result, err := m.findGroup(groupName, []string{"dn", m.GroupMembershipAttribute})
 	if err != nil {
 		return false, err
 	}
 	if len(result.Entries) != 1 {
 		return false, fmt.Errorf("user %q does not exist or too many entries returned", username)
 	}
-	if !s.GroupMembershipUsesUID {
+	if !m.GroupMembershipUsesUID {
 		// "${LDAP['account_attribute']}=$username,${LDAP['user_dn']}";
-		username = fmt.Sprintf("%s=%s,%s", s.AccountAttribute, username, s.UserGroupDN)
+		username = fmt.Sprintf("%s=%s,%s", m.AccountAttribute, username, m.UserGroupDN)
 	}
 	// preg_grep ("/^${username}$/i", $result[0][$LDAP['group_membership_attribute']])
-	for _, member := range result.Entries[0].GetAttributeValues(s.GroupMembershipAttribute) { // uniqueMember or memberUID
+	for _, member := range result.Entries[0].GetAttributeValues(m.GroupMembershipAttribute) { // uniqueMember or memberUID
 		if member == username {
 			return true, nil
 		}
@@ -111,27 +111,27 @@ func (req *NewAccountRequest) Validate() error {
 }
 
 // GetHighestID ...
-func (s *LDAPManager) GetHighestID(attribute string) (int, error) {
+func (m *LDAPManager) GetHighestID(attribute string) (int, error) {
 	var highestID int
 	var entryBaseDN, entryFilter, entryAttribute string
 	switch attribute {
-	case s.GroupAttribute:
+	case m.GroupAttribute:
 		highestID = MinGID
-		entryBaseDN = s.GroupsDN
+		entryBaseDN = m.GroupsDN
 		entryFilter = "(objectClass=posixGroup)"
 		entryAttribute = "gidNumber"
-	case s.AccountAttribute:
+	case m.AccountAttribute:
 		highestID = MinUID
-		entryBaseDN = s.UserGroupDN
-		entryFilter = fmt.Sprintf("(%s=*)", s.AccountAttribute)
+		entryBaseDN = m.UserGroupDN
+		entryFilter = fmt.Sprintf("(%s=*)", m.AccountAttribute)
 		entryAttribute = "uidNumber"
 	default:
 		return highestID, fmt.Errorf("unknown id attribute %q", attribute)
 	}
 
 	filter := fmt.Sprintf("(&(objectclass=device)(cn=last%s))", attribute)
-	result, err := s.ldap.Search(ldap.NewSearchRequest(
-		s.BaseDN,
+	result, err := m.ldap.Search(ldap.NewSearchRequest(
+		m.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		filter,
 		[]string{"serialNumber"},
@@ -148,7 +148,7 @@ func (s *LDAPManager) GetHighestID(attribute string) (int, error) {
 	}
 
 	// cache miss requires traversing all entries
-	result, err = s.ldap.Search(ldap.NewSearchRequest(
+	result, err = m.ldap.Search(ldap.NewSearchRequest(
 		entryBaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		entryFilter,
@@ -181,51 +181,51 @@ func (e *GroupExistsError) Error() string {
 }
 
 // NewGroup ...
-func (s *LDAPManager) NewGroup(name string, members []string) error {
+func (m *LDAPManager) NewGroup(name string, members []string) error {
 	if name == "" {
 		return errors.New("group name can not be empty")
 	}
-	result, err := s.findGroup(name, []string{"dn", s.GroupMembershipAttribute})
+	result, err := m.findGroup(name, []string{"dn", m.GroupMembershipAttribute})
 	if err != nil {
 		return err
 	}
 	if len(result.Entries) > 0 {
 		return &GroupExistsError{Group: name}
 	}
-	highestGID, err := s.GetHighestID(s.GroupAttribute)
+	highestGID, err := m.GetHighestID(m.GroupAttribute)
 	if err != nil {
 		return err
 	}
 	newGID := highestGID + 1
 
 	var groupAttributes []ldap.Attribute
-	if s.UseNISSchema {
+	if m.UseNISSchema {
 		groupAttributes = []ldap.Attribute{
-			{"objectClass", []string{"top", "posixGroup"}},
-			{"cn", []string{name}},
-			{"gidNumber", []string{strconv.Itoa(newGID)}},
+			{Type: "objectClass", Vals: []string{"top", "posixGroup"}},
+			{Type: "cn", Vals: []string{name}},
+			{Type: "gidNumber", Vals: []string{strconv.Itoa(newGID)}},
 		}
 	} else {
 		if len(members) < 1 {
 			return errors.New("when using RFC2307BIS (not NIS), you must specify at least one group member")
 		}
 		groupAttributes = []ldap.Attribute{
-			{"objectClass", []string{"top", "groupOfUniqueNames", "posixGroup"}},
-			{"cn", []string{name}},
-			{"gidNumber", []string{strconv.Itoa(newGID)}},
-			{s.GroupMembershipAttribute, members},
+			{Type: "objectClass", Vals: []string{"top", "groupOfUniqueNames", "posixGroup"}},
+			{Type: "cn", Vals: []string{name}},
+			{Type: "gidNumber", Vals: []string{strconv.Itoa(newGID)}},
+			{Type: m.GroupMembershipAttribute, Vals: members},
 		}
 	}
 	addGroupRequest := &ldap.AddRequest{
-		DN:         fmt.Sprintf("cn=%s,%s", name, s.GroupsDN),
+		DN:         fmt.Sprintf("cn=%s,%s", name, m.GroupsDN),
 		Attributes: groupAttributes,
 		Controls:   []ldap.Control{},
 	}
 	log.Debug(addGroupRequest)
-	if err := s.ldap.Add(addGroupRequest); err != nil {
+	if err := m.ldap.Add(addGroupRequest); err != nil {
 		return err
 	}
-	if err := s.updateLastID("lastGID", newGID); err != nil {
+	if err := m.updateLastID("lastGID", newGID); err != nil {
 		return err
 	}
 	log.Infof("added new group %q (gid=%d)", name, newGID)
@@ -233,12 +233,12 @@ func (s *LDAPManager) NewGroup(name string, members []string) error {
 }
 
 // GetGroupMembers ...
-func (s *LDAPManager) GetGroupMembers(groupName string, start, end int, sortOrder string) ([]string, error) {
-	result, err := s.ldap.Search(ldap.NewSearchRequest(
-		s.GroupsDN,
+func (m *LDAPManager) GetGroupMembers(groupName string, start, end int, sortOrder string) ([]string, error) {
+	result, err := m.ldap.Search(ldap.NewSearchRequest(
+		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		fmt.Sprintf("(cn=%s)", escape(groupName)),
-		[]string{s.GroupMembershipAttribute},
+		[]string{m.GroupMembershipAttribute},
 		[]ldap.Control{},
 	))
 	if err != nil {
@@ -249,11 +249,11 @@ func (s *LDAPManager) GetGroupMembers(groupName string, start, end int, sortOrde
 	}
 	var members []string
 	group := result.Entries[0]
-	for _, member := range group.GetAttributeValues(s.GroupMembershipAttribute) {
+	for _, member := range group.GetAttributeValues(m.GroupMembershipAttribute) {
 		log.Info(member)
 		// TODO
 		/*
-			reg, err := regexp.Compile(fmt.Sprintf("%s=(.*?),", s.AccountAttribute))
+			reg, err := regexp.Compile(fmt.Sprintf("%s=(.*?),", m.AccountAttribute))
 			if err != nil {
 				return "", errors.New("failed to compile regex")
 			}
@@ -282,10 +282,10 @@ func (s *LDAPManager) GetGroupMembers(groupName string, start, end int, sortOrde
 }
 
 // GetGroupList ...
-func (s *LDAPManager) GetGroupList(start, end int, sortOrder string, filters []string) ([]string, error) {
+func (m *LDAPManager) GetGroupList(start, end int, sortOrder string, filters []string) ([]string, error) {
 	filter := fmt.Sprintf("(&(objectclass=*)%s)", filters)
-	result, err := s.ldap.Search(ldap.NewSearchRequest(
-		s.GroupsDN,
+	result, err := m.ldap.Search(ldap.NewSearchRequest(
+		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		filter,
 		[]string{},
@@ -316,16 +316,16 @@ func (s *LDAPManager) GetGroupList(start, end int, sortOrder string, filters []s
 }
 
 // GetUserList ...
-func (s *LDAPManager) GetUserList(start, end int, sortOrder string, sortKey string, filters string, fields []string) ([]map[string]string, error) {
+func (m *LDAPManager) GetUserList(start, end int, sortOrder string, sortKey string, filters string, fields []string) ([]map[string]string, error) {
 	if len(fields) < 1 {
-		fields = []string{s.AccountAttribute, "givenname", "sn", "mail"}
+		fields = []string{m.AccountAttribute, "givenname", "sn", "mail"}
 	}
 	if sortKey == "" {
-		sortKey = s.AccountAttribute
+		sortKey = m.AccountAttribute
 	}
-	filter := fmt.Sprintf("(&(%s=*)%s)", s.AccountAttribute, filters)
-	result, err := s.ldap.Search(ldap.NewSearchRequest(
-		s.UserGroupDN,
+	filter := fmt.Sprintf("(&(%s=*)%s)", m.AccountAttribute, filters)
+	result, err := m.ldap.Search(ldap.NewSearchRequest(
+		m.UserGroupDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		filter,
 		fields,
@@ -373,21 +373,21 @@ func (s *LDAPManager) GetUserList(start, end int, sortOrder string, sortKey stri
 }
 
 // AddGroupMember ...
-func (s *LDAPManager) AddGroupMember(groupName string, username string) error {
-	groupDN := fmt.Sprintf("cn=%s,%s", escape(groupName), s.GroupsDN)
-	if !s.GroupMembershipUsesUID {
-		username = fmt.Sprintf("%s=%s,%s", s.AccountAttribute, username, s.UserGroupDN)
+func (m *LDAPManager) AddGroupMember(groupName string, username string) error {
+	groupDN := fmt.Sprintf("cn=%s,%s", escape(groupName), m.GroupsDN)
+	if !m.GroupMembershipUsesUID {
+		username = fmt.Sprintf("%s=%s,%s", m.AccountAttribute, username, m.UserGroupDN)
 	}
 
 	addGroupMemberRequest := &ldap.AddRequest{
 		DN: groupDN,
 		Attributes: []ldap.Attribute{
-			{s.GroupMembershipAttribute, []string{username}},
+			{Type: m.GroupMembershipAttribute, Vals: []string{username}},
 		},
 		Controls: []ldap.Control{},
 	}
 	log.Debug(addGroupMemberRequest)
-	if err := s.ldap.Add(addGroupMemberRequest); err != nil {
+	if err := m.ldap.Add(addGroupMemberRequest); err != nil {
 		return err
 	}
 	log.Infof("added user %q to group %q", username, groupName)
@@ -395,19 +395,19 @@ func (s *LDAPManager) AddGroupMember(groupName string, username string) error {
 }
 
 // DeleteGroupMember ...
-func (s *LDAPManager) DeleteGroupMember(groupName string, username string) error {
-	groupDN := fmt.Sprintf("cn=%s,%s", escape(groupName), s.GroupsDN)
-	if !s.GroupMembershipUsesUID {
-		username = fmt.Sprintf("%s=%s,%s", s.AccountAttribute, username, s.UserGroupDN)
+func (m *LDAPManager) DeleteGroupMember(groupName string, username string) error {
+	groupDN := fmt.Sprintf("cn=%s,%s", escape(groupName), m.GroupsDN)
+	if !m.GroupMembershipUsesUID {
+		username = fmt.Sprintf("%s=%s,%s", m.AccountAttribute, username, m.UserGroupDN)
 	}
 
 	modifyRequest := ldap.NewModifyRequest(
 		groupDN,
 		[]ldap.Control{},
 	)
-	modifyRequest.Delete(s.GroupMembershipAttribute, []string{username})
+	modifyRequest.Delete(m.GroupMembershipAttribute, []string{username})
 	log.Debug(modifyRequest)
-	if err := s.ldap.Modify(modifyRequest); err != nil {
+	if err := m.ldap.Modify(modifyRequest); err != nil {
 		return err
 	}
 	log.Infof("removed user %q from group %q", username, groupName)
@@ -415,17 +415,17 @@ func (s *LDAPManager) DeleteGroupMember(groupName string, username string) error
 }
 
 // AuthenticateUser ...
-func (s *LDAPManager) AuthenticateUser(username string, password string) (string, error) {
+func (m *LDAPManager) AuthenticateUser(username string, password string) (string, error) {
 	// Validate
 	if username == "" || password == "" {
 		return "", errors.New("must provide username and password")
 	}
 	// Search for the DN for the given username. If found, try binding with the DN and user's password.
 	// If the binding succeeds, return the DN.
-	result, err := s.ldap.Search(ldap.NewSearchRequest(
-		s.BaseDN,
+	result, err := m.ldap.Search(ldap.NewSearchRequest(
+		m.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(%s=%s,%s)", s.AccountAttribute, escape(username), s.UserGroupDN),
+		fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, escape(username), m.UserGroupDN),
 		[]string{"dn"},
 		[]ldap.Control{},
 	))
@@ -436,10 +436,10 @@ func (s *LDAPManager) AuthenticateUser(username string, password string) (string
 		return "", fmt.Errorf("zero or multiple accounts with username %q", username)
 	}
 	userDN := result.Entries[0].DN
-	if err := s.ldap.Bind(userDN, password); err != nil {
+	if err := m.ldap.Bind(userDN, password); err != nil {
 		return "", fmt.Errorf("unable to bind as %q", username)
 	}
-	reg, err := regexp.Compile(fmt.Sprintf("%s=(.*?),", s.AccountAttribute))
+	reg, err := regexp.Compile(fmt.Sprintf("%s=(.*?),", m.AccountAttribute))
 	if err != nil {
 		return "", errors.New("failed to compile regex")
 	}
@@ -448,16 +448,16 @@ func (s *LDAPManager) AuthenticateUser(username string, password string) (string
 }
 
 // NewAccount ...
-func (s *LDAPManager) NewAccount(req *NewAccountRequest) error {
+func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 	// Validate
 	if err := req.Validate(); err != nil {
 		return err
 	}
 	// Check for existing user with the same username
-	result, err := s.ldap.Search(ldap.NewSearchRequest(
-		s.UserGroupDN,
+	result, err := m.ldap.Search(ldap.NewSearchRequest(
+		m.UserGroupDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(%s=%s,%s)", s.AccountAttribute, escape(req.Username), s.UserGroupDN),
+		fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, escape(req.Username), m.UserGroupDN),
 		[]string{},
 		[]ldap.Control{},
 	))
@@ -467,23 +467,23 @@ func (s *LDAPManager) NewAccount(req *NewAccountRequest) error {
 	if len(result.Entries) > 0 {
 		return fmt.Errorf("account with username %q already exists", req.Username)
 	}
-	highestUID, err := s.GetHighestID(s.AccountAttribute)
+	highestUID, err := m.GetHighestID(m.AccountAttribute)
 	if err != nil {
 		return err
 	}
 	newUID := highestUID + 1
-	group := s.DefaultUserGroup
-	userDN := fmt.Sprintf("%s=%s,%s", s.AccountAttribute, req.Username, s.UserGroupDN)
+	group := m.DefaultUserGroup
+	userDN := fmt.Sprintf("%s=%s,%s", m.AccountAttribute, req.Username, m.UserGroupDN)
 
 	var GID int
-	if defaultGID, err := s.GetGroupGID(s.DefaultUserGroup); err == nil {
+	if defaultGID, err := m.GetGroupGID(m.DefaultUserGroup); err == nil {
 		GID = defaultGID
 	} else {
 		// The default user group might not yet exist
 		// Note that a group can only be created with at least one member when using RFC2307BIS
-		if err := s.NewGroup(s.DefaultUserGroup, []string{userDN}); err != nil {
+		if err := m.NewGroup(m.DefaultUserGroup, []string{userDN}); err != nil {
 			// Fall back to create a new group group for the user
-			if err := s.NewGroup(req.Username, []string{userDN}); err != nil {
+			if err := m.NewGroup(req.Username, []string{userDN}); err != nil {
 				if _, ok := err.(*GroupExistsError); !ok {
 					return err
 				}
@@ -491,7 +491,7 @@ func (s *LDAPManager) NewAccount(req *NewAccountRequest) error {
 			group = req.Username
 		}
 
-		userGroupGID, err := s.GetGroupGID(group)
+		userGroupGID, err := m.GetGroupGID(group)
 		if err != nil {
 			return err
 		}
@@ -507,32 +507,32 @@ func (s *LDAPManager) NewAccount(req *NewAccountRequest) error {
 	addUserRequest := &ldap.AddRequest{
 		DN: userDN,
 		Attributes: []ldap.Attribute{
-			{"objectClass", []string{"person", "inetOrgPerson", "posixAccount"}},
-			{"uid", []string{req.Username}},
-			{"givenName", []string{req.FirstName}},
-			{"sn", []string{req.LastName}},
-			{"cn", []string{fmt.Sprintf("%s %s", req.FirstName, req.LastName)}},
-			{"displayName", []string{fmt.Sprintf("%s %s", req.FirstName, req.LastName)}},
-			{"uidNumber", []string{strconv.Itoa(newUID)}},
-			{"gidNumber", []string{strconv.Itoa(GID)}},
-			{"loginShell", []string{s.DefaultUserShell}},
-			{"homeDirectory", []string{fmt.Sprintf("/home/%s", req.Username)}},
-			{"userPassword", []string{hashedPassword}},
-			{"mail", []string{req.Email}},
+			{Type: "objectClass", Vals: []string{"person", "inetOrgPerson", "posixAccount"}},
+			{Type: "uid", Vals: []string{req.Username}},
+			{Type: "givenName", Vals: []string{req.FirstName}},
+			{Type: "sn", Vals: []string{req.LastName}},
+			{Type: "cn", Vals: []string{fmt.Sprintf("%s %s", req.FirstName, req.LastName)}},
+			{Type: "displayName", Vals: []string{fmt.Sprintf("%s %s", req.FirstName, req.LastName)}},
+			{Type: "uidNumber", Vals: []string{strconv.Itoa(newUID)}},
+			{Type: "gidNumber", Vals: []string{strconv.Itoa(GID)}},
+			{Type: "loginShell", Vals: []string{m.DefaultUserShell}},
+			{Type: "homeDirectory", Vals: []string{fmt.Sprintf("/home/%s", req.Username)}},
+			{Type: "userPassword", Vals: []string{hashedPassword}},
+			{Type: "mail", Vals: []string{req.Email}},
 		},
 		Controls: []ldap.Control{},
 	}
 	log.Debug(addUserRequest)
 	// TODO
 	/*
-		if err := s.ldap.Add(addUserRequest); err != nil {
+		if err := m.ldap.Add(addUserRequest); err != nil {
 			return err
 		}
 	*/
-	if err := s.AddGroupMember(group, req.Username); err != nil {
+	if err := m.AddGroupMember(group, req.Username); err != nil {
 		return err
 	}
-	if err := s.updateLastID("lastUID", newUID); err != nil {
+	if err := m.updateLastID("lastUID", newUID); err != nil {
 		return err
 	}
 	log.Infof("added new account %q (member of group %q)", req.Username, group)
@@ -540,16 +540,16 @@ func (s *LDAPManager) NewAccount(req *NewAccountRequest) error {
 }
 
 // ChangePassword ...
-func (s *LDAPManager) ChangePassword(username, newPassword string) error {
+func (m *LDAPManager) ChangePassword(username, newPassword string) error {
 	// Validate
 	if username == "" || newPassword == "" {
 		return errors.New("username and password must not be empty")
 	}
 
-	result, err := s.ldap.Search(ldap.NewSearchRequest(
-		s.BaseDN,
+	result, err := m.ldap.Search(ldap.NewSearchRequest(
+		m.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(%s=%s,%s)", s.AccountAttribute, escape(username), s.UserGroupDN),
+		fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, escape(username), m.UserGroupDN),
 		[]string{"dn"},
 		[]ldap.Control{},
 	))
@@ -570,7 +570,7 @@ func (s *LDAPManager) ChangePassword(username, newPassword string) error {
 	)
 	modifyPasswordRequest.Replace("userPassword", []string{hashedPassword})
 	log.Debug(modifyPasswordRequest)
-	if err := s.ldap.Modify(modifyPasswordRequest); err != nil {
+	if err := m.ldap.Modify(modifyPasswordRequest); err != nil {
 		return err
 	}
 	log.Infof("changed password for user %q", username)

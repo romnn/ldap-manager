@@ -1,4 +1,4 @@
-package main
+package ldapmanager
 
 import (
 	"errors"
@@ -10,21 +10,21 @@ import (
 )
 
 // BindReadOnly ...
-func (s *LDAPManagerServer) BindReadOnly() error {
+func (s *LDAPManager) BindReadOnly() error {
 	return s.ldap.Bind(fmt.Sprintf("cn=%s,dc=example,dc=org", s.ReadonlyBindUsername), s.ReadonlyBindPassword)
 }
 
 // BindAdmin ...
-func (s *LDAPManagerServer) BindAdmin() error {
+func (s *LDAPManager) BindAdmin() error {
 	return s.ldap.Bind(fmt.Sprintf("cn=%s,dc=example,dc=org", s.AdminBindUsername), s.AdminBindPassword)
 }
 
-func (s *LDAPManagerServer) setupOU(dn, name string) error {
+func (s *LDAPManager) setupOU(dn, name string) error {
 	addOURequest := &ldap.AddRequest{
 		DN: dn,
 		Attributes: []ldap.Attribute{
-			{"objectClass", []string{"organizationalUnit"}},
-			{"ou", []string{name}},
+			{Type: "objectClass", Vals: []string{"organizationalUnit"}},
+			{Type: "ou", Vals: []string{name}},
 		},
 		Controls: []ldap.Control{},
 	}
@@ -32,15 +32,15 @@ func (s *LDAPManagerServer) setupOU(dn, name string) error {
 	return s.ldap.Add(addOURequest)
 }
 
-func (s *LDAPManagerServer) setupGroupsOU() error {
+func (s *LDAPManager) setupGroupsOU() error {
 	return s.setupOU(s.GroupsDN, s.GroupsOU)
 }
 
-func (s *LDAPManagerServer) setupUsersOU() error {
+func (s *LDAPManager) setupUsersOU() error {
 	return s.setupOU(s.UserGroupDN, s.UsersOU)
 }
 
-func (s *LDAPManagerServer) setupLastID(attribute, cn string, desc string) error {
+func (s *LDAPManager) setupLastID(attribute, cn string, desc string) error {
 	highestID, err := s.GetHighestID(attribute)
 	if err != nil {
 		return err
@@ -48,9 +48,9 @@ func (s *LDAPManagerServer) setupLastID(attribute, cn string, desc string) error
 	addLastIDRequest := &ldap.AddRequest{
 		DN: fmt.Sprintf("cn=%s,%s", cn, s.BaseDN),
 		Attributes: []ldap.Attribute{
-			{"objectClass", []string{"device", "top"}},
-			{"serialnumber", []string{strconv.Itoa(highestID)}},
-			{"description", []string{desc}},
+			{Type: "objectClass", Vals: []string{"device", "top"}},
+			{Type: "serialnumber", Vals: []string{strconv.Itoa(highestID)}},
+			{Type: "description", Vals: []string{desc}},
 		},
 		Controls: []ldap.Control{},
 	}
@@ -58,25 +58,25 @@ func (s *LDAPManagerServer) setupLastID(attribute, cn string, desc string) error
 	return s.ldap.Add(addLastIDRequest)
 }
 
-func (s *LDAPManagerServer) setupLastGID() error {
+func (s *LDAPManager) setupLastGID() error {
 	return s.setupLastID(
 		s.GroupAttribute, "lastGID",
 		"Records the last GID used to create a Posix group. This prevents the re-use of a GID from a deleted group.",
 	)
 }
 
-func (s *LDAPManagerServer) setupLastUID() error {
+func (s *LDAPManager) setupLastUID() error {
 	return s.setupLastID(
 		s.AccountAttribute, "lastUID",
 		"Records the last UID used to create a Posix account. This prevents the re-use of a UID from a deleted account.",
 	)
 }
 
-func (s *LDAPManagerServer) setupDefaultGroup() error {
+func (s *LDAPManager) setupDefaultGroup() error {
 	return s.NewGroup(s.DefaultUserGroup, []string{})
 }
 
-func (s *LDAPManagerServer) setupAdminsGroup() error {
+func (s *LDAPManager) setupAdminsGroup() error {
 	if err := s.NewGroup(s.DefaultAdminGroup, []string{}); err != nil {
 		return err
 	}
@@ -90,12 +90,12 @@ func (s *LDAPManagerServer) setupAdminsGroup() error {
 	return nil
 }
 
-func (s *LDAPManagerServer) setupAuth(adminPassword string) error {
+func (s *LDAPManager) setupAuth(adminPassword string) error {
 	return s.ldap.Bind(fmt.Sprintf("cn=%s,dc=example,dc=org", s.AdminBindUsername), adminPassword)
 }
 
 // SetupLDAP ...
-func (s *LDAPManagerServer) SetupLDAP() error {
+func (s *LDAPManager) SetupLDAP() error {
 	if err := s.setupGroupsOU(); err != nil && !isErr(err, ldap.LDAPResultEntryAlreadyExists) {
 		return fmt.Errorf("failed to setup groups organizational unit (OU): %v", err)
 	}

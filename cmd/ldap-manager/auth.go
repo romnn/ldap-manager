@@ -26,12 +26,12 @@ func (s *LDAPManagerServer) login(c echo.Context) error {
 	if req.UserID == "" || req.Password == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "please provide valid credentials")
 	}
-	userDN, err := s.AuthenticateUser(req.UserID, req.Password)
+	userDN, err := s.manager.AuthenticateUser(req.UserID, req.Password)
 	if err != nil {
 		log.Error(err)
 		return echo.NewHTTPError(http.StatusNotFound, "no such user")
 	}
-	isMember, err := s.IsGroupMember(s.DefaultAdminGroup, req.UserID)
+	isMember, err := s.manager.IsGroupMember(s.manager.DefaultAdminGroup, req.UserID)
 	if err != nil {
 		log.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "unable to check admin status of user")

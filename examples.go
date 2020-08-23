@@ -1,10 +1,10 @@
-package main
+package ldapmanager
 
 import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (s *LDAPManagerServer) examples() {
+func (s *LDAPManager) examples() {
 	/*
 		if err := s.BindReadOnly(); err != nil {
 			return err

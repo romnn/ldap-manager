@@ -7,10 +7,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
-	"crypto/tls"
+	// "crypto/tls"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -18,7 +17,7 @@ import (
 
 	"github.com/romnnn/flags4urfavecli/flags"
 	// "github.com/romnnn/flags4urfavecli/values"
-	"github.com/go-ldap/ldap"
+
 	gogrpcservice "github.com/romnnn/go-grpc-service"
 	"github.com/romnnn/go-grpc-service/versioning"
 	log "github.com/sirupsen/logrus"
@@ -45,8 +44,8 @@ func (s *LDAPManagerServer) Shutdown() {
 	s.Service.GracefulStop()
 	s.echoServer.Shutdown(context.Background())
 	// Disconnet download service
-	if s.ldap != nil {
-		s.ldap.Close()
+	if s.manager != nil {
+		s.manager.Close()
 	}
 }
 
@@ -106,7 +105,7 @@ func main() {
 					BuildTime:          Rev,
 					HTTPHealthCheckURL: "health/healthz",
 				},
-				manager: ldapmanager.LDAPManager{
+				manager: &ldapmanager.LDAPManager{
 					GroupsOU:                 "groups",
 					UsersOU:                  "users",
 					BaseDN:                   "dc=example,dc=org",
@@ -166,28 +165,7 @@ func (s *LDAPManagerServer) BootstrapHTTP(cliCtx *cli.Context) error {
 
 // Setup prepares the service
 func (s *LDAPManagerServer) Setup(ctx *cli.Context) error {
-	var err error
-	connectionURI := ctx.String("ldap-uri")
-	s.ldap, err = ldap.DialURL(connectionURI)
-	if err != nil {
-		return err
-	}
-
-	// Check for TLS
-	if strings.HasPrefix(connectionURI, "ldaps:") || s.RequireStartTLS {
-		if err := s.ldap.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
-			log.Warnf("failed to connect via TLS: %v", err)
-			if s.RequireStartTLS {
-				return err
-			}
-		}
-	}
-
-	// Bind as the admin user
-	if err := s.BindAdmin(); err != nil {
-		return err
-	}
-	if err := s.SetupLDAP(); err != nil {
+	if err := s.manager.Setup(ctx.String("ldap-uri")); err != nil {
 		return err
 	}
 	return nil
