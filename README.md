@@ -10,8 +10,13 @@ Your description goes here...
 
 ```bash
 go get github.com/romnnn/ldap-manager
-```
 
+# run the HTTP server
+go run github.com/romnnn/ldap-manager/cmd/ldap-manager serve --port 8090 http
+
+# run the gRPC server
+go run github.com/romnnn/ldap-manager/cmd/ldap-manager serve --port 8090 grpc
+```
 
 You can also download pre built binaries from the [releases page](https://github.com/romnnn/ldap-manager/releases), or use the `docker` image:
 
@@ -114,9 +119,7 @@ This project is still in the alpha stage and should not be considered production
 
 - Implement frontend
 - Implement token based authentication
-- Rename users to accounts
 - Fully configure travis
-- Write tests using testcontainers
 - Restructure to allow usage via GRPC API?
 - Restructure to allow CLI usage
     - new acc
@@ -127,5 +130,6 @@ This project is still in the alpha stage and should not be considered production
     - verify?
 - Publish helm chart via github pages
 - Add images to the readme
+- Rename users to accounts
 - Implement missing password hashing algorithms
 - Embed crypt(3) as vendored?

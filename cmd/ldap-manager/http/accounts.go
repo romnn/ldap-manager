@@ -1,11 +1,11 @@
-package main
+package http
 
 import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/neko-neko/echo-logrus/v2/log"
 	ldapmanager "github.com/romnnn/ldap-manager"
-	log "github.com/sirupsen/logrus"
 )
 
 func (s *LDAPManagerServer) listAccountsHandler(c echo.Context) error {
@@ -14,7 +14,7 @@ func (s *LDAPManagerServer) listAccountsHandler(c echo.Context) error {
 		log.Error(err)
 		return err
 	}
-	users, err := s.manager.GetUserList(&ldapmanager.GetUserListRequest{
+	users, err := s.Manager.GetUserList(&ldapmanager.GetUserListRequest{
 		ListOptions: options,
 	})
 	if err != nil {
@@ -26,7 +26,7 @@ func (s *LDAPManagerServer) listAccountsHandler(c echo.Context) error {
 
 func (s *LDAPManagerServer) getAccountHandler(c echo.Context) error {
 	username := c.Param("username")
-	user, err := s.manager.GetAccount(username)
+	user, err := s.Manager.GetAccount(username)
 	if err != nil {
 		switch err.(type) {
 		case *ldapmanager.ZeroOrMultipleAccountsError:
@@ -53,7 +53,7 @@ func (s *LDAPManagerServer) updateAccountHandler(c echo.Context) error {
 }
 
 func (s *LDAPManagerServer) deleteAccount(c echo.Context, username string) error {
-	if err := s.manager.DeleteAccount(&ldapmanager.DeleteAccountRequest{Username: username}); err != nil {
+	if err := s.Manager.DeleteAccount(&ldapmanager.DeleteAccountRequest{Username: username}); err != nil {
 		switch err.(type) {
 		case *ldapmanager.ZeroOrMultipleAccountsError:
 			return echo.NewHTTPError(err.(*ldapmanager.ZeroOrMultipleAccountsError).Status(), err.Error())
@@ -69,7 +69,7 @@ func (s *LDAPManagerServer) deleteAccountHandler(c echo.Context) error {
 }
 
 func (s *LDAPManagerServer) newAccount(c echo.Context, req *ldapmanager.NewAccountRequest) error {
-	if err := s.manager.NewAccount(req); err != nil {
+	if err := s.Manager.NewAccount(req); err != nil {
 		switch err.(type) {
 		case *ldapmanager.AccountValidationError:
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())

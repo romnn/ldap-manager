@@ -1,11 +1,11 @@
-package main
+package http
 
 import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/neko-neko/echo-logrus/v2/log"
 	ldapmanager "github.com/romnnn/ldap-manager"
-	log "github.com/sirupsen/logrus"
 )
 
 type loginRequest struct {
@@ -27,12 +27,12 @@ func (s *LDAPManagerServer) loginHandler(c echo.Context) error {
 	if req.UserID == "" || req.Password == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "please provide valid credentials")
 	}
-	userDN, err := s.manager.AuthenticateUser(&ldapmanager.AuthenticateUserRequest{Username: req.UserID, Password: req.Password})
+	userDN, err := s.Manager.AuthenticateUser(&ldapmanager.AuthenticateUserRequest{Username: req.UserID, Password: req.Password})
 	if err != nil {
 		log.Error(err)
 		return echo.NewHTTPError(http.StatusNotFound, "no such user")
 	}
-	isMember, err := s.manager.IsGroupMember(&ldapmanager.IsGroupMemberRequest{Username: req.UserID, Group: s.manager.DefaultAdminGroup})
+	isMember, err := s.Manager.IsGroupMember(&ldapmanager.IsGroupMemberRequest{Username: req.UserID, Group: s.Manager.DefaultAdminGroup})
 	if err != nil {
 		log.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "unable to check admin status of user")

@@ -1,11 +1,11 @@
-package main
+package http
 
 import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/neko-neko/echo-logrus/v2/log"
 	ldapmanager "github.com/romnnn/ldap-manager"
-	log "github.com/sirupsen/logrus"
 )
 
 type groupMemberRequest struct {
@@ -19,7 +19,7 @@ func (s *LDAPManagerServer) addGroupMemberHandler(c echo.Context) error {
 		log.Error(err)
 		return err
 	}
-	if err := s.manager.AddGroupMember(&ldapmanager.AddGroupMemberRequest{Group: group, Username: req.Username}); err != nil {
+	if err := s.Manager.AddGroupMember(&ldapmanager.AddGroupMemberRequest{Group: group, Username: req.Username}); err != nil {
 		switch err.(type) {
 		case *ldapmanager.GroupValidationError:
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -39,7 +39,7 @@ func (s *LDAPManagerServer) removeGroupMemberHandler(c echo.Context) error {
 		log.Error(err)
 		return err
 	}
-	if err := s.manager.DeleteGroupMember(&ldapmanager.DeleteGroupMemberRequest{Group: group, Username: req.Username}); err != nil {
+	if err := s.Manager.DeleteGroupMember(&ldapmanager.DeleteGroupMemberRequest{Group: group, Username: req.Username}); err != nil {
 		switch err.(type) {
 		case *ldapmanager.GroupValidationError:
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())

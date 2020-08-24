@@ -9,8 +9,8 @@ import (
 	"strconv"
 
 	"github.com/go-ldap/ldap"
+	"github.com/neko-neko/echo-logrus/v2/log"
 	ldaphash "github.com/romnnn/ldap-manager/hash"
-	log "github.com/sirupsen/logrus"
 )
 
 var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")

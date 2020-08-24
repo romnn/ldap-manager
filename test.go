@@ -10,7 +10,7 @@ import (
 	ldaptest "github.com/romnnn/ldap-manager/test"
 	tc "github.com/romnnn/testcontainers"
 	"github.com/romnnn/testcontainers-go"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -28,7 +28,7 @@ func init() {
 	tclog.SetOutput(ioutil.Discard)
 
 	// This wil disable the application logger
-	log.SetOutput(ioutil.Discard)
+	logrus.SetOutput(ioutil.Discard)
 
 	// Note: if you want to log in tests, use `t.Log`
 }

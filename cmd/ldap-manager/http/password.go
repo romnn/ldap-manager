@@ -1,11 +1,11 @@
-package main
+package http
 
 import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/neko-neko/echo-logrus/v2/log"
 	ldapmanager "github.com/romnnn/ldap-manager"
-	log "github.com/sirupsen/logrus"
 )
 
 func (s *LDAPManagerServer) updatePasswordHandler(c echo.Context) error {
@@ -15,7 +15,7 @@ func (s *LDAPManagerServer) updatePasswordHandler(c echo.Context) error {
 		return err
 	}
 
-	if err := s.manager.ChangePassword(&req); err != nil {
+	if err := s.Manager.ChangePassword(&req); err != nil {
 		switch err.(type) {
 		case *ldapmanager.ZeroOrMultipleAccountsError:
 			return echo.NewHTTPError(err.(*ldapmanager.ZeroOrMultipleAccountsError).Status(), err.Error())

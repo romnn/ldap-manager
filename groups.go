@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-ldap/ldap"
-	log "github.com/sirupsen/logrus"
+	"github.com/neko-neko/echo-logrus/v2/log"
 )
 
 // GroupAlreadyExistsError ...

@@ -1,6 +1,6 @@
 syntax = "proto3";
-package samples;
-option go_package = "github.com/romnnn/ldap-manager/grpc/service";
+package ldapmanager;
+option go_package = "github.com/romnnn/ldap-manager/grpc/ldap-manager;ldapmanager";
 
 import "google/protobuf/descriptor.proto";
 

@@ -1,11 +1,11 @@
-package main
+package http
 
 import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/neko-neko/echo-logrus/v2/log"
 	ldapmanager "github.com/romnnn/ldap-manager"
-	log "github.com/sirupsen/logrus"
 )
 
 func (s *LDAPManagerServer) listGroupsHandler(c echo.Context) error {
@@ -14,7 +14,7 @@ func (s *LDAPManagerServer) listGroupsHandler(c echo.Context) error {
 		log.Error(err)
 		return err
 	}
-	groups, err := s.manager.GetGroupList(&ldapmanager.GetGroupListRequest{
+	groups, err := s.Manager.GetGroupList(&ldapmanager.GetGroupListRequest{
 		ListOptions: options,
 	})
 	if err != nil {
@@ -35,7 +35,7 @@ func (s *LDAPManagerServer) renameGroupHandler(c echo.Context) error {
 		log.Error(err)
 		return err
 	}
-	if err := s.manager.RenameGroup(&ldapmanager.RenameGroupRequest{Group: groupName, NewName: req.NewName}); err != nil {
+	if err := s.Manager.RenameGroup(&ldapmanager.RenameGroupRequest{Group: groupName, NewName: req.NewName}); err != nil {
 		switch err.(type) {
 		case *ldapmanager.GroupValidationError:
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -50,7 +50,7 @@ func (s *LDAPManagerServer) renameGroupHandler(c echo.Context) error {
 
 func (s *LDAPManagerServer) getGroupHandler(c echo.Context) error {
 	groupName := c.Param("group")
-	group, err := s.manager.GetGroup(&ldapmanager.GetGroupRequest{Group: groupName})
+	group, err := s.Manager.GetGroup(&ldapmanager.GetGroupRequest{Group: groupName})
 	if err != nil {
 		switch err.(type) {
 		case *ldapmanager.GroupValidationError:
@@ -66,7 +66,7 @@ func (s *LDAPManagerServer) getGroupHandler(c echo.Context) error {
 
 func (s *LDAPManagerServer) deleteGroupHandler(c echo.Context) error {
 	group := c.Param("group")
-	if err := s.manager.DeleteGroup(group); err != nil {
+	if err := s.Manager.DeleteGroup(group); err != nil {
 		switch err.(type) {
 		case *ldapmanager.GroupValidationError:
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -86,7 +86,7 @@ func (s *LDAPManagerServer) newGroupHandler(c echo.Context) error {
 		return err
 	}
 	req.Strict = true // enforces all members of the group to already exist
-	if err := s.manager.NewGroup(&req); err != nil {
+	if err := s.Manager.NewGroup(&req); err != nil {
 		switch err.(type) {
 		case *ldapmanager.GroupValidationError:
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())

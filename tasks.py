@@ -94,11 +94,11 @@ def compile_proto(c):
     c.run(str(" ").join([
         "protoc",
         "--proto_path=%s" % ROOT_DIR,
-        "--go_out=grpc/service",
-        "--go-grpc_out=grpc/service",
+        "--go_out=grpc/ldap-manager",
+        "--go-grpc_out=grpc/ldap-manager",
         "--go_opt=paths=source_relative",
         "--go-grpc_opt=paths=source_relative",
-        os.path.join(ROOT_DIR, "ldap-manager.proto"),
+        os.path.join(ROOT_DIR, "ldap_manager.proto"),
     ]))
 
 

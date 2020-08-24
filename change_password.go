@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/go-ldap/ldap"
+	"github.com/neko-neko/echo-logrus/v2/log"
 	ldaphash "github.com/romnnn/ldap-manager/hash"
-	log "github.com/sirupsen/logrus"
 )
 
 // ChangePasswordRequest ...
