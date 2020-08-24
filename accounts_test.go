@@ -3,6 +3,7 @@ package ldapmanager
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	ldaphash "github.com/romnnn/ldap-manager/hash"
@@ -94,10 +95,12 @@ func TestAuthenticateUser(t *testing.T) {
 				t.Errorf("failed to add user %q: %v", newUserReq.Username, err)
 				continue
 			}
-			// Now check if we can authenticate using the clear password
+			// wait some time to process the password hash
+			time.Sleep(1 * time.Second)
+
+			// now check if we can authenticate using the clear password
 			if _, err := manager.AuthenticateUser(newUserReq.Username, pw); err != nil {
 				t.Errorf("failed to authenticate user %q with password %q: %v", newUserReq.Username, pw, err)
-				continue
 			}
 		}
 	}

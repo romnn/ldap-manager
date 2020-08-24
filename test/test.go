@@ -12,6 +12,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	parallel = true
+)
+
 func init() {
 	// This wil disable the native `log.Printf` calls by testcontainers-go
 	tclog.SetFlags(0)
@@ -28,10 +32,6 @@ type Test struct {
 	OpenLDAPC       testcontainers.Container
 	OpenLDAPCConfig ldapconfig.OpenLDAPConfig
 }
-
-const (
-	parallel = false
-)
 
 // Setup ...
 func (test *Test) Setup(t *testing.T) *Test {
