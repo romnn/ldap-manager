@@ -1,0 +1,183 @@
+syntax = "proto3";
+package samples;
+option go_package = "github.com/romnnn/ldap-manager/service";
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.MethodOptions {
+  bool require_admin = 51234;
+  bool require_auth = 51235;
+}
+
+message Empty {}
+
+enum SortOrder {
+  ASCENDING = 0;
+  DESCENDING = 1;
+}
+
+message ListOptions {
+  int32 start = 1;
+	int32 end = 2;
+	SortOrder sort_order = 3;
+	string sort_key = 4;
+}
+
+message GetUserListRequest {
+  ListOptions options = 1;
+  string filters = 10;
+	repeated string fields = 11;
+}
+
+message User {
+  map<string, string> user = 1;
+}
+
+message UserList {
+  repeated User users = 1;
+}
+
+message UserDN {
+  string dn = 1;
+}
+
+message AuthenticateUserRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message GetAccountRequest {
+  string username = 1;
+}
+
+enum HashingAlgorithm {
+  DEFAULT = 0;
+	SHA512CRYPT = 1;
+	SHA256CRYPT = 2;
+	BLOWFISH = 3;
+	EXTDES = 4;
+	MD5CRYPT = 5;
+	SMD5 = 6;
+	MD5 = 7;
+	SHA = 8;
+	SSHA = 9;
+	CRYPT = 10;
+	CLEAR = 11;
+}
+
+message NewAccountRequest {
+  string first_name = 1;
+	string last_name = 2;
+	string username = 3;
+	string password = 4;
+	string email = 5;
+	HashingAlgorithm hashing_algorithm = 100;
+}
+
+message DeleteAccountRequest {
+  string username = 1;
+}
+
+message NewGroupRequest {
+  string name = 1;
+	repeated string members = 2;
+}
+
+message DeleteGroupRequest {
+  string name = 1;
+}
+
+message RenameGroupRequest {
+  string name = 1;
+  string new_name = 2;
+}
+
+message GetGroupListRequest {
+  ListOptions options = 1;
+	string filters = 2;
+}
+
+message GroupList {
+  repeated string groups = 1;
+}
+
+message IsGroupMemberRequest {
+  string username = 1;
+  string group = 2;
+}
+
+message IsGroupMemberResponse {
+  bool is_member = 1;
+}
+
+message GetGroupRequest {
+  string group = 1;
+  ListOptions options = 2;
+}
+
+message Group {
+  repeated string members = 1;
+	string name = 2;
+	string dn = 3;
+}
+
+message GroupMember {
+  string group = 1;
+  string username = 2;
+}
+
+message ChangePasswordRequest {
+  string username = 1;
+	string password = 2;
+	HashingAlgorithm hashing_algorithm = 100;
+}
+
+service LDAPManager {
+  // Accounts
+  rpc GetUserList(GetUserListRequest) returns (UserList) {
+    option (require_admin) = true;
+  }
+  rpc AuthenticateUser(AuthenticateUserRequest) returns (UserDN) {
+    option (require_admin) = true;
+  }
+  rpc GetAccount(GetAccountRequest) returns (User) {
+    option (require_admin) = true;
+  }
+  rpc NewAccount(NewAccountRequest) returns (Empty) {
+    option (require_admin) = true;
+  }
+  rpc DeleteAccount(DeleteAccountRequest) returns (Empty) {
+    option (require_admin) = true;
+  }
+
+  // Password
+  rpc ChangePassword(ChangePasswordRequest) returns (Empty) {
+    option (require_admin) = true;
+  }
+
+  // Groups
+  rpc NewGroup(NewGroupRequest) returns (Empty) {
+    option (require_admin) = true;
+  }
+  rpc DeleteGroup(DeleteGroupRequest) returns (Empty) {
+    option (require_admin) = true;
+  }
+  rpc RenameGroup(RenameGroupRequest) returns (Empty) {
+    option (require_admin) = true;
+  }
+  rpc GetGroupList(GetGroupListRequest) returns (GroupList) {
+    option (require_admin) = true;
+  }
+  rpc IsGroupMember(IsGroupMemberRequest) returns (IsGroupMemberResponse) {
+    option (require_admin) = true;
+  }
+  rpc GetGroup(GetGroupRequest) returns (Group) {
+    option (require_admin) = true;
+  }
+  rpc AddGroupMember(GroupMember) returns (Empty) {
+    option (require_admin) = true;
+  }
+  rpc DeleteGroupMember(GroupMember) returns (Empty) {
+    option (require_admin) = true;
+  }
+}

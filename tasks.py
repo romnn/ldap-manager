@@ -88,6 +88,21 @@ def coverage(c, publish=False):
 
 
 @task
+def compile_proto(c):
+    """Build the project
+    """
+    c.run(str(" ").join([
+        "protoc",
+        "--proto_path=%s" % ROOT_DIR,
+        "--go_out=proto/service",
+        "--go-grpc_out=proto/service",
+        "--go_opt=paths=source_relative",
+        "--go-grpc_opt=paths=source_relative",
+        os.path.join(ROOT_DIR, "service.proto"),
+    ]))
+
+
+@task
 def cc(c):
     """Build the project for all architectures
     """
