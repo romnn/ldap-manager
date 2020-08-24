@@ -72,6 +72,27 @@ bump2version (major | minor | patch)
 git push --follow-tags
 ```
 
+If you want to (re-)generate the sample grpc service, make sure to install `protoc`, `protoc-gen-go` and `protoc-gen-go-grpc`.
+You can then use the provided script:
+```bash
+apt install -y protobuf-compiler
+go install google.golang.org/protobuf/cmd/protoc-gen-go
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
+invoke compile-proto
+```
+
+
+# See https://pre-commit.com/ for usage and config
+repos:
+- repo: local
+  hooks:
+  - id: go-cyclo
+    name: go-cyclo
+    stages: [commit]
+    language: system
+    entry: goimports -w $(go list -f {{.Dir}} ./... | grep -v /grpc/)
+    pass_filenames: false
+
 #### Debug user config
 
 To manually add a user via an LDIF file, use the `ldapadd` command
