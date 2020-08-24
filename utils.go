@@ -2,6 +2,7 @@ package ldapmanager
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -71,6 +72,19 @@ func escapeDN(dn string) string {
 		}
 	}
 	return string(buf)
+}
+
+func extractAttribute(dn string, attribute string) (string, error) {
+	reg, err := regexp.Compile(fmt.Sprintf("%s=(?P<Attribute>.*?),", attribute))
+	if err != nil {
+		return "", err
+	}
+	if matches := reg.FindStringSubmatch(dn); len(matches) > 1 {
+		if match := matches[1]; match != "" {
+			return match, nil
+		}
+	}
+	return "", fmt.Errorf("could not find attribute %q in %q", attribute, dn)
 }
 
 func (m *LDAPManager) findGroup(groupName string, attributes []string) (*ldap.SearchResult, error) {

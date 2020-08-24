@@ -71,6 +71,11 @@ func (m *LDAPManager) getGroupGID(groupName string) (int, error) {
 	return strconv.Atoi(gidNumbers[0])
 }
 
+// GroupNamed ...
+func (m *LDAPManager) GroupNamed(name string) string {
+	return fmt.Sprintf("cn=%s,%s", escapeDN(name), m.GroupsDN)
+}
+
 // NewGroupRequest ...
 type NewGroupRequest struct {
 	Name    string   `json:"name" form:"name"`
@@ -115,7 +120,7 @@ func (m *LDAPManager) NewGroup(req *NewGroupRequest) error {
 		}
 	}
 	addGroupRequest := &ldap.AddRequest{
-		DN:         fmt.Sprintf("cn=%s,%s", req.Name, m.GroupsDN),
+		DN:         m.GroupNamed(req.Name),
 		Attributes: groupAttributes,
 		Controls:   []ldap.Control{},
 	}
@@ -141,7 +146,7 @@ func (m *LDAPManager) DeleteGroup(groupName string) error {
 		return &GroupValidationError{"deleting the default user or admin group is not allowed"}
 	}
 	if err := m.ldap.Del(ldap.NewDelRequest(
-		fmt.Sprintf("cn=%s,%s", escapeDN(groupName), m.GroupsDN),
+		m.GroupNamed(groupName),
 		[]ldap.Control{},
 	)); err != nil {
 		if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
@@ -176,7 +181,7 @@ func (m *LDAPManager) RenameGroup(groupName, newName string) error {
 		return &GroupValidationError{"group name can not be empty"}
 	}
 	modifyRequest := &ldap.ModifyDNRequest{
-		DN:           fmt.Sprintf("cn=%s,%s", groupName, m.GroupsDN),
+		DN:           m.GroupNamed(groupName),
 		NewRDN:       fmt.Sprintf("cn=%s", newName),
 		DeleteOldRDN: true,
 		NewSuperior:  "",

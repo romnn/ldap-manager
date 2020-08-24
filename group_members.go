@@ -101,21 +101,29 @@ func (m *LDAPManager) GetGroup(groupName string, options *ListOptions) (*Group, 
 	if err != nil {
 		return nil, err
 	}
+	normGroup := &Group{Name: group.Name}
+
+	// Convert member DN's to usernames
+	for _, memberDN := range group.Members {
+		if memberUsername, err := extractAttribute(memberDN, m.AccountAttribute); err == nil && memberUsername != "" {
+			normGroup.Members = append(normGroup.Members, memberUsername)
+		}
+	}
 
 	// Sort
-	sort.Slice(group.Members, func(i, j int) bool {
-		asc := group.Members[i] < group.Members[j]
+	sort.Slice(normGroup.Members, func(i, j int) bool {
+		asc := normGroup.Members[i] < normGroup.Members[j]
 		if options.SortOrder == SortDescending {
 			return !asc
 		}
 		return asc
 	})
 	// Clip
-	if options.Start >= 0 && options.End < len(group.Members) && options.Start < options.End {
-		group.Members = group.Members[options.Start:options.End]
-		return group, nil
+	if options.Start >= 0 && options.End < len(normGroup.Members) && options.Start < options.End {
+		normGroup.Members = normGroup.Members[options.Start:options.End]
+		return normGroup, nil
 	}
-	return group, nil
+	return normGroup, nil
 }
 
 // AddGroupMember ...

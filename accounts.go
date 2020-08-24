@@ -243,12 +243,22 @@ func (m *LDAPManager) GetAccount(username string) (map[string]string, error) {
 	}
 	// Check for existing user with the same username
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
-		m.UserGroupDN,
+		// m.UserGroupDN,
+		m.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, escapeFilter(username), m.UserGroupDN),
+		// fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, escapeFilter(username), m.UserGroupDN),
+		fmt.Sprintf("(%s=%s)", m.AccountAttribute, escapeFilter(username)),
 		m.defaultUserFields(),
 		[]ldap.Control{},
 	))
+	// panic(fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, escapeFilter(username), m.UserGroupDN))
+	/*
+		m.BaseDN,
+			ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+			fmt.Sprintf("(%s=%s)", m.AccountAttribute, escapeFilter(username)),
+			[]string{"dn"},
+			[]ldap.Control{},
+	*/
 	if err != nil {
 		return nil, fmt.Errorf("failed to get account %q: %v", username, err)
 	}

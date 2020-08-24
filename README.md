@@ -81,18 +81,6 @@ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
 invoke compile-proto
 ```
 
-
-# See https://pre-commit.com/ for usage and config
-repos:
-- repo: local
-  hooks:
-  - id: go-cyclo
-    name: go-cyclo
-    stages: [commit]
-    language: system
-    entry: goimports -w $(go list -f {{.Dir}} ./... | grep -v /grpc/)
-    pass_filenames: false
-
 #### Debug user config
 
 To manually add a user via an LDIF file, use the `ldapadd` command

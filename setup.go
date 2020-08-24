@@ -19,12 +19,12 @@ func (m *LDAPManager) BindAdmin() error {
 	return m.ldap.Bind(fmt.Sprintf("cn=%s,dc=example,dc=org", "admin"), m.OpenLDAPConfig.AdminPassword)
 }
 
-func (m *LDAPManager) setupOU(dn, name string) error {
+func (m *LDAPManager) setupOU(dn, ou string) error {
 	addOURequest := &ldap.AddRequest{
 		DN: dn,
 		Attributes: []ldap.Attribute{
 			{Type: "objectClass", Vals: []string{"organizationalUnit"}},
-			{Type: "ou", Vals: []string{name}},
+			{Type: "ou", Vals: []string{ou}},
 		},
 		Controls: []ldap.Control{},
 	}
