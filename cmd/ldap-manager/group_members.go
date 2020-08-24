@@ -19,7 +19,7 @@ func (s *LDAPManagerServer) addGroupMemberHandler(c echo.Context) error {
 		log.Error(err)
 		return err
 	}
-	if err := s.manager.AddGroupMember(group, req.Username); err != nil {
+	if err := s.manager.AddGroupMember(&ldapmanager.AddGroupMemberRequest{Group: group, Username: req.Username}); err != nil {
 		switch err.(type) {
 		case *ldapmanager.GroupValidationError:
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -39,7 +39,7 @@ func (s *LDAPManagerServer) removeGroupMemberHandler(c echo.Context) error {
 		log.Error(err)
 		return err
 	}
-	if err := s.manager.DeleteGroupMember(group, req.Username); err != nil {
+	if err := s.manager.DeleteGroupMember(&ldapmanager.DeleteGroupMemberRequest{Group: group, Username: req.Username}); err != nil {
 		switch err.(type) {
 		case *ldapmanager.GroupValidationError:
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())

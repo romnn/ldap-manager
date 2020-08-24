@@ -57,16 +57,6 @@ func (e *AccountValidationError) Error() string {
 	return fmt.Sprintf("invalid account request. missing or invalid: %v", e.Invalid)
 }
 
-// NewAccountRequest ...
-type NewAccountRequest struct {
-	FirstName        string `json:"first_name" form:"first_name"`
-	LastName         string `json:"last_name" form:"last_name"`
-	Username         string `json:"username" form:"username"`
-	Password         string `json:"password" form:"password"`
-	Email            string `json:"email" form:"email"`
-	HashingAlgorithm ldaphash.LDAPPasswordHashingAlgorithm
-}
-
 func validEmail(e string) bool {
 	if len(e) < 3 && len(e) > 254 {
 		return false
@@ -82,30 +72,6 @@ func validPassword(pw string) bool {
 func validUsername(un string) bool {
 	// TODO: maybe we enforce some username regex in the future
 	return true
-}
-
-// Validate ...
-func (req *NewAccountRequest) Validate() error {
-	var invalid []string
-	if req.Username == "" || !validUsername(req.Username) {
-		invalid = append(invalid, "username")
-	}
-	if req.Password == "" || !validPassword(req.Password) {
-		invalid = append(invalid, "password")
-	}
-	if req.Email == "" || !validEmail(req.Email) {
-		invalid = append(invalid, "email")
-	}
-	if req.FirstName == "" {
-		invalid = append(invalid, "first name")
-	}
-	if req.LastName == "" {
-		invalid = append(invalid, "last name")
-	}
-	if len(invalid) > 0 {
-		return &AccountValidationError{Invalid: invalid}
-	}
-	return nil
 }
 
 func (m *LDAPManager) defaultUserFields() []string {
@@ -207,10 +173,16 @@ func (m *LDAPManager) GetUserList(req *GetUserListRequest) ([]map[string]string,
 	return clippedUsers, nil
 }
 
+// AuthenticateUserRequest ...
+type AuthenticateUserRequest struct {
+	Username string `json:"username" form:"username"`
+	Password string `json:"password" form:"password"`
+}
+
 // AuthenticateUser ...
-func (m *LDAPManager) AuthenticateUser(username string, password string) (string, error) {
+func (m *LDAPManager) AuthenticateUser(req *AuthenticateUserRequest) (string, error) {
 	// Validate
-	if username == "" || password == "" {
+	if req.Username == "" || req.Password == "" {
 		return "", errors.New("must provide username and password")
 	}
 	// Search for the DN for the given username. If found, try binding with the DN and user's password.
@@ -218,7 +190,7 @@ func (m *LDAPManager) AuthenticateUser(username string, password string) (string
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(%s=%s)", m.AccountAttribute, escapeFilter(username)),
+		fmt.Sprintf("(%s=%s)", m.AccountAttribute, escapeFilter(req.Username)),
 		[]string{"dn"},
 		[]ldap.Control{},
 	))
@@ -226,13 +198,13 @@ func (m *LDAPManager) AuthenticateUser(username string, password string) (string
 		return "", err
 	}
 	if len(result.Entries) != 1 {
-		return "", &ZeroOrMultipleAccountsError{Username: username, Count: len(result.Entries)}
+		return "", &ZeroOrMultipleAccountsError{Username: req.Username, Count: len(result.Entries)}
 	}
 	// Make sure to always re-bind as admin afterwards
 	defer m.BindAdmin()
 	userDN := result.Entries[0].DN
-	if err := m.ldap.Bind(userDN, password); err != nil {
-		return "", fmt.Errorf("unable to bind as %q", username)
+	if err := m.ldap.Bind(userDN, req.Password); err != nil {
+		return "", fmt.Errorf("unable to bind as %q", req.Username)
 	}
 	reg, err := regexp.Compile(fmt.Sprintf("%s=(.*?),", m.AccountAttribute))
 	if err != nil {
@@ -262,6 +234,40 @@ func (m *LDAPManager) GetAccount(username string) (map[string]string, error) {
 		return nil, &ZeroOrMultipleAccountsError{Username: username, Count: len(result.Entries)}
 	}
 	return parseUser(result.Entries[0]), nil
+}
+
+// NewAccountRequest ...
+type NewAccountRequest struct {
+	FirstName        string `json:"first_name" form:"first_name"`
+	LastName         string `json:"last_name" form:"last_name"`
+	Username         string `json:"username" form:"username"`
+	Password         string `json:"password" form:"password"`
+	Email            string `json:"email" form:"email"`
+	HashingAlgorithm ldaphash.LDAPPasswordHashingAlgorithm
+}
+
+// Validate ...
+func (req *NewAccountRequest) Validate() error {
+	var invalid []string
+	if req.Username == "" || !validUsername(req.Username) {
+		invalid = append(invalid, "username")
+	}
+	if req.Password == "" || !validPassword(req.Password) {
+		invalid = append(invalid, "password")
+	}
+	if req.Email == "" || !validEmail(req.Email) {
+		invalid = append(invalid, "email")
+	}
+	if req.FirstName == "" {
+		invalid = append(invalid, "first name")
+	}
+	if req.LastName == "" {
+		invalid = append(invalid, "last name")
+	}
+	if len(invalid) > 0 {
+		return &AccountValidationError{Invalid: invalid}
+	}
+	return nil
 }
 
 // NewAccount ...
@@ -339,7 +345,7 @@ func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 		}
 		return fmt.Errorf("failed to add user %q: %v", userDN, err)
 	}
-	if err := m.AddGroupMember(group, req.Username); err != nil && !ldap.IsErrorWithCode(err, ldap.LDAPResultAttributeOrValueExists) {
+	if err := m.AddGroupMember(&AddGroupMemberRequest{Group: group, Username: req.Username}); err != nil && !ldap.IsErrorWithCode(err, ldap.LDAPResultAttributeOrValueExists) {
 		return fmt.Errorf("failed to add user %q to group %q: %v", req.Username, group, err)
 	}
 	if err := m.updateLastID("lastUID", newUID); err != nil {
@@ -349,17 +355,37 @@ func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 	return nil
 }
 
+// DeleteAccountRequest ...
+type DeleteAccountRequest struct {
+	Username    string `json:"username" form:"username"`
+	LeaveGroups bool
+}
+
 // DeleteAccount ...
-func (m *LDAPManager) DeleteAccount(username string) error {
-	if username == "" {
+func (m *LDAPManager) DeleteAccount(req *DeleteAccountRequest) error {
+	if req.Username == "" {
 		return errors.New("username must not be empty")
 	}
 	if err := m.ldap.Del(ldap.NewDelRequest(
-		fmt.Sprintf("%s=%s,%s", m.AccountAttribute, escapeDN(username), m.UserGroupDN),
+		fmt.Sprintf("%s=%s,%s", m.AccountAttribute, escapeDN(req.Username), m.UserGroupDN),
 		[]ldap.Control{},
 	)); err != nil {
 		return err
 	}
-	log.Infof("removed account %q", username)
+	if !req.LeaveGroups {
+		// delete the account from all its groups
+		groups, err := m.GetGroupList(&GetGroupListRequest{})
+		if err != nil {
+			return fmt.Errorf("failed to get list of groups: %v", err)
+		}
+		for _, group := range groups {
+			if err := m.DeleteGroupMember(&DeleteGroupMemberRequest{Group: group, Username: req.Username, AllowDeleteOfDefaultGroups: true}); err != nil {
+				if _, ok := err.(*NoSuchMemberError); !ok {
+					return fmt.Errorf("failed to remove deleted user %q from group %q: %v", req.Username, group, err)
+				}
+			}
+		}
+	}
+	log.Infof("removed account %q", req.Username)
 	return nil
 }

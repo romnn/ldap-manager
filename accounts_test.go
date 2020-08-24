@@ -95,7 +95,7 @@ func TestAuthenticateUser(t *testing.T) {
 			time.Sleep(1 * time.Second)
 
 			// now check if we can authenticate using the clear password
-			if _, err := test.Manager.AuthenticateUser(newUserReq.Username, pw); err != nil {
+			if _, err := test.Manager.AuthenticateUser(&AuthenticateUserRequest{Username: newUserReq.Username, Password: pw}); err != nil {
 				t.Errorf("failed to authenticate user %q with password %q: %v", newUserReq.Username, pw, err)
 			}
 		}
@@ -208,7 +208,7 @@ func TestGetAccount(t *testing.T) {
 	}
 
 	// Make sure that the new account is in the users group
-	group, err := test.Manager.GetGroup(test.Manager.DefaultUserGroup, &ListOptions{})
+	group, err := test.Manager.GetGroup(&GetGroupRequest{Group: test.Manager.DefaultUserGroup})
 	if err != nil {
 		t.Fatalf("failed to get members of the group %q: %v", test.Manager.DefaultUserGroup, err)
 	}
@@ -216,7 +216,7 @@ func TestGetAccount(t *testing.T) {
 		t.Fatalf("expected the new user %q to be a member of the default user group %q", newUserReq.Username, test.Manager.DefaultUserGroup)
 	}
 
-	isMember, err := test.Manager.IsGroupMember(newUserReq.Username, test.Manager.DefaultUserGroup)
+	isMember, err := test.Manager.IsGroupMember(&IsGroupMemberRequest{Username: newUserReq.Username, Group: test.Manager.DefaultUserGroup})
 	if err != nil {
 		t.Fatalf("failed to check if user %q is in the group %q: %v", newUserReq.Username, test.Manager.DefaultUserGroup, err)
 	}
@@ -268,7 +268,7 @@ func TestDeleteAccount(t *testing.T) {
 	}
 
 	// Now delete the first user
-	if err := test.Manager.DeleteAccount(users[0]); err != nil {
+	if err := test.Manager.DeleteAccount(&DeleteAccountRequest{Username: users[0]}); err != nil {
 		t.Fatalf("failed to delete user %q: %v", users[0], err)
 	}
 

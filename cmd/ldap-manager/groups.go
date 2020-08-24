@@ -35,7 +35,7 @@ func (s *LDAPManagerServer) renameGroupHandler(c echo.Context) error {
 		log.Error(err)
 		return err
 	}
-	if err := s.manager.RenameGroup(groupName, req.NewName); err != nil {
+	if err := s.manager.RenameGroup(&ldapmanager.RenameGroupRequest{Group: groupName, NewName: req.NewName}); err != nil {
 		switch err.(type) {
 		case *ldapmanager.GroupValidationError:
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -50,7 +50,7 @@ func (s *LDAPManagerServer) renameGroupHandler(c echo.Context) error {
 
 func (s *LDAPManagerServer) getGroupHandler(c echo.Context) error {
 	groupName := c.Param("group")
-	group, err := s.manager.GetGroup(groupName, &ldapmanager.ListOptions{})
+	group, err := s.manager.GetGroup(&ldapmanager.GetGroupRequest{Group: groupName})
 	if err != nil {
 		switch err.(type) {
 		case *ldapmanager.GroupValidationError:

@@ -53,7 +53,7 @@ func (s *LDAPManagerServer) updateAccountHandler(c echo.Context) error {
 }
 
 func (s *LDAPManagerServer) deleteAccount(c echo.Context, username string) error {
-	if err := s.manager.DeleteAccount(username); err != nil {
+	if err := s.manager.DeleteAccount(&ldapmanager.DeleteAccountRequest{Username: username}); err != nil {
 		switch err.(type) {
 		case *ldapmanager.ZeroOrMultipleAccountsError:
 			return echo.NewHTTPError(err.(*ldapmanager.ZeroOrMultipleAccountsError).Status(), err.Error())

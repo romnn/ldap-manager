@@ -26,7 +26,7 @@ func TestChangePassword(t *testing.T) {
 	}
 
 	// Test we can authenticate with password "123"
-	if _, err := test.Manager.AuthenticateUser(username, initialPassword); err != nil {
+	if _, err := test.Manager.AuthenticateUser(&AuthenticateUserRequest{Username: username, Password: initialPassword}); err != nil {
 		t.Fatalf("failed to authenticate user %q with password %q: %v", username, initialPassword, err)
 	}
 
@@ -48,12 +48,12 @@ func TestChangePassword(t *testing.T) {
 	}
 
 	// Assert we can no longer authenticate with the old password
-	if _, err := test.Manager.AuthenticateUser(username, initialPassword); err == nil {
+	if _, err := test.Manager.AuthenticateUser(&AuthenticateUserRequest{Username: username, Password: initialPassword}); err == nil {
 		t.Fatalf("expected error authenticating user %q with the initial password %q: %v", username, initialPassword, err)
 	}
 
 	// Assert we can authenticate with the new password
-	if _, err := test.Manager.AuthenticateUser(username, newPassword); err != nil {
+	if _, err := test.Manager.AuthenticateUser(&AuthenticateUserRequest{Username: username, Password: newPassword}); err != nil {
 		t.Fatalf("failed to authenticate user %q with the new password %q: %v", username, newPassword, err)
 	}
 

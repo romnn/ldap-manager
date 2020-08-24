@@ -80,7 +80,7 @@ func (m *LDAPManager) setupAdminsGroup() error {
 	if err := m.NewGroup(&NewGroupRequest{Name: m.DefaultAdminGroup}); err != nil {
 		return err
 	}
-	adminGroup, err := m.GetGroup(m.DefaultAdminGroup, &ListOptions{})
+	adminGroup, err := m.GetGroup(&GetGroupRequest{Group: m.DefaultAdminGroup})
 	if err != nil {
 		return err
 	}
