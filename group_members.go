@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-ldap/ldap"
 	"github.com/neko-neko/echo-logrus/v2/log"
+	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 )
 
 // RemoveLastGroupMemberError ...
@@ -28,14 +29,7 @@ func (e *NoSuchMemberError) Error() string {
 	return fmt.Sprintf("no such member %q in group %q", e.Member, e.Group)
 }
 
-// Group ...
-type Group struct {
-	Members []string `json:"members" form:"members"`
-	Name    string   `json:"name" form:"name"`
-	DN      string   `json:"dn" form:"dn"`
-}
-
-func (m *LDAPManager) getGroup(groupName string) (*Group, error) {
+func (m *LDAPManager) getGroup(groupName string) (*pb.Group, error) {
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
@@ -55,106 +49,88 @@ func (m *LDAPManager) getGroup(groupName string) (*Group, error) {
 		log.Info(member)
 		members = append(members, member)
 	}
-	return &Group{
+	return &pb.Group{
 		Members: members,
 		Name:    groupName,
-		DN:      group.DN,
 	}, nil
 }
 
-// IsGroupMemberRequest ...
-type IsGroupMemberRequest struct {
-	Username string `json:"username" form:"username"`
-	Group    string `json:"group" form:"group"`
-}
-
 // IsGroupMember ...
-func (m *LDAPManager) IsGroupMember(req *IsGroupMemberRequest) (bool, error) {
+func (m *LDAPManager) IsGroupMember(req *pb.IsGroupMemberRequest) (*pb.GroupMemberStatus, error) {
+	var status pb.GroupMemberStatus
 	result, err := m.findGroup(req.Group, []string{"dn", m.GroupMembershipAttribute})
 	if err != nil {
-		return false, err
+		return &status, err
 	}
 	if len(result.Entries) != 1 {
-		return false, &ZeroOrMultipleGroupsError{Group: req.Group, Count: len(result.Entries)}
+		return &status, &ZeroOrMultipleGroupsError{Group: req.GetGroup(), Count: len(result.Entries)}
 	}
 	if !m.GroupMembershipUsesUID {
-		req.Username = fmt.Sprintf("%s=%s,%s", m.AccountAttribute, req.Username, m.UserGroupDN)
+		req.Username = fmt.Sprintf("%s=%s,%s", m.AccountAttribute, req.GetUsername(), m.UserGroupDN)
 	}
 	for _, member := range result.Entries[0].GetAttributeValues(m.GroupMembershipAttribute) {
-		if member == req.Username {
-			return true, nil
+		if member == req.GetUsername() {
+			return &pb.GroupMemberStatus{IsMember: true}, nil
 		}
 	}
-	return false, nil
-}
-
-// GetGroupRequest ...
-type GetGroupRequest struct {
-	Options ListOptions `json:"options" form:"options"`
-	Group   string      `json:"group" form:"group"`
+	return &status, nil
 }
 
 // GetGroup ...
-func (m *LDAPManager) GetGroup(req *GetGroupRequest) (*Group, error) {
-	group, err := m.getGroup(req.Group)
+func (m *LDAPManager) GetGroup(req *pb.GetGroupRequest) (*pb.Group, error) {
+	group, err := m.getGroup(req.GetGroup())
 	if err != nil {
 		return nil, err
 	}
-	normGroup := &Group{Name: group.Name}
+	normGroup := &pb.Group{Name: group.GetName()}
 
 	// Convert member DN's to usernames
-	for _, memberDN := range group.Members {
+	for _, memberDN := range group.GetMembers() {
 		if memberUsername, err := extractAttribute(memberDN, m.AccountAttribute); err == nil && memberUsername != "" {
-			normGroup.Members = append(normGroup.Members, memberUsername)
+			normGroup.Members = append(normGroup.GetMembers(), memberUsername)
 		}
 	}
 
 	// Sort
+	options := req.GetOptions()
 	sort.Slice(normGroup.Members, func(i, j int) bool {
 		asc := normGroup.Members[i] < normGroup.Members[j]
-		if req.Options.SortOrder == SortDescending {
+		if options.GetSortOrder() == pb.SortOrder_DESCENDING {
 			return !asc
 		}
 		return asc
 	})
 	// Clip
-	if req.Options.Start >= 0 && req.Options.End < len(normGroup.Members) && req.Options.Start < req.Options.End {
-		normGroup.Members = normGroup.Members[req.Options.Start:req.Options.End]
+	if options.GetStart() >= 0 && options.GetEnd() < int32(len(normGroup.GetMembers())) && options.GetStart() < options.GetEnd() {
+		normGroup.Members = normGroup.Members[options.GetStart():options.GetEnd()]
 		return normGroup, nil
 	}
 	return normGroup, nil
 }
 
-// AddGroupMemberRequest ...
-type AddGroupMemberRequest struct {
-	Username         string `json:"username" form:"username"`
-	Group            string `json:"group" form:"group"`
-	AllowNonExistent bool
-}
-
 // AddGroupMember ...
-func (m *LDAPManager) AddGroupMember(req *AddGroupMemberRequest) error {
-	if req.Group == "" || req.Username == "" {
+func (m *LDAPManager) AddGroupMember(req *pb.GroupMember, allowNonExistent bool) error {
+	if req.GetGroup() == "" || req.GetUsername() == "" {
 		return &GroupValidationError{"group and user name can not be empty"}
 	}
-	if !req.AllowNonExistent && !m.IsProtectedGroup(req.Group) {
-		isMember, err := m.IsGroupMember(&IsGroupMemberRequest{Username: req.Username, Group: m.DefaultUserGroup})
+	if !allowNonExistent && !m.IsProtectedGroup(req.GetGroup()) {
+		memberStatus, err := m.IsGroupMember(&pb.IsGroupMemberRequest{Username: req.GetUsername(), Group: m.DefaultUserGroup})
 		if err != nil {
-			return fmt.Errorf("failed to check if member %q exists: %v", req.Username, err)
+			return fmt.Errorf("failed to check if member %q exists: %v", req.GetUsername(), err)
 		}
-		if !isMember {
+		if !memberStatus.GetIsMember() {
 			return &ZeroOrMultipleAccountsError{
-				Username: req.Username,
+				Username: req.GetUsername(),
 			}
 		}
 	}
 
-	username := escapeDN(req.Username)
+	username := escapeDN(req.GetUsername())
 	if !m.GroupMembershipUsesUID {
-		username = m.AccountNamed(req.Username)
+		username = m.AccountNamed(req.GetUsername())
 	}
 	modifyRequest := ldap.NewModifyRequest(
-		m.GroupNamed(req.Group),
+		m.GroupNamed(req.GetGroup()),
 		[]ldap.Control{},
 	)
 	modifyRequest.Add(m.GroupMembershipAttribute, []string{username})
@@ -162,44 +138,37 @@ func (m *LDAPManager) AddGroupMember(req *AddGroupMemberRequest) error {
 	if err := m.ldap.Modify(modifyRequest); err != nil {
 		return err
 	}
-	log.Infof("added user %q to group %q", username, req.Group)
+	log.Infof("added user %q to group %q", username, req.GetGroup())
 	return nil
 }
 
-// DeleteGroupMemberRequest ...
-type DeleteGroupMemberRequest struct {
-	Username                   string `json:"username" form:"username"`
-	Group                      string `json:"group" form:"group"`
-	AllowDeleteOfDefaultGroups bool
-}
-
 // DeleteGroupMember ...
-func (m *LDAPManager) DeleteGroupMember(req *DeleteGroupMemberRequest) error {
-	if req.Group == "" || req.Username == "" {
+func (m *LDAPManager) DeleteGroupMember(req *pb.GroupMember, allowDeleteOfDefaultGroups bool) error {
+	if req.GetGroup() == "" || req.GetUsername() == "" {
 		return &GroupValidationError{"group and user name can not be empty"}
 	}
-	if !req.AllowDeleteOfDefaultGroups && m.IsProtectedGroup(req.Group) {
+	if !allowDeleteOfDefaultGroups && m.IsProtectedGroup(req.GetGroup()) {
 		return &GroupValidationError{"deleting members from the default user or admin group is not allowed"}
 	}
-	username := escapeDN(req.Username)
+	username := escapeDN(req.GetUsername())
 	if !m.GroupMembershipUsesUID {
-		username = m.AccountNamed(req.Username)
+		username = m.AccountNamed(req.GetUsername())
 	}
 	modifyRequest := ldap.NewModifyRequest(
-		m.GroupNamed(req.Group),
+		m.GroupNamed(req.GetGroup()),
 		[]ldap.Control{},
 	)
 	modifyRequest.Delete(m.GroupMembershipAttribute, []string{username})
 	log.Debug(modifyRequest)
 	if err := m.ldap.Modify(modifyRequest); err != nil {
 		if ldap.IsErrorWithCode(err, ldap.LDAPResultObjectClassViolation) {
-			return &RemoveLastGroupMemberError{req.Group}
+			return &RemoveLastGroupMemberError{req.GetGroup()}
 		}
 		if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) || ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchAttribute) {
-			return &NoSuchMemberError{Group: req.Group, Member: req.Username}
+			return &NoSuchMemberError{Group: req.GetGroup(), Member: req.GetUsername()}
 		}
 		return err
 	}
-	log.Infof("removed user %q from group %q", username, req.Group)
+	log.Infof("removed user %q from group %q", username, req.GetGroup())
 	return nil
 }

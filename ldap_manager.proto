@@ -30,15 +30,11 @@ message GetUserListRequest {
 }
 
 message User {
-  map<string, string> user = 1;
+  map<string, string> data = 1;
 }
 
 message UserList {
   repeated User users = 1;
-}
-
-message UserDN {
-  string dn = 1;
 }
 
 message AuthenticateUserRequest {
@@ -106,7 +102,7 @@ message IsGroupMemberRequest {
   string group = 2;
 }
 
-message IsGroupMemberResponse {
+message GroupMemberStatus {
   bool is_member = 1;
 }
 
@@ -118,7 +114,6 @@ message GetGroupRequest {
 message Group {
   repeated string members = 1;
 	string name = 2;
-	string dn = 3;
 }
 
 message GroupMember {
@@ -137,7 +132,7 @@ service LDAPManager {
   rpc GetUserList(GetUserListRequest) returns (UserList) {
     option (require_admin) = true;
   }
-  rpc AuthenticateUser(AuthenticateUserRequest) returns (UserDN) {
+  rpc AuthenticateUser(AuthenticateUserRequest) returns (Empty) {
     option (require_admin) = true;
   }
   rpc GetAccount(GetAccountRequest) returns (User) {
@@ -149,8 +144,6 @@ service LDAPManager {
   rpc DeleteAccount(DeleteAccountRequest) returns (Empty) {
     option (require_admin) = true;
   }
-
-  // Password
   rpc ChangePassword(ChangePasswordRequest) returns (Empty) {
     option (require_admin) = true;
   }
@@ -168,7 +161,9 @@ service LDAPManager {
   rpc GetGroupList(GetGroupListRequest) returns (GroupList) {
     option (require_admin) = true;
   }
-  rpc IsGroupMember(IsGroupMemberRequest) returns (IsGroupMemberResponse) {
+
+  // Group members
+  rpc IsGroupMember(IsGroupMemberRequest) returns (GroupMemberStatus) {
     option (require_admin) = true;
   }
   rpc GetGroup(GetGroupRequest) returns (Group) {

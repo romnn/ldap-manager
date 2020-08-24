@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-ldap/ldap"
 	"github.com/neko-neko/echo-logrus/v2/log"
+	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 )
 
 // BindReadOnly ...
@@ -73,14 +74,16 @@ func (m *LDAPManager) setupLastUID() error {
 }
 
 func (m *LDAPManager) setupDefaultGroup() error {
-	return m.NewGroup(&NewGroupRequest{Name: m.DefaultUserGroup})
+	strict := false
+	return m.NewGroup(&pb.NewGroupRequest{Name: m.DefaultUserGroup}, strict)
 }
 
 func (m *LDAPManager) setupAdminsGroup() error {
-	if err := m.NewGroup(&NewGroupRequest{Name: m.DefaultAdminGroup}); err != nil {
+	strict := false
+	if err := m.NewGroup(&pb.NewGroupRequest{Name: m.DefaultAdminGroup}, strict); err != nil {
 		return err
 	}
-	adminGroup, err := m.GetGroup(&GetGroupRequest{Group: m.DefaultAdminGroup})
+	adminGroup, err := m.GetGroup(&pb.GetGroupRequest{Group: m.DefaultAdminGroup})
 	if err != nil {
 		return err
 	}
@@ -127,15 +130,6 @@ func (m *LDAPManager) SetupLDAP() error {
 	} else {
 		log.Debug("completed setup of the last UID")
 	}
-
 	// Unfortunately, we cannot setup groups here without initial members
-	/*
-		if err := m.setupDefaultGroup(); err != nil && !ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists) {
-			return fmt.Errorf("failed to setup the default user group: %v", err)
-		}
-		if err := m.setupAdminsGroup(); err != nil && !ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists) {
-			return fmt.Errorf("failed to setup the default admin group: %v", err)
-		}
-	*/
 	return nil
 }

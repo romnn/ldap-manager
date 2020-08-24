@@ -6,11 +6,11 @@ import (
 	tclog "log"
 	"testing"
 
+	"github.com/neko-neko/echo-logrus/v2/log"
 	ldapconfig "github.com/romnnn/ldap-manager/config"
 	ldaptest "github.com/romnnn/ldap-manager/test"
 	tc "github.com/romnnn/testcontainers"
 	"github.com/romnnn/testcontainers-go"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -28,7 +28,7 @@ func init() {
 	tclog.SetOutput(ioutil.Discard)
 
 	// This wil disable the application logger
-	logrus.SetOutput(ioutil.Discard)
+	log.Logger().SetOutput(ioutil.Discard)
 
 	// Note: if you want to log in tests, use `t.Log`
 }

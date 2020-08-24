@@ -7,7 +7,7 @@ import (
 	"github.com/go-ldap/ldap"
 	"github.com/neko-neko/echo-logrus/v2/log"
 	ldapconfig "github.com/romnnn/ldap-manager/config"
-	ldaphash "github.com/romnnn/ldap-manager/hash"
+	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 )
 
 // LDAPManager ...
@@ -21,7 +21,7 @@ type LDAPManager struct {
 	GroupsOU string
 	UsersOU  string
 
-	HashingAlgorithm  ldaphash.LDAPPasswordHashingAlgorithm
+	HashingAlgorithm  pb.HashingAlgorithm
 	DefaultUserGroup  string
 	DefaultAdminGroup string
 	DefaultUserShell  string

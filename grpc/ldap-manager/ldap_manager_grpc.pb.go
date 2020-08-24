@@ -20,18 +20,18 @@ const _ = grpc.SupportPackageIsVersion6
 type LDAPManagerClient interface {
 	// Accounts
 	GetUserList(ctx context.Context, in *GetUserListRequest, opts ...grpc.CallOption) (*UserList, error)
-	AuthenticateUser(ctx context.Context, in *AuthenticateUserRequest, opts ...grpc.CallOption) (*UserDN, error)
+	AuthenticateUser(ctx context.Context, in *AuthenticateUserRequest, opts ...grpc.CallOption) (*Empty, error)
 	GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*User, error)
 	NewAccount(ctx context.Context, in *NewAccountRequest, opts ...grpc.CallOption) (*Empty, error)
 	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*Empty, error)
-	// Password
 	ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*Empty, error)
 	// Groups
 	NewGroup(ctx context.Context, in *NewGroupRequest, opts ...grpc.CallOption) (*Empty, error)
 	DeleteGroup(ctx context.Context, in *DeleteGroupRequest, opts ...grpc.CallOption) (*Empty, error)
 	RenameGroup(ctx context.Context, in *RenameGroupRequest, opts ...grpc.CallOption) (*Empty, error)
 	GetGroupList(ctx context.Context, in *GetGroupListRequest, opts ...grpc.CallOption) (*GroupList, error)
-	IsGroupMember(ctx context.Context, in *IsGroupMemberRequest, opts ...grpc.CallOption) (*IsGroupMemberResponse, error)
+	// Group members
+	IsGroupMember(ctx context.Context, in *IsGroupMemberRequest, opts ...grpc.CallOption) (*GroupMemberStatus, error)
 	GetGroup(ctx context.Context, in *GetGroupRequest, opts ...grpc.CallOption) (*Group, error)
 	AddGroupMember(ctx context.Context, in *GroupMember, opts ...grpc.CallOption) (*Empty, error)
 	DeleteGroupMember(ctx context.Context, in *GroupMember, opts ...grpc.CallOption) (*Empty, error)
@@ -54,8 +54,8 @@ func (c *lDAPManagerClient) GetUserList(ctx context.Context, in *GetUserListRequ
 	return out, nil
 }
 
-func (c *lDAPManagerClient) AuthenticateUser(ctx context.Context, in *AuthenticateUserRequest, opts ...grpc.CallOption) (*UserDN, error) {
-	out := new(UserDN)
+func (c *lDAPManagerClient) AuthenticateUser(ctx context.Context, in *AuthenticateUserRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/ldapmanager.LDAPManager/AuthenticateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -135,8 +135,8 @@ func (c *lDAPManagerClient) GetGroupList(ctx context.Context, in *GetGroupListRe
 	return out, nil
 }
 
-func (c *lDAPManagerClient) IsGroupMember(ctx context.Context, in *IsGroupMemberRequest, opts ...grpc.CallOption) (*IsGroupMemberResponse, error) {
-	out := new(IsGroupMemberResponse)
+func (c *lDAPManagerClient) IsGroupMember(ctx context.Context, in *IsGroupMemberRequest, opts ...grpc.CallOption) (*GroupMemberStatus, error) {
+	out := new(GroupMemberStatus)
 	err := c.cc.Invoke(ctx, "/ldapmanager.LDAPManager/IsGroupMember", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -177,18 +177,18 @@ func (c *lDAPManagerClient) DeleteGroupMember(ctx context.Context, in *GroupMemb
 type LDAPManagerServer interface {
 	// Accounts
 	GetUserList(context.Context, *GetUserListRequest) (*UserList, error)
-	AuthenticateUser(context.Context, *AuthenticateUserRequest) (*UserDN, error)
+	AuthenticateUser(context.Context, *AuthenticateUserRequest) (*Empty, error)
 	GetAccount(context.Context, *GetAccountRequest) (*User, error)
 	NewAccount(context.Context, *NewAccountRequest) (*Empty, error)
 	DeleteAccount(context.Context, *DeleteAccountRequest) (*Empty, error)
-	// Password
 	ChangePassword(context.Context, *ChangePasswordRequest) (*Empty, error)
 	// Groups
 	NewGroup(context.Context, *NewGroupRequest) (*Empty, error)
 	DeleteGroup(context.Context, *DeleteGroupRequest) (*Empty, error)
 	RenameGroup(context.Context, *RenameGroupRequest) (*Empty, error)
 	GetGroupList(context.Context, *GetGroupListRequest) (*GroupList, error)
-	IsGroupMember(context.Context, *IsGroupMemberRequest) (*IsGroupMemberResponse, error)
+	// Group members
+	IsGroupMember(context.Context, *IsGroupMemberRequest) (*GroupMemberStatus, error)
 	GetGroup(context.Context, *GetGroupRequest) (*Group, error)
 	AddGroupMember(context.Context, *GroupMember) (*Empty, error)
 	DeleteGroupMember(context.Context, *GroupMember) (*Empty, error)
@@ -202,7 +202,7 @@ type UnimplementedLDAPManagerServer struct {
 func (*UnimplementedLDAPManagerServer) GetUserList(context.Context, *GetUserListRequest) (*UserList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserList not implemented")
 }
-func (*UnimplementedLDAPManagerServer) AuthenticateUser(context.Context, *AuthenticateUserRequest) (*UserDN, error) {
+func (*UnimplementedLDAPManagerServer) AuthenticateUser(context.Context, *AuthenticateUserRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateUser not implemented")
 }
 func (*UnimplementedLDAPManagerServer) GetAccount(context.Context, *GetAccountRequest) (*User, error) {
@@ -229,7 +229,7 @@ func (*UnimplementedLDAPManagerServer) RenameGroup(context.Context, *RenameGroup
 func (*UnimplementedLDAPManagerServer) GetGroupList(context.Context, *GetGroupListRequest) (*GroupList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetGroupList not implemented")
 }
-func (*UnimplementedLDAPManagerServer) IsGroupMember(context.Context, *IsGroupMemberRequest) (*IsGroupMemberResponse, error) {
+func (*UnimplementedLDAPManagerServer) IsGroupMember(context.Context, *IsGroupMemberRequest) (*GroupMemberStatus, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsGroupMember not implemented")
 }
 func (*UnimplementedLDAPManagerServer) GetGroup(context.Context, *GetGroupRequest) (*Group, error) {

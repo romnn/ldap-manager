@@ -6,10 +6,11 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/neko-neko/echo-logrus/v2/log"
 	ldapmanager "github.com/romnnn/ldap-manager"
+	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 )
 
 func (s *LDAPManagerServer) updatePasswordHandler(c echo.Context) error {
-	var req ldapmanager.ChangePasswordRequest
+	var req pb.ChangePasswordRequest
 	if err := c.Bind(&req); err != nil {
 		log.Error(err)
 		return err

@@ -6,16 +6,17 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/neko-neko/echo-logrus/v2/log"
 	ldapmanager "github.com/romnnn/ldap-manager"
+	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 )
 
 func (s *LDAPManagerServer) listAccountsHandler(c echo.Context) error {
-	var options ldapmanager.ListOptions
+	var options pb.ListOptions
 	if err := c.Bind(&options); err != nil {
 		log.Error(err)
 		return err
 	}
-	users, err := s.Manager.GetUserList(&ldapmanager.GetUserListRequest{
-		ListOptions: options,
+	users, err := s.Manager.GetUserList(&pb.GetUserListRequest{
+		Options: &options,
 	})
 	if err != nil {
 		log.Error(err)
@@ -26,7 +27,7 @@ func (s *LDAPManagerServer) listAccountsHandler(c echo.Context) error {
 
 func (s *LDAPManagerServer) getAccountHandler(c echo.Context) error {
 	username := c.Param("username")
-	user, err := s.Manager.GetAccount(username)
+	user, err := s.Manager.GetAccount(&pb.GetAccountRequest{Username: username})
 	if err != nil {
 		switch err.(type) {
 		case *ldapmanager.ZeroOrMultipleAccountsError:
@@ -39,7 +40,7 @@ func (s *LDAPManagerServer) getAccountHandler(c echo.Context) error {
 }
 
 func (s *LDAPManagerServer) updateAccountHandler(c echo.Context) error {
-	var req ldapmanager.NewAccountRequest
+	var req pb.NewAccountRequest
 	if err := c.Bind(&req); err != nil {
 		log.Error(err)
 		return err
@@ -53,7 +54,8 @@ func (s *LDAPManagerServer) updateAccountHandler(c echo.Context) error {
 }
 
 func (s *LDAPManagerServer) deleteAccount(c echo.Context, username string) error {
-	if err := s.Manager.DeleteAccount(&ldapmanager.DeleteAccountRequest{Username: username}); err != nil {
+	leaveGroups := false
+	if err := s.Manager.DeleteAccount(&pb.DeleteAccountRequest{Username: username}, leaveGroups); err != nil {
 		switch err.(type) {
 		case *ldapmanager.ZeroOrMultipleAccountsError:
 			return echo.NewHTTPError(err.(*ldapmanager.ZeroOrMultipleAccountsError).Status(), err.Error())
@@ -68,7 +70,7 @@ func (s *LDAPManagerServer) deleteAccountHandler(c echo.Context) error {
 	return s.deleteAccount(c, c.Param("username"))
 }
 
-func (s *LDAPManagerServer) newAccount(c echo.Context, req *ldapmanager.NewAccountRequest) error {
+func (s *LDAPManagerServer) newAccount(c echo.Context, req *pb.NewAccountRequest) error {
 	if err := s.Manager.NewAccount(req); err != nil {
 		switch err.(type) {
 		case *ldapmanager.AccountValidationError:
@@ -83,7 +85,7 @@ func (s *LDAPManagerServer) newAccount(c echo.Context, req *ldapmanager.NewAccou
 }
 
 func (s *LDAPManagerServer) newAccountHandler(c echo.Context) error {
-	var req ldapmanager.NewAccountRequest
+	var req pb.NewAccountRequest
 	if err := c.Bind(&req); err != nil {
 		log.Error(err)
 		return err

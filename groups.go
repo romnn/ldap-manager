@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-ldap/ldap"
 	"github.com/neko-neko/echo-logrus/v2/log"
+	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 )
 
 // GroupAlreadyExistsError ...
@@ -83,24 +84,17 @@ func (m *LDAPManager) GroupNamed(name string) string {
 	return fmt.Sprintf("cn=%s,%s", escapeDN(name), m.GroupsDN)
 }
 
-// NewGroupRequest ...
-type NewGroupRequest struct {
-	Name    string   `json:"name" form:"name"`
-	Members []string `json:"members" form:"members"`
-	Strict  bool
-}
-
 // NewGroup ...
-func (m *LDAPManager) NewGroup(req *NewGroupRequest) error {
-	if req.Name == "" {
+func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
+	if req.GetName() == "" {
 		return &GroupValidationError{"group name can not be empty"}
 	}
-	result, err := m.findGroup(req.Name, []string{"dn", m.GroupMembershipAttribute})
+	result, err := m.findGroup(req.GetName(), []string{"dn", m.GroupMembershipAttribute})
 	if err != nil {
 		return err
 	}
 	if len(result.Entries) > 0 {
-		return &GroupAlreadyExistsError{Group: req.Name}
+		return &GroupAlreadyExistsError{Group: req.GetName()}
 	}
 	highestGID, err := m.getHighestID(m.GroupAttribute)
 	if err != nil {
@@ -112,19 +106,19 @@ func (m *LDAPManager) NewGroup(req *NewGroupRequest) error {
 	if !m.UseRFC2307BISSchema {
 		groupAttributes = []ldap.Attribute{
 			{Type: "objectClass", Vals: []string{"top", "posixGroup"}},
-			{Type: "cn", Vals: []string{escapeDN(req.Name)}},
+			{Type: "cn", Vals: []string{escapeDN(req.GetName())}},
 			{Type: "gidNumber", Vals: []string{strconv.Itoa(newGID)}},
 		}
 	} else {
 		// Convert usernames into full account DN's
 		var memberList []string
-		for _, username := range req.Members {
-			if req.Strict {
-				isMember, err := m.IsGroupMember(&IsGroupMemberRequest{Username: username, Group: m.DefaultUserGroup})
+		for _, username := range req.GetMembers() {
+			if strict {
+				memberStatus, err := m.IsGroupMember(&pb.IsGroupMemberRequest{Username: username, Group: m.DefaultUserGroup})
 				if err != nil {
 					return fmt.Errorf("failed to check if member %q exists: %v", username, err)
 				}
-				if !isMember {
+				if !memberStatus.GetIsMember() {
 					continue
 				}
 			}
@@ -141,13 +135,13 @@ func (m *LDAPManager) NewGroup(req *NewGroupRequest) error {
 
 		groupAttributes = []ldap.Attribute{
 			{Type: "objectClass", Vals: []string{"top", "groupOfUniqueNames", "posixGroup"}},
-			{Type: "cn", Vals: []string{escapeDN(req.Name)}},
+			{Type: "cn", Vals: []string{escapeDN(req.GetName())}},
 			{Type: "gidNumber", Vals: []string{strconv.Itoa(newGID)}},
 			{Type: m.GroupMembershipAttribute, Vals: memberList},
 		}
 	}
 	addGroupRequest := &ldap.AddRequest{
-		DN:         m.GroupNamed(req.Name),
+		DN:         m.GroupNamed(req.GetName()),
 		Attributes: groupAttributes,
 		Controls:   []ldap.Control{},
 	}
@@ -158,45 +152,39 @@ func (m *LDAPManager) NewGroup(req *NewGroupRequest) error {
 	if err := m.updateLastID("lastGID", newGID); err != nil {
 		return err
 	}
-	log.Infof("added new group %q (gid=%d)", req.Name, newGID)
+	log.Infof("added new group %q (gid=%d)", req.GetName(), newGID)
 	return nil
 }
 
 // DeleteGroup ...
-func (m *LDAPManager) DeleteGroup(groupName string) error {
-	if groupName == "" {
+func (m *LDAPManager) DeleteGroup(req *pb.DeleteGroupRequest) error {
+	if req.GetName() == "" {
 		return &GroupValidationError{"group name can not be empty"}
 	}
-	if m.IsProtectedGroup(groupName) {
+	if m.IsProtectedGroup(req.GetName()) {
 		return &GroupValidationError{"deleting the default user or admin group is not allowed"}
 	}
 	if err := m.ldap.Del(ldap.NewDelRequest(
-		m.GroupNamed(groupName),
+		m.GroupNamed(req.GetName()),
 		[]ldap.Control{},
 	)); err != nil {
 		if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
-			return &ZeroOrMultipleGroupsError{Group: groupName}
+			return &ZeroOrMultipleGroupsError{Group: req.GetName()}
 		}
 		return err
 	}
-	log.Infof("removed group %q", groupName)
+	log.Infof("removed group %q", req.GetName())
 	return nil
 }
 
-// RenameGroupRequest ...
-type RenameGroupRequest struct {
-	NewName string `json:"new_name" form:"new_name"`
-	Group   string `json:"group" form:"group"`
-}
-
 // RenameGroup ...
-func (m *LDAPManager) RenameGroup(req *RenameGroupRequest) error {
-	if req.Group == "" || req.NewName == "" {
+func (m *LDAPManager) RenameGroup(req *pb.RenameGroupRequest) error {
+	if req.GetName() == "" || req.GetNewName() == "" {
 		return &GroupValidationError{"group name can not be empty"}
 	}
 	modifyRequest := &ldap.ModifyDNRequest{
-		DN:           m.GroupNamed(req.Group),
-		NewRDN:       fmt.Sprintf("cn=%s", req.NewName),
+		DN:           m.GroupNamed(req.GetName()),
+		NewRDN:       fmt.Sprintf("cn=%s", req.GetNewName()),
 		DeleteOldRDN: true,
 		NewSuperior:  "",
 	}
@@ -204,19 +192,13 @@ func (m *LDAPManager) RenameGroup(req *RenameGroupRequest) error {
 	if err := m.ldap.ModifyDN(modifyRequest); err != nil {
 		return err
 	}
-	log.Infof("renames group from %q to %q", req.Group, req.NewName)
+	log.Infof("renames group from %q to %q", req.GetName(), req.GetNewName())
 	return nil
 }
 
-// GetGroupListRequest ...
-type GetGroupListRequest struct {
-	ListOptions
-	Filters string
-}
-
 // GetGroupList ...
-func (m *LDAPManager) GetGroupList(req *GetGroupListRequest) ([]string, error) {
-	filter := fmt.Sprintf("(&(objectClass=*)%s)", req.Filters)
+func (m *LDAPManager) GetGroupList(req *pb.GetGroupListRequest) (*pb.GroupList, error) {
+	filter := fmt.Sprintf("(&(objectClass=*)%s)", req.GetFilters())
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
@@ -227,23 +209,28 @@ func (m *LDAPManager) GetGroupList(req *GetGroupListRequest) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	var groups []string
+	groupList := &pb.GroupList{}
 	for _, group := range result.Entries {
 		if cn := group.GetAttributeValue("cn"); cn != "" {
-			groups = append(groups, cn)
+			groupList.Groups = append(groupList.Groups, cn)
 		}
 	}
 	// Sort
+	if req.GetOptions() == nil {
+		req.Options = &pb.ListOptions{}
+	}
+	options := req.GetOptions()
+	groups := groupList.GetGroups()
 	sort.Slice(groups, func(i, j int) bool {
 		asc := groups[i] < groups[j]
-		if req.SortOrder == SortDescending {
+		if options.GetSortOrder() == pb.SortOrder_DESCENDING {
 			return !asc
 		}
 		return asc
 	})
 	// Clip
-	if req.Start >= 0 && req.End < len(groups) && req.Start < req.End {
-		return groups[req.Start:req.End], nil
+	if options.GetStart() >= 0 && options.GetEnd() < int32(len(groups)) && options.GetStart() < options.GetEnd() {
+		groupList.Groups = groups[options.GetStart():options.GetEnd()]
 	}
-	return groups, nil
+	return groupList, nil
 }

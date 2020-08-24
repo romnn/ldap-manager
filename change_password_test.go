@@ -2,6 +2,8 @@ package ldapmanager
 
 import (
 	"testing"
+
+	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 )
 
 // TestChangePassword ...
@@ -15,7 +17,7 @@ func TestChangePassword(t *testing.T) {
 	// Add user with initial password "123"
 	username := "testuser"
 	initialPassword := "123"
-	if err := test.Manager.NewAccount(&NewAccountRequest{
+	if err := test.Manager.NewAccount(&pb.NewAccountRequest{
 		Username:  username,
 		Password:  initialPassword,
 		Email:     "a@b.de",
@@ -26,12 +28,12 @@ func TestChangePassword(t *testing.T) {
 	}
 
 	// Test we can authenticate with password "123"
-	if _, err := test.Manager.AuthenticateUser(&AuthenticateUserRequest{Username: username, Password: initialPassword}); err != nil {
+	if err := test.Manager.AuthenticateUser(&pb.AuthenticateUserRequest{Username: username, Password: initialPassword}); err != nil {
 		t.Fatalf("failed to authenticate user %q with password %q: %v", username, initialPassword, err)
 	}
 
 	// Invalid change password request
-	if err := test.Manager.ChangePassword(&ChangePasswordRequest{
+	if err := test.Manager.ChangePassword(&pb.ChangePasswordRequest{
 		Username: username,
 		Password: "", // invalid
 	}); err == nil {
@@ -40,7 +42,7 @@ func TestChangePassword(t *testing.T) {
 
 	// Valid change password request
 	newPassword := "456"
-	if err := test.Manager.ChangePassword(&ChangePasswordRequest{
+	if err := test.Manager.ChangePassword(&pb.ChangePasswordRequest{
 		Username: username,
 		Password: newPassword, // valid
 	}); err != nil {
@@ -48,18 +50,18 @@ func TestChangePassword(t *testing.T) {
 	}
 
 	// Assert we can no longer authenticate with the old password
-	if _, err := test.Manager.AuthenticateUser(&AuthenticateUserRequest{Username: username, Password: initialPassword}); err == nil {
+	if err := test.Manager.AuthenticateUser(&pb.AuthenticateUserRequest{Username: username, Password: initialPassword}); err == nil {
 		t.Fatalf("expected error authenticating user %q with the initial password %q: %v", username, initialPassword, err)
 	}
 
 	// Assert we can authenticate with the new password
-	if _, err := test.Manager.AuthenticateUser(&AuthenticateUserRequest{Username: username, Password: newPassword}); err != nil {
+	if err := test.Manager.AuthenticateUser(&pb.AuthenticateUserRequest{Username: username, Password: newPassword}); err != nil {
 		t.Fatalf("failed to authenticate user %q with the new password %q: %v", username, newPassword, err)
 	}
 
 	// Assert the number of users did not change in the process
-	userList, _ := test.Manager.GetUserList(&GetUserListRequest{})
-	if len(userList) != 1 {
-		t.Fatalf("expected exactly one user, but got %d", len(userList))
+	userList, _ := test.Manager.GetUserList(&pb.GetUserListRequest{})
+	if len(userList.GetUsers()) != 1 {
+		t.Fatalf("expected exactly one user, but got %d", len(userList.GetUsers()))
 	}
 }

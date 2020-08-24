@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-ldap/ldap"
 	"github.com/neko-neko/echo-logrus/v2/log"
+	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 	ldaphash "github.com/romnnn/ldap-manager/hash"
 )
 
@@ -78,10 +79,10 @@ func (m *LDAPManager) defaultUserFields() []string {
 	return []string{m.AccountAttribute, "givenname", "sn", "mail"}
 }
 
-func parseUser(entry *ldap.Entry) map[string]string {
-	user := make(map[string]string)
+func parseUser(entry *ldap.Entry) *pb.User {
+	user := &pb.User{Data: make(map[string]string)}
 	for _, attr := range entry.Attributes {
-		user[attr.Name] = entry.GetAttributeValue(attr.Name)
+		user.Data[attr.Name] = entry.GetAttributeValue(attr.Name)
 	}
 	return user
 }
@@ -94,9 +95,10 @@ func (m *LDAPManager) getNewAccountGroup(username string) (string, int, error) {
 	// The default user group might not yet exist
 	// Note that a group can only be created with at least one member when using RFC2307BIS
 	// Because we need the GID to create the user, strict checking of members remains disabled because they are added after the group
-	if err := m.NewGroup(&NewGroupRequest{Name: m.DefaultUserGroup, Members: []string{username}}); err != nil {
+	strict := false
+	if err := m.NewGroup(&pb.NewGroupRequest{Name: m.DefaultUserGroup, Members: []string{username}}, strict); err != nil {
 		// Fall back to create a new group group for the user
-		if err := m.NewGroup(&NewGroupRequest{Name: username, Members: []string{username}}); err != nil {
+		if err := m.NewGroup(&pb.NewGroupRequest{Name: username, Members: []string{username}}, strict); err != nil {
 			if _, ok := err.(*GroupAlreadyExistsError); !ok {
 				return group, 0, fmt.Errorf("failed to create group for user %q: %v", username, err)
 			}
@@ -116,20 +118,17 @@ func (m *LDAPManager) AccountNamed(name string) string {
 	return fmt.Sprintf("%s=%s,%s", m.AccountAttribute, escapeDN(name), m.UserGroupDN)
 }
 
-// GetUserListRequest ...
-type GetUserListRequest struct {
-	ListOptions
-	Filters string
-	Fields  []string
-}
-
 // GetUserList ...
-func (m *LDAPManager) GetUserList(req *GetUserListRequest) ([]map[string]string, error) {
+func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, error) {
 	if len(req.Fields) < 1 {
 		req.Fields = m.defaultUserFields()
 	}
-	if req.SortKey == "" {
-		req.SortKey = m.AccountAttribute
+	if req.GetOptions() == nil {
+		req.Options = &pb.ListOptions{}
+	}
+	options := req.GetOptions()
+	if options.GetSortKey() == "" {
+		options.SortKey = m.AccountAttribute
 	}
 	filter := fmt.Sprintf("(&(%s=*)%s)", m.AccountAttribute, req.Filters)
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
@@ -142,9 +141,9 @@ func (m *LDAPManager) GetUserList(req *GetUserListRequest) ([]map[string]string,
 	if err != nil {
 		return nil, err
 	}
-	users := make(map[string]map[string]string)
+	users := make(map[string]*pb.User)
 	for _, entry := range result.Entries {
-		if entryKey := entry.GetAttributeValue(req.SortKey); entryKey != "" {
+		if entryKey := entry.GetAttributeValue(options.GetSortKey()); entryKey != "" {
 			users[entryKey] = parseUser(entry)
 		}
 	}
@@ -156,112 +155,91 @@ func (m *LDAPManager) GetUserList(req *GetUserListRequest) ([]map[string]string,
 	// Sort
 	sort.Slice(keys, func(i, j int) bool {
 		asc := keys[i] < keys[j]
-		if req.SortOrder == SortDescending {
+		if options.GetSortOrder() == pb.SortOrder_ASCENDING {
 			return !asc
 		}
 		return asc
 	})
 	// Clip
 	clippedKeys := keys
-	var clippedUsers []map[string]string
-	if req.Start >= 0 && req.End < len(keys) && req.Start < req.End {
-		clippedKeys = keys[req.Start:req.End]
+	clipped := &pb.UserList{}
+	if options.GetStart() >= 0 && options.GetEnd() < int32(len(keys)) && options.GetStart() < options.GetEnd() {
+		clippedKeys = keys[options.GetStart():options.GetEnd()]
 	}
 	for _, key := range clippedKeys {
-		clippedUsers = append(clippedUsers, users[key])
+		clipped.Users = append(clipped.Users, users[key])
 	}
-	return clippedUsers, nil
-}
-
-// AuthenticateUserRequest ...
-type AuthenticateUserRequest struct {
-	Username string `json:"username" form:"username"`
-	Password string `json:"password" form:"password"`
+	return clipped, nil
 }
 
 // AuthenticateUser ...
-func (m *LDAPManager) AuthenticateUser(req *AuthenticateUserRequest) (string, error) {
+func (m *LDAPManager) AuthenticateUser(req *pb.AuthenticateUserRequest) error {
 	// Validate
-	if req.Username == "" || req.Password == "" {
-		return "", errors.New("must provide username and password")
+	if req.GetUsername() == "" || req.GetPassword() == "" {
+		return errors.New("must provide username and password")
 	}
 	// Search for the DN for the given username. If found, try binding with the DN and user's password.
 	// If the binding succeeds, return the DN.
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(%s=%s)", m.AccountAttribute, escapeFilter(req.Username)),
+		fmt.Sprintf("(%s=%s)", m.AccountAttribute, escapeFilter(req.GetUsername())),
 		[]string{"dn"},
 		[]ldap.Control{},
 	))
 	if err != nil {
-		return "", err
+		return err
 	}
 	if len(result.Entries) != 1 {
-		return "", &ZeroOrMultipleAccountsError{Username: req.Username, Count: len(result.Entries)}
+		return &ZeroOrMultipleAccountsError{Username: req.GetUsername(), Count: len(result.Entries)}
 	}
 	// Make sure to always re-bind as admin afterwards
 	defer m.BindAdmin()
 	userDN := result.Entries[0].DN
-	if err := m.ldap.Bind(userDN, req.Password); err != nil {
-		return "", fmt.Errorf("unable to bind as %q", req.Username)
+	if err := m.ldap.Bind(userDN, req.GetPassword()); err != nil {
+		return fmt.Errorf("unable to bind as %q", req.GetUsername())
 	}
-	reg, err := regexp.Compile(fmt.Sprintf("%s=(.*?),", m.AccountAttribute))
-	if err != nil {
-		return "", errors.New("failed to compile regex")
-	}
-	matchedDN := reg.FindString(userDN)
-	return matchedDN, nil
+	return nil
 }
 
 // GetAccount ...
-func (m *LDAPManager) GetAccount(username string) (map[string]string, error) {
-	if username == "" {
+func (m *LDAPManager) GetAccount(req *pb.GetAccountRequest) (*pb.User, error) {
+	if req.GetUsername() == "" {
 		return nil, errors.New("account username must not be empty")
 	}
 	// Check for existing user with the same username
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.UserGroupDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(%s=%s)", m.AccountAttribute, escapeFilter(username)),
+		fmt.Sprintf("(%s=%s)", m.AccountAttribute, escapeFilter(req.GetUsername())),
 		m.defaultUserFields(),
 		[]ldap.Control{},
 	))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get account %q: %v", username, err)
+		return nil, fmt.Errorf("failed to get account %q: %v", req.GetUsername(), err)
 	}
 	if len(result.Entries) != 1 {
-		return nil, &ZeroOrMultipleAccountsError{Username: username, Count: len(result.Entries)}
+		return nil, &ZeroOrMultipleAccountsError{Username: req.GetUsername(), Count: len(result.Entries)}
 	}
 	return parseUser(result.Entries[0]), nil
 }
 
-// NewAccountRequest ...
-type NewAccountRequest struct {
-	FirstName        string `json:"first_name" form:"first_name"`
-	LastName         string `json:"last_name" form:"last_name"`
-	Username         string `json:"username" form:"username"`
-	Password         string `json:"password" form:"password"`
-	Email            string `json:"email" form:"email"`
-	HashingAlgorithm ldaphash.LDAPPasswordHashingAlgorithm
-}
-
-// Validate ...
-func (req *NewAccountRequest) Validate() error {
+// ValidAccountRequest ...
+func ValidAccountRequest(req *pb.NewAccountRequest) error {
 	var invalid []string
-	if req.Username == "" || !validUsername(req.Username) {
+	if req.GetUsername() == "" || !validUsername(req.GetUsername()) {
 		invalid = append(invalid, "username")
 	}
-	if req.Password == "" || !validPassword(req.Password) {
+	if req.GetPassword() == "" || !validPassword(req.GetPassword()) {
 		invalid = append(invalid, "password")
 	}
-	if req.Email == "" || !validEmail(req.Email) {
+	if req.GetEmail() == "" || !validEmail(req.GetEmail()) {
 		invalid = append(invalid, "email")
 	}
-	if req.FirstName == "" {
+	if req.GetFirstName() == "" {
 		invalid = append(invalid, "first name")
 	}
-	if req.LastName == "" {
+	if req.GetLastName() == "" {
 		invalid = append(invalid, "last name")
 	}
 	if len(invalid) > 0 {
@@ -271,25 +249,25 @@ func (req *NewAccountRequest) Validate() error {
 }
 
 // NewAccount ...
-func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
+func (m *LDAPManager) NewAccount(req *pb.NewAccountRequest) error {
 	// Validate
-	if err := req.Validate(); err != nil {
+	if err := ValidAccountRequest(req); err != nil {
 		return err
 	}
 	// Check for existing user with the same username
-	req.Username = escapeDN(req.Username)
+	req.Username = escapeDN(req.GetUsername())
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.UserGroupDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, req.Username, m.UserGroupDN),
+		fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, req.GetUsername(), m.UserGroupDN),
 		[]string{},
 		[]ldap.Control{},
 	))
 	if err != nil {
-		return fmt.Errorf("failed to check for existing user %q: %v", req.Username, err)
+		return fmt.Errorf("failed to check for existing user %q: %v", req.GetUsername(), err)
 	}
 	if len(result.Entries) > 0 {
-		return fmt.Errorf("account with username %q already exists", req.Username)
+		return fmt.Errorf("account with username %q already exists", req.GetUsername())
 	}
 	highestUID, err := m.getHighestID(m.AccountAttribute)
 	if err != nil {
@@ -303,34 +281,34 @@ func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 		}
 	}
 	newUID := highestUID + 1
-	userDN := m.AccountNamed(req.Username)
-	group, GID, err := m.getNewAccountGroup(req.Username)
+	userDN := m.AccountNamed(req.GetUsername())
+	group, GID, err := m.getNewAccountGroup(req.GetUsername())
 	if err != nil {
 		return err
 	}
 
-	if req.HashingAlgorithm == ldaphash.DEFAULT {
+	if req.GetHashingAlgorithm() == pb.HashingAlgorithm_DEFAULT {
 		req.HashingAlgorithm = m.HashingAlgorithm
 	}
 
-	hashedPassword, err := ldaphash.Password(req.Password, req.HashingAlgorithm)
+	hashedPassword, err := ldaphash.Password(req.GetPassword(), req.GetHashingAlgorithm())
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %v", err)
 	}
-	fullName := fmt.Sprintf("%s %s", req.FirstName, req.LastName)
+	fullName := fmt.Sprintf("%s %s", req.GetFirstName(), req.GetLastName())
 	userAttributes := []ldap.Attribute{
 		{Type: "objectClass", Vals: []string{"person", "inetOrgPerson", "posixAccount"}},
-		{Type: "uid", Vals: []string{req.Username}},
-		{Type: "givenName", Vals: []string{req.FirstName}},
-		{Type: "sn", Vals: []string{req.LastName}},
+		{Type: "uid", Vals: []string{req.GetUsername()}},
+		{Type: "givenName", Vals: []string{req.GetFirstName()}},
+		{Type: "sn", Vals: []string{req.GetLastName()}},
 		{Type: "cn", Vals: []string{fullName}},
 		{Type: "displayName", Vals: []string{fullName}},
 		{Type: "uidNumber", Vals: []string{strconv.Itoa(newUID)}},
 		{Type: "gidNumber", Vals: []string{strconv.Itoa(GID)}},
 		{Type: "loginShell", Vals: []string{m.DefaultUserShell}},
-		{Type: "homeDirectory", Vals: []string{fmt.Sprintf("/home/%s", req.Username)}},
+		{Type: "homeDirectory", Vals: []string{fmt.Sprintf("/home/%s", req.GetUsername())}},
 		{Type: "userPassword", Vals: []string{hashedPassword}},
-		{Type: "mail", Vals: []string{req.Email}},
+		{Type: "mail", Vals: []string{req.GetEmail()}},
 	}
 
 	addUserRequest := &ldap.AddRequest{
@@ -341,51 +319,49 @@ func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 	log.Debug(addUserRequest)
 	if err := m.ldap.Add(addUserRequest); err != nil {
 		if ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists) {
-			return &AccountAlreadyExistsError{Username: req.Username}
+			return &AccountAlreadyExistsError{Username: req.GetUsername()}
 		}
 		return fmt.Errorf("failed to add user %q: %v", userDN, err)
 	}
-	if err := m.AddGroupMember(&AddGroupMemberRequest{Group: group, Username: req.Username}); err != nil && !ldap.IsErrorWithCode(err, ldap.LDAPResultAttributeOrValueExists) {
-		return fmt.Errorf("failed to add user %q to group %q: %v", req.Username, group, err)
+	allowNonExistent := false
+	if err := m.AddGroupMember(&pb.GroupMember{Group: group, Username: req.GetUsername()}, allowNonExistent); err != nil {
+		if !ldap.IsErrorWithCode(err, ldap.LDAPResultAttributeOrValueExists) {
+			return fmt.Errorf("failed to add user %q to group %q: %v", req.GetUsername(), group, err)
+		}
 	}
 	if err := m.updateLastID("lastUID", newUID); err != nil {
 		return err
 	}
-	log.Infof("added new account %q (member of group %q)", req.Username, group)
+	log.Infof("added new account %q (member of group %q)", req.GetUsername(), group)
 	return nil
 }
 
-// DeleteAccountRequest ...
-type DeleteAccountRequest struct {
-	Username    string `json:"username" form:"username"`
-	LeaveGroups bool
-}
-
 // DeleteAccount ...
-func (m *LDAPManager) DeleteAccount(req *DeleteAccountRequest) error {
-	if req.Username == "" {
+func (m *LDAPManager) DeleteAccount(req *pb.DeleteAccountRequest, leaveGroups bool) error {
+	if req.GetUsername() == "" {
 		return errors.New("username must not be empty")
 	}
 	if err := m.ldap.Del(ldap.NewDelRequest(
-		fmt.Sprintf("%s=%s,%s", m.AccountAttribute, escapeDN(req.Username), m.UserGroupDN),
+		fmt.Sprintf("%s=%s,%s", m.AccountAttribute, escapeDN(req.GetUsername()), m.UserGroupDN),
 		[]ldap.Control{},
 	)); err != nil {
 		return err
 	}
-	if !req.LeaveGroups {
+	if !leaveGroups {
 		// delete the account from all its groups
-		groups, err := m.GetGroupList(&GetGroupListRequest{})
+		groups, err := m.GetGroupList(&pb.GetGroupListRequest{})
 		if err != nil {
 			return fmt.Errorf("failed to get list of groups: %v", err)
 		}
-		for _, group := range groups {
-			if err := m.DeleteGroupMember(&DeleteGroupMemberRequest{Group: group, Username: req.Username, AllowDeleteOfDefaultGroups: true}); err != nil {
+		for _, group := range groups.GetGroups() {
+			allowDeleteOfDefaultGroups := true
+			if err := m.DeleteGroupMember(&pb.GroupMember{Group: group, Username: req.GetUsername()}, allowDeleteOfDefaultGroups); err != nil {
 				if _, ok := err.(*NoSuchMemberError); !ok {
-					return fmt.Errorf("failed to remove deleted user %q from group %q: %v", req.Username, group, err)
+					return fmt.Errorf("failed to remove deleted user %q from group %q: %v", req.GetUsername(), group, err)
 				}
 			}
 		}
 	}
-	log.Infof("removed account %q", req.Username)
+	log.Infof("removed account %q", req.GetUsername())
 	return nil
 }

@@ -120,8 +120,10 @@ This project is still in the alpha stage and should not be considered production
 - Implement frontend
 - Implement token based authentication
 - Fully configure travis
-- Restructure to allow usage via GRPC API?
-- Restructure to allow CLI usage
+- Implement generic interface
+- Implement GRPC and HTTP interface
+- Update internal methods to use GRPC generated structs that are also used for serialization in the frontend via JSON
+- Implement CLI interface
     - new acc
     - change password
     - add group

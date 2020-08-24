@@ -15,52 +15,23 @@ import (
 	_ "github.com/GehirnInc/crypt/md5_crypt"
 	_ "github.com/GehirnInc/crypt/sha256_crypt"
 	_ "github.com/GehirnInc/crypt/sha512_crypt"
-)
-
-// LDAPPasswordHashingAlgorithm ...
-type LDAPPasswordHashingAlgorithm uint16
-
-const (
-	// DEFAULT ...
-	DEFAULT LDAPPasswordHashingAlgorithm = iota
-	// SHA512CRYPT ...
-	SHA512CRYPT
-	// SHA256CRYPT ...
-	SHA256CRYPT
-	// BLOWFISH ...
-	BLOWFISH
-	// EXTDES ...
-	EXTDES
-	// MD5CRYPT ...
-	MD5CRYPT
-	// SMD5 ...
-	SMD5
-	// MD5 ...
-	MD5
-	// SHA ...
-	SHA
-	// SSHA ...
-	SSHA
-	// CRYPT ...
-	CRYPT
-	// CLEAR ...
-	CLEAR
+	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 )
 
 // LDAPPasswordHashingAlgorithms ...
-var LDAPPasswordHashingAlgorithms = map[string]LDAPPasswordHashingAlgorithm{
-	"Default":     DEFAULT,
-	"SHA512CRYPT": SHA512CRYPT,
-	"SHA256CRYPT": SHA256CRYPT,
-	// "BLOWFISH":    BLOWFISH,
-	// "EXTDES":      EXTDES,
-	"MD5CRYPT": MD5CRYPT,
-	"SMD5":     SMD5,
-	"MD5":      MD5,
-	"SHA":      SHA,
-	"SSHA":     SSHA,
-	// "CRYPT":       CRYPT,
-	"CLEAR": CLEAR,
+var LDAPPasswordHashingAlgorithms = []pb.HashingAlgorithm{
+	pb.HashingAlgorithm_DEFAULT,
+	pb.HashingAlgorithm_SHA512CRYPT,
+	pb.HashingAlgorithm_SHA256CRYPT,
+	// pb.HashingAlgorithm_BLOWFISH,
+	// pb.HashingAlgorithm_EXTDES,
+	pb.HashingAlgorithm_MD5CRYPT,
+	pb.HashingAlgorithm_SMD5,
+	pb.HashingAlgorithm_MD5,
+	pb.HashingAlgorithm_SHA,
+	pb.HashingAlgorithm_SSHA,
+	// pb.HashingAlgorithm_CRYPT,
+	pb.HashingAlgorithm_CLEAR,
 }
 
 func encodeSSHA(pw string) string {
@@ -176,32 +147,32 @@ func generateSalt(l int) []byte {
 }
 
 // Password ...
-func Password(password string, algorithm LDAPPasswordHashingAlgorithm) (string, error) {
+func Password(password string, algorithm pb.HashingAlgorithm) (string, error) {
 	switch algorithm {
-	case SSHA, DEFAULT:
+	case pb.HashingAlgorithm_SSHA, pb.HashingAlgorithm_DEFAULT:
 		return encodeSSHA(password), nil
-	case SHA256CRYPT:
+	case pb.HashingAlgorithm_SHA256CRYPT:
 		return encodeSHA256(password), nil
-	case SHA512CRYPT:
+	case pb.HashingAlgorithm_SHA512CRYPT:
 		return encodeSHA512(password), nil
-	case BLOWFISH:
+	case pb.HashingAlgorithm_BLOWFISH:
 		return "", errors.New("BLOWFISH is currently not supported")
 		// return encodeBLOWFISH(password), nil
-	case MD5:
+	case pb.HashingAlgorithm_MD5:
 		return encodeMD5(password), nil
-	case MD5CRYPT:
+	case pb.HashingAlgorithm_MD5CRYPT:
 		return encodeMD5CRYPT(password), nil
-	case SMD5:
+	case pb.HashingAlgorithm_SMD5:
 		return encodeSMD5(password), nil
-	case SHA:
+	case pb.HashingAlgorithm_SHA:
 		return encodeSHA(password), nil
-	case CRYPT:
+	case pb.HashingAlgorithm_CRYPT:
 		return "", errors.New("CRYPT is currently not supported")
 		// return encodeCRYPT(password), nil
-	case EXTDES:
+	case pb.HashingAlgorithm_EXTDES:
 		return "", errors.New("EXTDES is currently not supported")
 		// return encodeEXTDES(password), nil
-	case CLEAR:
+	case pb.HashingAlgorithm_CLEAR:
 		return encodeCLEAR(password), nil
 	default:
 		return encodeSSHA(password), nil

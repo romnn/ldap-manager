@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/neko-neko/echo-logrus/v2/log"
 	ldapmanager "github.com/romnnn/ldap-manager"
+	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 )
 
 type groupMemberRequest struct {
@@ -19,7 +20,8 @@ func (s *LDAPManagerServer) addGroupMemberHandler(c echo.Context) error {
 		log.Error(err)
 		return err
 	}
-	if err := s.Manager.AddGroupMember(&ldapmanager.AddGroupMemberRequest{Group: group, Username: req.Username}); err != nil {
+	allowNonExistent := false
+	if err := s.Manager.AddGroupMember(&pb.GroupMember{Group: group, Username: req.Username}, allowNonExistent); err != nil {
 		switch err.(type) {
 		case *ldapmanager.GroupValidationError:
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -39,7 +41,8 @@ func (s *LDAPManagerServer) removeGroupMemberHandler(c echo.Context) error {
 		log.Error(err)
 		return err
 	}
-	if err := s.Manager.DeleteGroupMember(&ldapmanager.DeleteGroupMemberRequest{Group: group, Username: req.Username}); err != nil {
+	allowDeleteOfDefaultGroups := false
+	if err := s.Manager.DeleteGroupMember(&pb.GroupMember{Group: group, Username: req.Username}, allowDeleteOfDefaultGroups); err != nil {
 		switch err.(type) {
 		case *ldapmanager.GroupValidationError:
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
