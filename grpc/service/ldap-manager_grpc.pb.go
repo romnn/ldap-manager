@@ -561,5 +561,5 @@ var _LDAPManager_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "ldap-manager.proto",
+	Metadata: "ldap-test.Manager.proto",
 }

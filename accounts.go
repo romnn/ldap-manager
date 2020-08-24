@@ -120,16 +120,17 @@ func parseUser(entry *ldap.Entry) map[string]string {
 	return user
 }
 
-func (m *LDAPManager) getNewAccountGroup(username, dn string) (string, int, error) {
+func (m *LDAPManager) getNewAccountGroup(username string) (string, int, error) {
 	group := m.DefaultUserGroup
 	if defaultGID, err := m.getGroupGID(m.DefaultUserGroup); err == nil {
 		return group, defaultGID, nil
 	}
 	// The default user group might not yet exist
 	// Note that a group can only be created with at least one member when using RFC2307BIS
-	if err := m.NewGroup(&NewGroupRequest{Name: m.DefaultUserGroup, Members: []string{dn}}); err != nil {
+	// Because we need the GID to create the user, strict checking of members remains disabled because they are added after the group
+	if err := m.NewGroup(&NewGroupRequest{Name: m.DefaultUserGroup, Members: []string{username}}); err != nil {
 		// Fall back to create a new group group for the user
-		if err := m.NewGroup(&NewGroupRequest{Name: username, Members: []string{dn}}); err != nil {
+		if err := m.NewGroup(&NewGroupRequest{Name: username, Members: []string{username}}); err != nil {
 			if _, ok := err.(*GroupAlreadyExistsError); !ok {
 				return group, 0, fmt.Errorf("failed to create group for user %q: %v", username, err)
 			}
@@ -142,6 +143,11 @@ func (m *LDAPManager) getNewAccountGroup(username, dn string) (string, int, erro
 		return group, 0, fmt.Errorf("failed to get GID for group %q: %v", group, err)
 	}
 	return group, userGroupGID, nil
+}
+
+// AccountNamed ...
+func (m *LDAPManager) AccountNamed(name string) string {
+	return fmt.Sprintf("%s=%s,%s", m.AccountAttribute, escapeDN(name), m.UserGroupDN)
 }
 
 // GetUserListRequest ...
@@ -291,8 +297,8 @@ func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 		}
 	}
 	newUID := highestUID + 1
-	userDN := fmt.Sprintf("%s=%s,%s", m.AccountAttribute, req.Username, m.UserGroupDN)
-	group, GID, err := m.getNewAccountGroup(req.Username, userDN)
+	userDN := m.AccountNamed(req.Username)
+	group, GID, err := m.getNewAccountGroup(req.Username)
 	if err != nil {
 		return err
 	}

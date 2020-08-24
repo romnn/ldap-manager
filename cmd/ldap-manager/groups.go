@@ -85,6 +85,7 @@ func (s *LDAPManagerServer) newGroupHandler(c echo.Context) error {
 		log.Error(err)
 		return err
 	}
+	req.Strict = true // enforces all members of the group to already exist
 	if err := s.manager.NewGroup(&req); err != nil {
 		switch err.(type) {
 		case *ldapmanager.GroupValidationError:

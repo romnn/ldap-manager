@@ -80,6 +80,7 @@ func (m *LDAPManager) GroupNamed(name string) string {
 type NewGroupRequest struct {
 	Name    string   `json:"name" form:"name"`
 	Members []string `json:"members" form:"members"`
+	Strict  bool
 }
 
 // NewGroup ...
@@ -108,15 +109,30 @@ func (m *LDAPManager) NewGroup(req *NewGroupRequest) error {
 			{Type: "gidNumber", Vals: []string{strconv.Itoa(newGID)}},
 		}
 	} else {
-		if len(req.Members) < 1 {
-			return &GroupValidationError{"when using RFC2307BIS (not NIS), you must specify at least one group member"}
+		// Convert usernames into full account DN's
+		var memberDNList []string
+		for _, username := range req.Members {
+			if req.Strict {
+				isMember, err := m.IsGroupMember(username, m.DefaultUserGroup)
+				if err != nil {
+					return fmt.Errorf("failed to check if member %q exists: %v", username, err)
+				}
+				if !isMember {
+					continue
+				}
+			}
+			memberDNList = append(memberDNList, m.AccountNamed(username))
 		}
+
+		if len(memberDNList) < 1 {
+			return &GroupValidationError{"when using RFC2307BIS (not NIS), you must specify at least one existing group member"}
+		}
+
 		groupAttributes = []ldap.Attribute{
 			{Type: "objectClass", Vals: []string{"top", "groupOfUniqueNames", "posixGroup"}},
 			{Type: "cn", Vals: []string{req.Name}},
 			{Type: "gidNumber", Vals: []string{strconv.Itoa(newGID)}},
-			// TODO: Do not expect full userDN's here
-			{Type: m.GroupMembershipAttribute, Vals: req.Members},
+			{Type: m.GroupMembershipAttribute, Vals: memberDNList},
 		}
 	}
 	addGroupRequest := &ldap.AddRequest{
@@ -157,23 +173,6 @@ func (m *LDAPManager) DeleteGroup(groupName string) error {
 	log.Infof("removed group %q", groupName)
 	return nil
 }
-
-/* GetGroup ...
-func (m *LDAPManager) GetGroup(groupName string) (string, error) {
-	if groupName == "" {
-		return "", &GroupValidationError{"group name can not be empty"}
-	}
-	result, err := m.findGroup(groupName, []string{"gidNumber"})
-	if err != nil {
-		return "", err
-	}
-	if len(result.Entries) != 1 {
-		return "", &ZeroOrMultipleGroupsError{Group: groupName, Count: len(result.Entries)}
-	}
-	// TODO: What do we want to return here
-	return result.Entries[0].DN, nil
-}
-*/
 
 // RenameGroup ...
 func (m *LDAPManager) RenameGroup(groupName, newName string) error {

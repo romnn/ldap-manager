@@ -66,37 +66,6 @@ func (m *LDAPManager) IsGroupMember(username, groupName string) (bool, error) {
 
 // GetGroup ...
 func (m *LDAPManager) GetGroup(groupName string, options *ListOptions) (*Group, error) {
-	/*result, err := m.ldap.Search(ldap.NewSearchRequest(
-		m.GroupsDN,
-		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(cn=%s)", escapeFilter(groupName)),
-		[]string{m.GroupMembershipAttribute},
-		[]ldap.Control{},
-	))
-	if err != nil {
-		return nil, err
-	}
-	if len(result.Entries) != 1 {
-		return nil, &ZeroOrMultipleGroupsError{Group: groupName, Count: len(result.Entries)}
-	}
-	var members []string
-	group := result.Entries[0]
-	for _, member := range group.GetAttributeValues(m.GroupMembershipAttribute) {
-		log.Info(member)
-		// TODO
-			reg, err := regexp.Compile(fmt.Sprintf("%s=(.*?),", m.AccountAttribute))
-			if err != nil {
-				return "", errors.New("failed to compile regex")
-			}
-			matchedDN := reg.FindString(userDN)
-
-
-		// if member.Key != "count" && member.Value != "" {
-		// $this_member = preg_replace("/^.*?=(.*?),.*", "$1", $value);
-		// array_push($records, $this_member);
-		// }
-	}
-	*/
 	group, err := m.getGroup(groupName)
 	if err != nil {
 		return nil, err

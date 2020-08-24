@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	ldaphash "github.com/romnnn/ldap-manager/hash"
-	ldaptest "github.com/romnnn/ldap-manager/test"
 )
 
 func containsUsers(observed []map[string]string, expected []string, attr string) error {
@@ -28,13 +27,11 @@ func containsUsers(observed []map[string]string, expected []string, attr string)
 
 // TestAddNewUserAndGetUserList ...
 func TestAddNewUserAndGetUserList(t *testing.T) {
-	// t.Skip()
-	test := new(ldaptest.Test).Setup(t)
-	defer test.Teardown()
-	manager := NewLDAPManager(test.OpenLDAPCConfig)
-	if err := manager.Setup(); err != nil {
-		t.Fatal(err)
+	if skipAccountTests {
+		t.Skip()
 	}
+	test := new(Test).Setup(t)
+	defer test.Teardown()
 
 	// Add two valid users
 	expected := []string{"romnn", "uwe12"}
@@ -55,30 +52,29 @@ func TestAddNewUserAndGetUserList(t *testing.T) {
 		},
 	}
 	for _, newUserReq := range users {
-		if err := manager.NewAccount(newUserReq); err != nil {
+		if err := test.Manager.NewAccount(newUserReq); err != nil {
 			t.Errorf("failed to add user: %v", err)
 		}
 	}
 
 	// List all users
-	userList, err := manager.GetUserList(&GetUserListRequest{})
+	userList, err := test.Manager.GetUserList(&GetUserListRequest{})
 	if err != nil {
 		t.Errorf("failed to get users list: %v", err)
 	}
-	if err := containsUsers(userList, expected, manager.AccountAttribute); err != nil {
+	if err := containsUsers(userList, expected, test.Manager.AccountAttribute); err != nil {
 		t.Error(err)
 	}
 }
 
 // TestAuthenticateUser ...
 func TestAuthenticateUser(t *testing.T) {
-	// t.Skip()
-	test := new(ldaptest.Test).Setup(t)
-	defer test.Teardown()
-	manager := NewLDAPManager(test.OpenLDAPCConfig)
-	if err := manager.Setup(); err != nil {
-		t.Fatal(err)
+	if skipAccountTests {
+		t.Skip()
 	}
+	test := new(Test).Setup(t)
+	defer test.Teardown()
+
 	samplePasswords := []string{"123456", "Hallo@Welt", "@#73sAdf0^E^RC#+++83230*###$&"}
 	for name, algorithm := range ldaphash.LDAPPasswordHashingAlgorithms {
 		for _, pw := range samplePasswords {
@@ -91,7 +87,7 @@ func TestAuthenticateUser(t *testing.T) {
 				LastName:         "d",
 				HashingAlgorithm: algorithm,
 			}
-			if err := manager.NewAccount(newUserReq); err != nil {
+			if err := test.Manager.NewAccount(newUserReq); err != nil {
 				t.Errorf("failed to add user %q: %v", newUserReq.Username, err)
 				continue
 			}
@@ -99,7 +95,7 @@ func TestAuthenticateUser(t *testing.T) {
 			time.Sleep(1 * time.Second)
 
 			// now check if we can authenticate using the clear password
-			if _, err := manager.AuthenticateUser(newUserReq.Username, pw); err != nil {
+			if _, err := test.Manager.AuthenticateUser(newUserReq.Username, pw); err != nil {
 				t.Errorf("failed to authenticate user %q with password %q: %v", newUserReq.Username, pw, err)
 			}
 		}
@@ -108,13 +104,12 @@ func TestAuthenticateUser(t *testing.T) {
 
 // TestNewAccountValidation ...
 func TestNewAccountValidation(t *testing.T) {
-	// t.Skip()
-	test := new(ldaptest.Test).Setup(t)
-	defer test.Teardown()
-	manager := NewLDAPManager(test.OpenLDAPCConfig)
-	if err := manager.Setup(); err != nil {
-		t.Fatal(err)
+	if skipAccountTests {
+		t.Skip()
 	}
+	test := new(Test).Setup(t)
+	defer test.Teardown()
+
 	cases := []struct {
 		valid   bool
 		request *NewAccountRequest
@@ -174,7 +169,7 @@ func TestNewAccountValidation(t *testing.T) {
 		}},
 	}
 	for _, c := range cases {
-		err := manager.NewAccount(c.request)
+		err := test.Manager.NewAccount(c.request)
 		if err != nil && c.valid {
 			t.Errorf("failed to add valid user: %v", err)
 		}
@@ -186,13 +181,12 @@ func TestNewAccountValidation(t *testing.T) {
 
 // TestGetAccount ...
 func TestGetAccount(t *testing.T) {
-	// t.Skip()
-	test := new(ldaptest.Test).Setup(t)
-	defer test.Teardown()
-	manager := NewLDAPManager(test.OpenLDAPCConfig)
-	if err := manager.Setup(); err != nil {
-		t.Fatal(err)
+	if skipAccountTests {
+		t.Skip()
 	}
+	test := new(Test).Setup(t)
+	defer test.Teardown()
+
 	newUserReq := &NewAccountRequest{
 		Username:  "felix",
 		Password:  "y&*T R&EGGSAdsnbdjhfb887gfdwe7fFWEFGDSSDEF",
@@ -200,37 +194,37 @@ func TestGetAccount(t *testing.T) {
 		FirstName: "Felix",
 		LastName:  "Heisenberg",
 	}
-	if err := manager.NewAccount(newUserReq); err != nil {
+	if err := test.Manager.NewAccount(newUserReq); err != nil {
 		t.Fatalf("failed to add user: %v", err)
 	}
 
 	// Make sure the users group was created
-	groups, err := manager.GetGroupList(&GetGroupListRequest{})
+	groups, err := test.Manager.GetGroupList(&GetGroupListRequest{})
 	if err != nil {
 		t.Fatalf("failed to get list of all groups: %v", err)
 	}
-	if groups[0] != manager.DefaultUserGroup {
-		t.Fatalf("expected the default user group %q to have been created", manager.DefaultUserGroup)
+	if groups[0] != test.Manager.DefaultUserGroup {
+		t.Fatalf("expected the default user group %q to have been created", test.Manager.DefaultUserGroup)
 	}
 
 	// Make sure that the new account is in the users group
-	group, err := manager.GetGroup(manager.DefaultUserGroup, &ListOptions{})
+	group, err := test.Manager.GetGroup(test.Manager.DefaultUserGroup, &ListOptions{})
 	if err != nil {
-		t.Fatalf("failed to get members of the group %q: %v", manager.DefaultUserGroup, err)
+		t.Fatalf("failed to get members of the group %q: %v", test.Manager.DefaultUserGroup, err)
 	}
 	if group.Members[0] != newUserReq.Username {
-		t.Fatalf("expected the new user %q to be a member of the default user group %q", newUserReq.Username, manager.DefaultUserGroup)
+		t.Fatalf("expected the new user %q to be a member of the default user group %q", newUserReq.Username, test.Manager.DefaultUserGroup)
 	}
 
-	isMember, err := manager.IsGroupMember(newUserReq.Username, manager.DefaultUserGroup)
+	isMember, err := test.Manager.IsGroupMember(newUserReq.Username, test.Manager.DefaultUserGroup)
 	if err != nil {
-		t.Fatalf("failed to check if user %q is in the group %q: %v", newUserReq.Username, manager.DefaultUserGroup, err)
+		t.Fatalf("failed to check if user %q is in the group %q: %v", newUserReq.Username, test.Manager.DefaultUserGroup, err)
 	}
 	if !isMember {
-		t.Fatalf("expected user %q to be a member of the group %q: %v", newUserReq.Username, manager.DefaultUserGroup, err)
+		t.Fatalf("expected user %q to be a member of the group %q: %v", newUserReq.Username, test.Manager.DefaultUserGroup, err)
 	}
 
-	account, err := manager.GetAccount("felix")
+	account, err := test.Manager.GetAccount("felix")
 	if err != nil {
 		t.Fatalf("failed to get account: %v", err)
 	}
@@ -245,16 +239,15 @@ func TestGetAccount(t *testing.T) {
 
 // TestDeleteAccount ...
 func TestDeleteAccount(t *testing.T) {
-	// t.Skip()
-	test := new(ldaptest.Test).Setup(t)
-	defer test.Teardown()
-	manager := NewLDAPManager(test.OpenLDAPCConfig)
-	if err := manager.Setup(); err != nil {
-		t.Fatal(err)
+	if skipAccountTests {
+		t.Skip()
 	}
+	test := new(Test).Setup(t)
+	defer test.Teardown()
+
 	users := []string{"user1", "user2"}
 	for _, user := range users {
-		if err := manager.NewAccount(&NewAccountRequest{
+		if err := test.Manager.NewAccount(&NewAccountRequest{
 			Username:  user,
 			Password:  "y&*T R&EGGSAdsnbdjhfb887gfdwe7fFWEFGDSSDEF",
 			Email:     "felix@web.de",
@@ -266,25 +259,25 @@ func TestDeleteAccount(t *testing.T) {
 	}
 
 	// Assert we find those two users
-	userList, err := manager.GetUserList(&GetUserListRequest{})
+	userList, err := test.Manager.GetUserList(&GetUserListRequest{})
 	if err != nil {
 		t.Fatalf("failed to get users list: %v", err)
 	}
-	if err := containsUsers(userList, users, manager.AccountAttribute); err != nil {
+	if err := containsUsers(userList, users, test.Manager.AccountAttribute); err != nil {
 		t.Error(err)
 	}
 
 	// Now delete the first user
-	if err := manager.DeleteAccount(users[0]); err != nil {
+	if err := test.Manager.DeleteAccount(users[0]); err != nil {
 		t.Fatalf("failed to delete user %q: %v", users[0], err)
 	}
 
 	// Assert we find only the second user
-	userList, err = manager.GetUserList(&GetUserListRequest{})
+	userList, err = test.Manager.GetUserList(&GetUserListRequest{})
 	if err != nil {
 		t.Fatalf("failed to get users list: %v", err)
 	}
-	if err := containsUsers(userList, users[1:2], manager.AccountAttribute); err != nil {
+	if err := containsUsers(userList, users[1:2], test.Manager.AccountAttribute); err != nil {
 		t.Error(err)
 	}
 }

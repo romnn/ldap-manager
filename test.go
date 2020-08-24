@@ -1,4 +1,4 @@
-package test
+package ldapmanager
 
 import (
 	"context"
@@ -7,17 +7,23 @@ import (
 	"testing"
 
 	ldapconfig "github.com/romnnn/ldap-manager/config"
+	ldaptest "github.com/romnnn/ldap-manager/test"
 	tc "github.com/romnnn/testcontainers"
 	"github.com/romnnn/testcontainers-go"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	parallel = true
+	parallel = false
+
+	skipAccountTests        = false
+	skipChangePasswordTests = false
+	skipGroupTests          = false
+	skipGroupMemberTests    = false
 )
 
 func init() {
-	// This wil disable the native `log.Printf` calls by testcontainers-go
+	// This will disable the native `log.Printf` calls by testcontainers-go
 	tclog.SetFlags(0)
 	tclog.SetOutput(ioutil.Discard)
 
@@ -31,6 +37,7 @@ func init() {
 type Test struct {
 	OpenLDAPC       testcontainers.Container
 	OpenLDAPCConfig ldapconfig.OpenLDAPConfig
+	Manager         *LDAPManager
 }
 
 // Setup ...
@@ -45,15 +52,22 @@ func (test *Test) Setup(t *testing.T) *Test {
 	}
 
 	// Start mongodb container
-	options := ContainerOptions{
+	options := ldaptest.ContainerOptions{
 		ContainerOptions: containerOptions,
 		OpenLDAPConfig:   ldapconfig.OpenLDAPConfig{},
 	}
-	test.OpenLDAPC, test.OpenLDAPCConfig, err = StartOpenLDAPContainer(context.Background(), options)
+	test.OpenLDAPC, test.OpenLDAPCConfig, err = ldaptest.StartOpenLDAPContainer(context.Background(), options)
 	if err != nil {
 		t.Fatalf("failed to start the OpenLDAP container: %v", err)
 		return test
 	}
+
+	// create and setup the LDAP Manager service
+	test.Manager = NewLDAPManager(test.OpenLDAPCConfig)
+	if err := test.Manager.Setup(); err != nil {
+		t.Fatal(err)
+	}
+
 	return test
 }
 

@@ -34,8 +34,8 @@ type LDAPManager struct {
 }
 
 // NewLDAPManager ...
-func NewLDAPManager(cfg ldapconfig.OpenLDAPConfig) LDAPManager {
-	return LDAPManager{
+func NewLDAPManager(cfg ldapconfig.OpenLDAPConfig) *LDAPManager {
+	return &LDAPManager{
 		OpenLDAPConfig:           cfg,
 		GroupsDN:                 "ou=groups," + cfg.BaseDN,
 		UserGroupDN:              "ou=users," + cfg.BaseDN,

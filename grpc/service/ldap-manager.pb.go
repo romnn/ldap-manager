@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.25.0
 // 	protoc        v3.6.1
-// source: ldap-manager.proto
+// source: ldap-test.Manager.proto
 
 package service
 
@@ -1302,7 +1302,7 @@ var file_ldap_manager_proto_extTypes = []protoimpl.ExtensionInfo{
 		Field:         51234,
 		Name:          "samples.require_admin",
 		Tag:           "varint,51234,opt,name=require_admin",
-		Filename:      "ldap-manager.proto",
+		Filename:      "ldap-test.Manager.proto",
 	},
 	{
 		ExtendedType:  (*descriptor.MethodOptions)(nil),
@@ -1310,7 +1310,7 @@ var file_ldap_manager_proto_extTypes = []protoimpl.ExtensionInfo{
 		Field:         51235,
 		Name:          "samples.require_auth",
 		Tag:           "varint,51235,opt,name=require_auth",
-		Filename:      "ldap-manager.proto",
+		Filename:      "ldap-test.Manager.proto",
 	},
 }
 
@@ -1574,34 +1574,34 @@ var file_ldap_manager_proto_depIdxs = []int32{
 	1,  // 7: samples.ChangePasswordRequest.hashing_algorithm:type_name -> samples.HashingAlgorithm
 	24, // 8: samples.require_admin:extendee -> google.protobuf.MethodOptions
 	24, // 9: samples.require_auth:extendee -> google.protobuf.MethodOptions
-	4,  // 10: samples.LDAPManager.GetUserList:input_type -> samples.GetUserListRequest
-	8,  // 11: samples.LDAPManager.AuthenticateUser:input_type -> samples.AuthenticateUserRequest
-	9,  // 12: samples.LDAPManager.GetAccount:input_type -> samples.GetAccountRequest
-	10, // 13: samples.LDAPManager.NewAccount:input_type -> samples.NewAccountRequest
-	11, // 14: samples.LDAPManager.DeleteAccount:input_type -> samples.DeleteAccountRequest
-	22, // 15: samples.LDAPManager.ChangePassword:input_type -> samples.ChangePasswordRequest
-	12, // 16: samples.LDAPManager.NewGroup:input_type -> samples.NewGroupRequest
-	13, // 17: samples.LDAPManager.DeleteGroup:input_type -> samples.DeleteGroupRequest
-	14, // 18: samples.LDAPManager.RenameGroup:input_type -> samples.RenameGroupRequest
-	15, // 19: samples.LDAPManager.GetGroupList:input_type -> samples.GetGroupListRequest
-	17, // 20: samples.LDAPManager.IsGroupMember:input_type -> samples.IsGroupMemberRequest
-	19, // 21: samples.LDAPManager.GetGroup:input_type -> samples.GetGroupRequest
-	21, // 22: samples.LDAPManager.AddGroupMember:input_type -> samples.GroupMember
-	21, // 23: samples.LDAPManager.DeleteGroupMember:input_type -> samples.GroupMember
-	6,  // 24: samples.LDAPManager.GetUserList:output_type -> samples.UserList
-	7,  // 25: samples.LDAPManager.AuthenticateUser:output_type -> samples.UserDN
-	5,  // 26: samples.LDAPManager.GetAccount:output_type -> samples.User
-	2,  // 27: samples.LDAPManager.NewAccount:output_type -> samples.Empty
-	2,  // 28: samples.LDAPManager.DeleteAccount:output_type -> samples.Empty
-	2,  // 29: samples.LDAPManager.ChangePassword:output_type -> samples.Empty
-	2,  // 30: samples.LDAPManager.NewGroup:output_type -> samples.Empty
-	2,  // 31: samples.LDAPManager.DeleteGroup:output_type -> samples.Empty
-	2,  // 32: samples.LDAPManager.RenameGroup:output_type -> samples.Empty
-	16, // 33: samples.LDAPManager.GetGroupList:output_type -> samples.GroupList
-	18, // 34: samples.LDAPManager.IsGroupMember:output_type -> samples.IsGroupMemberResponse
-	20, // 35: samples.LDAPManager.GetGroup:output_type -> samples.Group
-	2,  // 36: samples.LDAPManager.AddGroupMember:output_type -> samples.Empty
-	2,  // 37: samples.LDAPManager.DeleteGroupMember:output_type -> samples.Empty
+	4,  // 10: samples.ldapmanager.GetUserList:input_type -> samples.GetUserListRequest
+	8,  // 11: samples.ldapmanager.AuthenticateUser:input_type -> samples.AuthenticateUserRequest
+	9,  // 12: samples.ldapmanager.GetAccount:input_type -> samples.GetAccountRequest
+	10, // 13: samples.ldapmanager.NewAccount:input_type -> samples.NewAccountRequest
+	11, // 14: samples.ldapmanager.DeleteAccount:input_type -> samples.DeleteAccountRequest
+	22, // 15: samples.ldapmanager.ChangePassword:input_type -> samples.ChangePasswordRequest
+	12, // 16: samples.ldapmanager.NewGroup:input_type -> samples.NewGroupRequest
+	13, // 17: samples.ldapmanager.DeleteGroup:input_type -> samples.DeleteGroupRequest
+	14, // 18: samples.ldapmanager.RenameGroup:input_type -> samples.RenameGroupRequest
+	15, // 19: samples.ldapmanager.GetGroupList:input_type -> samples.GetGroupListRequest
+	17, // 20: samples.ldapmanager.IsGroupMember:input_type -> samples.IsGroupMemberRequest
+	19, // 21: samples.ldapmanager.GetGroup:input_type -> samples.GetGroupRequest
+	21, // 22: samples.ldapmanager.AddGroupMember:input_type -> samples.GroupMember
+	21, // 23: samples.ldapmanager.DeleteGroupMember:input_type -> samples.GroupMember
+	6,  // 24: samples.ldapmanager.GetUserList:output_type -> samples.UserList
+	7,  // 25: samples.ldapmanager.AuthenticateUser:output_type -> samples.UserDN
+	5,  // 26: samples.ldapmanager.GetAccount:output_type -> samples.User
+	2,  // 27: samples.ldapmanager.NewAccount:output_type -> samples.Empty
+	2,  // 28: samples.ldapmanager.DeleteAccount:output_type -> samples.Empty
+	2,  // 29: samples.ldapmanager.ChangePassword:output_type -> samples.Empty
+	2,  // 30: samples.ldapmanager.NewGroup:output_type -> samples.Empty
+	2,  // 31: samples.ldapmanager.DeleteGroup:output_type -> samples.Empty
+	2,  // 32: samples.ldapmanager.RenameGroup:output_type -> samples.Empty
+	16, // 33: samples.ldapmanager.GetGroupList:output_type -> samples.GroupList
+	18, // 34: samples.ldapmanager.IsGroupMember:output_type -> samples.IsGroupMemberResponse
+	20, // 35: samples.ldapmanager.GetGroup:output_type -> samples.Group
+	2,  // 36: samples.ldapmanager.AddGroupMember:output_type -> samples.Empty
+	2,  // 37: samples.ldapmanager.DeleteGroupMember:output_type -> samples.Empty
 	24, // [24:38] is the sub-list for method output_type
 	10, // [10:24] is the sub-list for method input_type
 	10, // [10:10] is the sub-list for extension type_name
