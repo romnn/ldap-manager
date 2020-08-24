@@ -8,28 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// IsGroupMember ...
-func (m *LDAPManager) IsGroupMember(username, groupName string) (bool, error) {
-	result, err := m.findGroup(groupName, []string{"dn", m.GroupMembershipAttribute})
-	if err != nil {
-		return false, err
-	}
-	if len(result.Entries) != 1 {
-		return false, &ZeroOrMultipleGroupsError{Group: groupName, Count: len(result.Entries)}
-	}
-	if !m.GroupMembershipUsesUID {
-		// "${LDAP['account_attribute']}=$username,${LDAP['user_dn']}";
-		username = fmt.Sprintf("%s=%s,%s", m.AccountAttribute, username, m.UserGroupDN)
-	}
-	// preg_grep ("/^${username}$/i", $result[0][$LDAP['group_membership_attribute']])
-	for _, member := range result.Entries[0].GetAttributeValues(m.GroupMembershipAttribute) { // uniqueMember or memberUID
-		if member == username {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
 // Group ...
 type Group struct {
 	Members []string `json:"members" form:"members"`
@@ -37,12 +15,11 @@ type Group struct {
 	DN      string   `json:"dn" form:"dn"`
 }
 
-// GetGroup ...
 func (m *LDAPManager) getGroup(groupName string) (*Group, error) {
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(cn=%s)", escape(groupName)),
+		fmt.Sprintf("(cn=%s)", escapeFilter(groupName)),
 		[]string{m.GroupMembershipAttribute},
 		[]ldap.Control{},
 	))
@@ -65,12 +42,34 @@ func (m *LDAPManager) getGroup(groupName string) (*Group, error) {
 	}, nil
 }
 
+// IsGroupMember ...
+func (m *LDAPManager) IsGroupMember(username, groupName string) (bool, error) {
+	result, err := m.findGroup(groupName, []string{"dn", m.GroupMembershipAttribute})
+	if err != nil {
+		return false, err
+	}
+	if len(result.Entries) != 1 {
+		return false, &ZeroOrMultipleGroupsError{Group: groupName, Count: len(result.Entries)}
+	}
+	if !m.GroupMembershipUsesUID {
+		// "${LDAP['account_attribute']}=$username,${LDAP['user_dn']}";
+		username = fmt.Sprintf("%s=%s,%s", m.AccountAttribute, username, m.UserGroupDN)
+	}
+	// preg_grep ("/^${username}$/i", $result[0][$LDAP['group_membership_attribute']])
+	for _, member := range result.Entries[0].GetAttributeValues(m.GroupMembershipAttribute) { // uniqueMember or memberUID
+		if member == username {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // GetGroup ...
 func (m *LDAPManager) GetGroup(groupName string, options *ListOptions) (*Group, error) {
 	/*result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(cn=%s)", escape(groupName)),
+		fmt.Sprintf("(cn=%s)", escapeFilter(groupName)),
 		[]string{m.GroupMembershipAttribute},
 		[]ldap.Control{},
 	))
@@ -121,7 +120,8 @@ func (m *LDAPManager) GetGroup(groupName string, options *ListOptions) (*Group, 
 
 // AddGroupMember ...
 func (m *LDAPManager) AddGroupMember(groupName string, username string) error {
-	groupDN := fmt.Sprintf("cn=%s,%s", escape(groupName), m.GroupsDN)
+	groupDN := fmt.Sprintf("cn=%s,%s", escapeDN(groupName), m.GroupsDN)
+	username = escapeDN(username)
 	if !m.GroupMembershipUsesUID {
 		username = fmt.Sprintf("%s=%s,%s", m.AccountAttribute, username, m.UserGroupDN)
 	}
@@ -141,7 +141,7 @@ func (m *LDAPManager) AddGroupMember(groupName string, username string) error {
 
 // DeleteGroupMember ...
 func (m *LDAPManager) DeleteGroupMember(groupName string, username string) error {
-	groupDN := fmt.Sprintf("cn=%s,%s", escape(groupName), m.GroupsDN)
+	groupDN := fmt.Sprintf("cn=%s,%s", escapeDN(groupName), m.GroupsDN)
 	if !m.GroupMembershipUsesUID {
 		username = fmt.Sprintf("%s=%s,%s", m.AccountAttribute, username, m.UserGroupDN)
 	}

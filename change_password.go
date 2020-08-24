@@ -22,14 +22,14 @@ func (m *LDAPManager) ChangePassword(req *ChangePasswordRequest) error {
 	if req.Username == "" || req.Password == "" {
 		return errors.New("username and password must not be empty")
 	}
-	if req.Algorithm == ldaphash.Default {
+	if req.Algorithm == ldaphash.DEFAULT {
 		req.Algorithm = m.HashingAlgorithm
 	}
 
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, escape(req.Username), m.UserGroupDN),
+		fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, escapeFilter(req.Username), m.UserGroupDN),
 		[]string{"dn"},
 		[]ldap.Control{},
 	))

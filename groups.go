@@ -53,6 +53,24 @@ func (e *ZeroOrMultipleGroupsError) Error() string {
 	return fmt.Sprintf("no group with name %q", e.Group)
 }
 
+func (m *LDAPManager) getGroupGID(groupName string) (int, error) {
+	if groupName == "" {
+		return 0, &GroupValidationError{"group name can not be empty"}
+	}
+	result, err := m.findGroup(groupName, []string{"gidNumber"})
+	if err != nil {
+		return 0, err
+	}
+	if len(result.Entries) != 1 {
+		return 0, &ZeroOrMultipleGroupsError{Group: groupName, Count: len(result.Entries)}
+	}
+	gidNumbers := result.Entries[0].GetAttributeValues("gidNumber")
+	if len(gidNumbers) != 1 {
+		return 0, fmt.Errorf("group %q does not have gidNumber or multiple", groupName)
+	}
+	return strconv.Atoi(gidNumbers[0])
+}
+
 // NewGroupRequest ...
 type NewGroupRequest struct {
 	Name    string   `json:"name" form:"name"`
@@ -123,10 +141,10 @@ func (m *LDAPManager) DeleteGroup(groupName string) error {
 		return &GroupValidationError{"deleting the default user or admin group is not allowed"}
 	}
 	if err := m.ldap.Del(ldap.NewDelRequest(
-		fmt.Sprintf("cn=%s,%s", escape(groupName), m.GroupsDN),
+		fmt.Sprintf("cn=%s,%s", escapeDN(groupName), m.GroupsDN),
 		[]ldap.Control{},
 	)); err != nil {
-		if isErr(err, ldap.LDAPResultNoSuchObject) {
+		if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
 			return &ZeroOrMultipleGroupsError{Group: groupName}
 		}
 		return err
@@ -209,22 +227,4 @@ func (m *LDAPManager) GetGroupList(req *GetGroupListRequest) ([]string, error) {
 		return groups[req.Start:req.End], nil
 	}
 	return groups, nil
-}
-
-func (m *LDAPManager) getGroupGID(groupName string) (int, error) {
-	if groupName == "" {
-		return 0, &GroupValidationError{"group name can not be empty"}
-	}
-	result, err := m.findGroup(groupName, []string{"gidNumber"})
-	if err != nil {
-		return 0, err
-	}
-	if len(result.Entries) != 1 {
-		return 0, &ZeroOrMultipleGroupsError{Group: groupName, Count: len(result.Entries)}
-	}
-	gidNumbers := result.Entries[0].GetAttributeValues("gidNumber")
-	if len(gidNumbers) != 1 {
-		return 0, fmt.Errorf("group %q does not have gidNumber or multiple", groupName)
-	}
-	return strconv.Atoi(gidNumbers[0])
 }

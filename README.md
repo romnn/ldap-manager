@@ -21,8 +21,21 @@ docker pull romnn/ldap-manager
 
 For a list of options, run with `--help`.
 
+TODO: Notes on static content and GRPC and CLI with references
 
+#### Deployment (docker-compose)
 
+TODO
+
+#### Deployment (k8s via helm)
+
+TODO
+
+#### Serving the frontend externally
+
+If you have a cluster environment and want to scale the `ldap-manager` container individually and use a more performant static servicer like `nginx`, you can disable serving static content using the `--no-static` (`NO_STATIC`) flag.
+
+TODO: nginx example
 
 #### Development
 
@@ -103,5 +116,7 @@ This project is still in the alpha stage and should not be considered production
     - add member to group
     - list users
     - verify?
+- Publish helm chart via github pages
+- Add images to the readme
 - Implement missing password hashing algorithms
 - Embed crypt(3) as vendored?

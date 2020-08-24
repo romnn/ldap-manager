@@ -108,8 +108,7 @@ func (req *NewAccountRequest) Validate() error {
 	return nil
 }
 
-// DefaultUserFields ...
-func (m *LDAPManager) DefaultUserFields() []string {
+func (m *LDAPManager) defaultUserFields() []string {
 	return []string{m.AccountAttribute, "givenname", "sn", "mail"}
 }
 
@@ -119,6 +118,30 @@ func parseUser(entry *ldap.Entry) map[string]string {
 		user[attr.Name] = entry.GetAttributeValue(attr.Name)
 	}
 	return user
+}
+
+func (m *LDAPManager) getNewAccountGroup(username, dn string) (string, int, error) {
+	group := m.DefaultUserGroup
+	if defaultGID, err := m.getGroupGID(m.DefaultUserGroup); err == nil {
+		return group, defaultGID, nil
+	}
+	// The default user group might not yet exist
+	// Note that a group can only be created with at least one member when using RFC2307BIS
+	if err := m.NewGroup(&NewGroupRequest{Name: m.DefaultUserGroup, Members: []string{dn}}); err != nil {
+		// Fall back to create a new group group for the user
+		if err := m.NewGroup(&NewGroupRequest{Name: username, Members: []string{dn}}); err != nil {
+			if _, ok := err.(*GroupAlreadyExistsError); !ok {
+				return group, 0, fmt.Errorf("failed to create group for user %q: %v", username, err)
+			}
+		}
+		group = username
+	}
+
+	userGroupGID, err := m.getGroupGID(group)
+	if err != nil {
+		return group, 0, fmt.Errorf("failed to get GID for group %q: %v", group, err)
+	}
+	return group, userGroupGID, nil
 }
 
 // GetUserListRequest ...
@@ -131,7 +154,7 @@ type GetUserListRequest struct {
 // GetUserList ...
 func (m *LDAPManager) GetUserList(req *GetUserListRequest) ([]map[string]string, error) {
 	if len(req.Fields) < 1 {
-		req.Fields = m.DefaultUserFields()
+		req.Fields = m.defaultUserFields()
 	}
 	if req.SortKey == "" {
 		req.SortKey = m.AccountAttribute
@@ -189,7 +212,7 @@ func (m *LDAPManager) AuthenticateUser(username string, password string) (string
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(%s=%s)", m.AccountAttribute, escape(username)),
+		fmt.Sprintf("(%s=%s)", m.AccountAttribute, escapeFilter(username)),
 		[]string{"dn"},
 		[]ldap.Control{},
 	))
@@ -213,31 +236,6 @@ func (m *LDAPManager) AuthenticateUser(username string, password string) (string
 	return matchedDN, nil
 }
 
-// NewAccount ...
-func (m *LDAPManager) getNewAccountGroup(username, dn string) (string, int, error) {
-	group := m.DefaultUserGroup
-	if defaultGID, err := m.getGroupGID(m.DefaultUserGroup); err == nil {
-		return group, defaultGID, nil
-	}
-	// The default user group might not yet exist
-	// Note that a group can only be created with at least one member when using RFC2307BIS
-	if err := m.NewGroup(&NewGroupRequest{Name: m.DefaultUserGroup, Members: []string{dn}}); err != nil {
-		// Fall back to create a new group group for the user
-		if err := m.NewGroup(&NewGroupRequest{Name: username, Members: []string{dn}}); err != nil {
-			if _, ok := err.(*GroupAlreadyExistsError); !ok {
-				return group, 0, fmt.Errorf("failed to create group for user %q: %v", username, err)
-			}
-		}
-		group = username
-	}
-
-	userGroupGID, err := m.getGroupGID(group)
-	if err != nil {
-		return group, 0, fmt.Errorf("failed to get GID for group %q: %v", group, err)
-	}
-	return group, userGroupGID, nil
-}
-
 // GetAccount ...
 func (m *LDAPManager) GetAccount(username string) (map[string]string, error) {
 	if username == "" {
@@ -247,8 +245,8 @@ func (m *LDAPManager) GetAccount(username string) (map[string]string, error) {
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.UserGroupDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, escape(username), m.UserGroupDN),
-		m.DefaultUserFields(),
+		fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, escapeFilter(username), m.UserGroupDN),
+		m.defaultUserFields(),
 		[]ldap.Control{},
 	))
 	if err != nil {
@@ -267,10 +265,11 @@ func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 		return err
 	}
 	// Check for existing user with the same username
+	req.Username = escapeDN(req.Username)
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.UserGroupDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, escape(req.Username), m.UserGroupDN),
+		fmt.Sprintf("(%s=%s,%s)", m.AccountAttribute, req.Username, m.UserGroupDN),
 		[]string{},
 		[]ldap.Control{},
 	))
@@ -282,7 +281,7 @@ func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 	}
 	highestUID, err := m.getHighestID(m.AccountAttribute)
 	if err != nil {
-		if isErr(err, ldap.LDAPResultNoSuchObject) {
+		if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
 			// Try to recover by running the setup
 			_ = m.setupLastUID()
 			highestUID, err = m.getHighestID(m.AccountAttribute)
@@ -298,7 +297,7 @@ func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 		return err
 	}
 
-	if req.HashingAlgorithm == ldaphash.Default {
+	if req.HashingAlgorithm == ldaphash.DEFAULT {
 		req.HashingAlgorithm = m.HashingAlgorithm
 	}
 
@@ -329,12 +328,12 @@ func (m *LDAPManager) NewAccount(req *NewAccountRequest) error {
 	}
 	log.Debug(addUserRequest)
 	if err := m.ldap.Add(addUserRequest); err != nil {
-		if isErr(err, ldap.LDAPResultEntryAlreadyExists) {
+		if ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists) {
 			return &AccountAlreadyExistsError{Username: req.Username}
 		}
 		return fmt.Errorf("failed to add user %q: %v", userDN, err)
 	}
-	if err := m.AddGroupMember(group, req.Username); err != nil && !isErr(err, ldap.LDAPResultAttributeOrValueExists) {
+	if err := m.AddGroupMember(group, req.Username); err != nil && !ldap.IsErrorWithCode(err, ldap.LDAPResultAttributeOrValueExists) {
 		return fmt.Errorf("failed to add user %q to group %q: %v", req.Username, group, err)
 	}
 	if err := m.updateLastID("lastUID", newUID); err != nil {
@@ -350,7 +349,7 @@ func (m *LDAPManager) DeleteAccount(username string) error {
 		return errors.New("username must not be empty")
 	}
 	if err := m.ldap.Del(ldap.NewDelRequest(
-		fmt.Sprintf("%s=%s,%s", m.AccountAttribute, escape(username), m.UserGroupDN),
+		fmt.Sprintf("%s=%s,%s", m.AccountAttribute, escapeDN(username), m.UserGroupDN),
 		[]ldap.Control{},
 	)); err != nil {
 		return err

@@ -29,19 +29,55 @@ type ListOptions struct {
 	SortKey   string `json:"sort_key" form:"sort_key"`
 }
 
-func escape(s string) string {
+func escapeFilter(s string) string {
 	return ldap.EscapeFilter(s)
 }
 
-func isErr(err error, code uint16) bool {
-	return strings.HasPrefix(err.Error(), fmt.Sprintf("LDAP Result Code %d %q", code, ldap.LDAPResultCodeMap[code]))
+var hex = "0123456789abcdef"
+
+func mustescapeFilter(c byte) bool {
+	if c > 0x7f {
+		return true
+	}
+	switch c {
+	case ',', ';', '(', ')', '\\', '*', '"', '#', '=', '+', '<', '>', 0:
+		return true
+	}
+	return false
+}
+
+func escapeDN(dn string) string {
+	// escapes https://ldapwiki.com/wiki/DN%20Escape%20Values
+	escape := 0
+	for i := 0; i < len(dn); i++ {
+		if mustescapeFilter(dn[i]) {
+			escape++
+		}
+	}
+	if escape == 0 {
+		return dn
+	}
+	buf := make([]byte, len(dn)+escape*2)
+	for i, j := 0, 0; i < len(dn); i++ {
+		c := dn[i]
+		if mustescapeFilter(c) {
+			buf[j+0] = '\\'
+			buf[j+1] = hex[c>>4]
+			buf[j+2] = hex[c&0xf]
+			j += 3
+		} else {
+			buf[j] = c
+			j++
+		}
+	}
+	return string(buf)
 }
 
 func (m *LDAPManager) findGroup(groupName string, attributes []string) (*ldap.SearchResult, error) {
 	return m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(cn=%s)", escape(groupName)),
+		fmt.Sprintf("(cn=%s)", escapeFilter(groupName)),
 		attributes,
 		[]ldap.Control{},
 	))

@@ -97,7 +97,7 @@ func (m *LDAPManager) setupAuth(adminPassword string) error {
 // SetupLDAP ...
 func (m *LDAPManager) SetupLDAP() error {
 	if err := m.setupGroupsOU(); err != nil {
-		if !isErr(err, ldap.LDAPResultEntryAlreadyExists) {
+		if !ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists) {
 			return fmt.Errorf("failed to setup groups organizational unit (OU): %v", err)
 		}
 	} else {
@@ -105,7 +105,7 @@ func (m *LDAPManager) SetupLDAP() error {
 	}
 
 	if err := m.setupUsersOU(); err != nil {
-		if !isErr(err, ldap.LDAPResultEntryAlreadyExists) {
+		if !ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists) {
 			return fmt.Errorf("failed to setup users organizational unit (OU): %v", err)
 		}
 	} else {
@@ -113,7 +113,7 @@ func (m *LDAPManager) SetupLDAP() error {
 	}
 
 	if err := m.setupLastGID(); err != nil {
-		if !isErr(err, ldap.LDAPResultEntryAlreadyExists) && !isErr(err, ldap.LDAPResultNoSuchObject) {
+		if !ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists) && !ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
 			return fmt.Errorf("failed to setup the last GID: %v", err)
 		}
 	} else {
@@ -121,7 +121,7 @@ func (m *LDAPManager) SetupLDAP() error {
 	}
 
 	if err := m.setupLastUID(); err != nil {
-		if !isErr(err, ldap.LDAPResultEntryAlreadyExists) && !isErr(err, ldap.LDAPResultNoSuchObject) {
+		if !ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists) && !ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
 			return fmt.Errorf("failed to setup the last UID: %v", err)
 		}
 	} else {
@@ -130,10 +130,10 @@ func (m *LDAPManager) SetupLDAP() error {
 
 	// Unfortunately, we cannot setup groups here without initial members
 	/*
-		if err := m.setupDefaultGroup(); err != nil && !isErr(err, ldap.LDAPResultEntryAlreadyExists) {
+		if err := m.setupDefaultGroup(); err != nil && !ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists) {
 			return fmt.Errorf("failed to setup the default user group: %v", err)
 		}
-		if err := m.setupAdminsGroup(); err != nil && !isErr(err, ldap.LDAPResultEntryAlreadyExists) {
+		if err := m.setupAdminsGroup(); err != nil && !ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists) {
 			return fmt.Errorf("failed to setup the default admin group: %v", err)
 		}
 	*/

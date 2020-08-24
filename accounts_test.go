@@ -32,7 +32,7 @@ func TestAddNewUser(t *testing.T) {
 	// List all users
 	users, err := manager.GetUserList(&GetUserListRequest{})
 	if err != nil {
-		t.Errorf("failed to add user: %v", err)
+		t.Errorf("failed to get users list: %v", err)
 	}
 	found := false
 	for _, user := range users {
@@ -48,17 +48,17 @@ func TestAddNewUser(t *testing.T) {
 
 // TestPasswordHashing ...
 func TestPasswordHashing(t *testing.T) {
-	// t.Skip()
+	t.Skip()
 	test := new(ldaptest.Test).Setup(t)
 	defer test.Teardown()
 	manager := NewLDAPManager(test.OpenLDAPCConfig)
 	if err := manager.Setup(); err != nil {
 		t.Fatal(err)
 	}
-	samplePasswords := []string{"123456"} // , "Hallo@Welt", "@#73sAdf0^E^RC#+++83230*###$&"}
+	samplePasswords := []string{"123456", "Hallo@Welt", "@#73sAdf0^E^RC#+++83230*###$&"}
 	for name, algorithm := range ldaphash.LDAPPasswordHashingAlgorithms {
 		for _, pw := range samplePasswords {
-			t.Log(name, algorithm, pw)
+			// t.Log(name, algorithm, pw)
 			newUserReq := &NewAccountRequest{
 				Username:         name + pw,
 				Password:         pw,
