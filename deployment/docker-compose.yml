@@ -3,9 +3,9 @@ version: "3.6"
 services:
   
   openldap:
-    # image: osixia/openldap
-    build:
-      context: .
+    image: osixia/openldap
+    # build:
+    #   context: .
     ports:
       - 389:389
       - 636:636
@@ -27,9 +27,9 @@ services:
       LDAP_RFC2307BIS_SCHEMA: "true"
 
   ldap-user-manager:
-    # image: wheelybird/ldap-user-manager:v1.2
-    build:
-      context: ../../ldap-user-manager
+    image: wheelybird/ldap-user-manager:v1.2
+    # build:
+    #   context: ../../ldap-user-manager
     ports:
       - 8888:80
     environment:
@@ -44,7 +44,6 @@ services:
       LDAP_GROUP_MEMBERSHIP_ATTRIBUTE: uniquemember
       DEFAULT_USER_GROUP: users
       LDAP_USER_OU: users
-      # LDAP_USES_NIS_SCHEMA: "false"
       LDAP_USES_NIS_SCHEMA: "false"
       NO_HTTPS: "true"
       EMAIL_DOMAIN: example.com
