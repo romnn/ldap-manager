@@ -42,7 +42,7 @@ jobs:
     os: linux
     go: master
     script:
-    - helm init --client-only
+    # - helm init --client-only
     - mkdir -p ./public
     - "echo \"User-Agent: *\nDisallow: /\" > ./public/robots.txt"
     - touch ./public/.nojekyll
@@ -70,7 +70,7 @@ before_script:
 - go get -u golang.org/x/lint/golint
 - go get github.com/fzipp/gocyclo
 - go get github.com/mitchellh/gox
-- curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
+- curl -L https://git.io/get_helm.sh | bash
 script:
 - env GO111MODULE=on go build ${MOD}
 - invoke pre-commit
