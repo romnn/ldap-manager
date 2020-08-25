@@ -9,3 +9,11 @@
     # - id: go-cyclo
     #   args: [-over=15]
     - id: go-build
+- repo: local
+  hooks:
+  - id: lint-chart
+    name: lint helm chart
+    stages: [commit]
+    language: system
+    entry: helm lint deployment/helm/ldap-manager/
+    pass_filenames: false

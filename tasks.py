@@ -132,6 +132,13 @@ def build(c):
 
 
 @task
+def lint_chart(c):
+    """Lints the helm chart
+    """
+    c.run("pre-commit run lint-chart --all-files")
+
+
+@task
 def run(c):
     """Run the cmd target
     """
