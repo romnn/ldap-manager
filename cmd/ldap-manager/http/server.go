@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"sync"
 
+	// "io"
+	// "encoding/json"
+
 	ldapbase "github.com/romnnn/ldap-manager/cmd/ldap-manager/base"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -23,6 +26,30 @@ type LDAPManagerServer struct {
 	Mux          *runtime.ServeMux
 }
 
+/*
+type MyMarshaler struct {}
+
+func (m *MyMarshaler) Marshal(v interface{}) ([]byte, error) {
+	return []byte{}, nil
+}
+
+func (m *MyMarshaler) Unmarshal(data []byte, v interface{}) error {
+	return nil
+}
+
+func (m *MyMarshaler) NewDecoder(r io.Reader) json.Decoder {
+
+}
+
+func (m *MyMarshaler) NewEncoder(w io.Writer) json.Encoder {
+
+}
+
+func (m *MyMarshaler) ContentType(w io.Writer) json.Encoder {
+
+}
+*/
+
 // NewHTTPLDAPManagerServer ...
 func NewHTTPLDAPManagerServer(base *ldapbase.LDAPManagerServer, listener, grpcListener net.Listener) *LDAPManagerServer {
 	mux := runtime.NewServeMux(
@@ -34,6 +61,12 @@ func NewHTTPLDAPManagerServer(base *ldapbase.LDAPManagerServer, listener, grpcLi
 				return key, false
 			}
 		}),
+		/*
+			runtime.WithMarshalerOption("application/octet-stream", &m{
+				// JSONPb: &runtime.JSONPb{EmitDefaults: true},
+				// unmarshaler: &jsonpb.Unmarshaler{AllowUnknownFields: false}, // explicit "false", &jsonpb.Unmarshaler{} would have the same effect
+			}),
+		*/
 	)
 	return &LDAPManagerServer{
 		LDAPManagerServer: base,

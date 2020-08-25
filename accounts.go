@@ -249,7 +249,7 @@ func ValidAccountRequest(req *pb.NewAccountRequest) error {
 }
 
 // NewAccount ...
-func (m *LDAPManager) NewAccount(req *pb.NewAccountRequest) error {
+func (m *LDAPManager) NewAccount(req *pb.NewAccountRequest, algorithm pb.HashingAlgorithm) error {
 	// Validate
 	if err := ValidAccountRequest(req); err != nil {
 		return err
@@ -287,11 +287,11 @@ func (m *LDAPManager) NewAccount(req *pb.NewAccountRequest) error {
 		return err
 	}
 
-	if req.GetHashingAlgorithm() == pb.HashingAlgorithm_DEFAULT {
-		req.HashingAlgorithm = m.HashingAlgorithm
+	if algorithm == pb.HashingAlgorithm_DEFAULT {
+		algorithm = m.HashingAlgorithm
 	}
 
-	hashedPassword, err := ldaphash.Password(req.GetPassword(), req.GetHashingAlgorithm())
+	hashedPassword, err := ldaphash.Password(req.GetPassword(), algorithm)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %v", err)
 	}

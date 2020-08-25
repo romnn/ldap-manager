@@ -64,11 +64,18 @@ enum HashingAlgorithm {
 
 message NewAccountRequest {
   string first_name = 1;
-	string last_name = 2;
-	string username = 3;
-	string password = 4;
-	string email = 5;
-	HashingAlgorithm hashing_algorithm = 100;
+  string last_name = 2;
+  
+  int32 uid = 10;
+  int32 gid = 11;
+  string login_shell = 12;
+  string home_directory = 13;
+
+  string username = 20;
+  string email = 21;
+	string password = 22;
+  // exclude from here because we will use this interface publicly
+  // HashingAlgorithm hashing_algorithm = 100;
 }
 
 message DeleteAccountRequest {
@@ -169,7 +176,7 @@ service LDAPManager {
   rpc GetAccount(GetAccountRequest) returns (User) {
     option (require_admin) = true;
     option (google.api.http) = {
-      get: "/v1/account"
+      get: "/v1/account/{username}"
     };
   }
   rpc NewAccount(NewAccountRequest) returns (Empty) {
@@ -247,7 +254,7 @@ service LDAPManager {
   rpc DeleteGroupMember(GroupMember) returns (Empty) {
     option (require_admin) = true;
     option (google.api.http) = {
-      delete: "/v1/group/{group}/members"
+      delete: "/v1/group/{group}/member/{username}"
     };
   }
 }

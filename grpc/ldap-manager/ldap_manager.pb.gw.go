@@ -99,19 +99,26 @@ func request_LDAPManager_AuthenticateUser_0(ctx context.Context, marshaler runti
 
 }
 
-var (
-	filter_LDAPManager_GetAccount_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_LDAPManager_GetAccount_0(ctx context.Context, marshaler runtime.Marshaler, client LDAPManagerClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetAccountRequest
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["username"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "username")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LDAPManager_GetAccount_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.Username, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "username", err)
 	}
 
 	msg, err := client.GetAccount(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -334,10 +341,6 @@ func request_LDAPManager_AddGroupMember_0(ctx context.Context, marshaler runtime
 
 }
 
-var (
-	filter_LDAPManager_DeleteGroupMember_0 = &utilities.DoubleArray{Encoding: map[string]int{"group": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
-)
-
 func request_LDAPManager_DeleteGroupMember_0(ctx context.Context, marshaler runtime.Marshaler, client LDAPManagerClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GroupMember
 	var metadata runtime.ServerMetadata
@@ -360,11 +363,15 @@ func request_LDAPManager_DeleteGroupMember_0(ctx context.Context, marshaler runt
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "group", err)
 	}
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	val, ok = pathParams["username"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "username")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LDAPManager_DeleteGroupMember_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.Username, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "username", err)
 	}
 
 	msg, err := client.DeleteGroupMember(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -722,7 +729,7 @@ var (
 
 	pattern_LDAPManager_AuthenticateUser_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "example", "echo"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_LDAPManager_GetAccount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "account"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_LDAPManager_GetAccount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "account", "username"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_LDAPManager_NewAccount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "account"}, "", runtime.AssumeColonVerbOpt(true)))
 
@@ -742,7 +749,7 @@ var (
 
 	pattern_LDAPManager_AddGroupMember_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 1, 2, 2}, []string{"v1", "group", "members"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_LDAPManager_DeleteGroupMember_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 1, 2, 2}, []string{"v1", "group", "members"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_LDAPManager_DeleteGroupMember_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "group", "member", "username"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (

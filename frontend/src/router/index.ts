@@ -4,7 +4,7 @@ import VueRouter, { RouteConfig } from "vue-router";
 Vue.use(VueRouter);
 
 const checkAuthenticated = (): boolean => {
-  return true
+  return true;
   /*
   let token = Vue.cookies?.get("user-token") as string;
   let email = Vue.cookies?.get("user-email") as string;
@@ -24,7 +24,7 @@ const checkNotAlreadyAuthenticated = (to: any, from: any, next: any) => {
     next();
     return;
   }
-  next({ name: "MyAccountRoute" });
+  next({ name: "HomeRoute" });
 };
 
 const requireAdmin = (to: any, from: any, next: any) => {
@@ -46,10 +46,10 @@ const requireAuth = (to: any, from: any, next: any) => {
 const routes: Array<RouteConfig> = [
   {
     path: "/",
-    name: "MyAccountRoute",
+    name: "HomeRoute",
     beforeEnter: requireAuth,
     component: () =>
-      import(/* webpackChunkName: "editMyAccount" */ "../views/accounts/Edit.vue")
+      import(/* webpackChunkName: "homeAccount" */ "../views/Home.vue")
   },
   {
     path: "/login",
@@ -59,32 +59,48 @@ const routes: Array<RouteConfig> = [
       import(/* webpackChunkName: "login" */ "../views/Login.vue")
   },
   {
+    path: "/logout",
+    name: "LogoutRoute",
+    component: () =>
+      import(/* webpackChunkName: "logout" */ "../views/Logout.vue")
+  },
+  {
     path: "/accounts",
+    alias: "/account",
     name: "AccountsRoute",
     redirect: { name: "ListAccountsRoute" },
     beforeEnter: requireAdmin,
+    component: () =>
+      import(/* webpackChunkName: "accounts" */ "../views/accounts/Base.vue"),
     children: [
       {
         path: "new",
         name: "NewAccountRoute",
         beforeEnter: requireAdmin,
         component: () =>
-          import(/* webpackChunkName: "newAccount" */ "../views/accounts/New.vue")
-      },
-      {
-        path: "edit",
-        name: "EditAccountRoute",
-        beforeEnter: requireAdmin,
-        component: () =>
-          import(/* webpackChunkName: "editAccount" */ "../views/accounts/Edit.vue")
+          import(
+            /* webpackChunkName: "newAccount" */ "../views/accounts/New.vue"
+          )
       },
       {
         path: "list",
         name: "ListAccountsRoute",
         beforeEnter: requireAdmin,
         component: () =>
-          import(/* webpackChunkName: "listAccounts" */ "../views/accounts/List.vue")
+          import(
+            /* webpackChunkName: "listAccounts" */ "../views/accounts/List.vue"
+          )
       },
+      {
+        path: ":username/edit",
+        name: "EditAccountRoute",
+        props: true,
+        beforeEnter: requireAdmin,
+        component: () =>
+          import(
+            /* webpackChunkName: "editAccount" */ "../views/accounts/Edit.vue"
+          )
+      }
     ]
   },
   {
@@ -98,7 +114,7 @@ const routes: Array<RouteConfig> = [
         beforeEnter: requireAdmin,
         component: () =>
           import(/* webpackChunkName: "newGroup" */ "../views/groups/New.vue")
-      },
+      }
     ]
   }
 ];

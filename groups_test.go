@@ -18,7 +18,7 @@ func addSampleUsers(manager *LDAPManager, num int) ([]string, error) {
 			Email:     "a@b.de",
 			FirstName: "roman",
 			LastName:  "d",
-		}); err != nil {
+		}, pb.HashingAlgorithm_DEFAULT); err != nil {
 			return added, err
 		}
 		added = append(added, username)

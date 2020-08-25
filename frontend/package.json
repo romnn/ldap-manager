@@ -14,6 +14,7 @@
     "bootstrap": "^4.5.2",
     "bootstrap-vue": "^2.16.0",
     "core-js": "^3.6.5",
+    "google-protobuf": "^3.13.0",
     "vue": "^2.6.11",
     "vue-axios": "^2.1.5",
     "vue-class-component": "^7.2.3",
@@ -54,6 +55,10 @@
     "env": {
       "node": true
     },
+    "ignorePatterns": [
+      "node_modules/",
+      "src/generated"
+    ],
     "extends": [
       "plugin:vue/essential",
       "eslint:recommended",

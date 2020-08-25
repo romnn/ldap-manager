@@ -84,6 +84,18 @@ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
 invoke compile-proto
 ```
 
+#### CORS
+
+To quickly work around CORS during development, you can use `proxybootstrap`:
+```bash
+pip install proxybootstrap
+proxybootstrap --port 5000 /v1@http://127.0.0.1:8090 /@http://127.0.0.1:8081
+```
+
+Note that 8090 is the HTTP service and 8081 is the frontend served via npm.
+You can then access the website at [localhost:5000](http://localhost:5000).
+
+
 #### Debug user config
 
 To manually add a user via an LDIF file, use the `ldapadd` command

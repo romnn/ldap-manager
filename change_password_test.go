@@ -23,7 +23,7 @@ func TestChangePassword(t *testing.T) {
 		Email:     "a@b.de",
 		FirstName: "roman",
 		LastName:  "d",
-	}); err != nil {
+	}, pb.HashingAlgorithm_DEFAULT); err != nil {
 		t.Fatalf("failed to add user %q: %v", username, err)
 	}
 

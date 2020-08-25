@@ -52,7 +52,7 @@ func TestAddNewUserAndGetUserList(t *testing.T) {
 		},
 	}
 	for _, newUserReq := range users {
-		if err := test.Manager.NewAccount(newUserReq); err != nil {
+		if err := test.Manager.NewAccount(newUserReq, pb.HashingAlgorithm_DEFAULT); err != nil {
 			t.Errorf("failed to add user: %v", err)
 		}
 	}
@@ -81,14 +81,13 @@ func TestAuthenticateUser(t *testing.T) {
 		for _, pw := range samplePasswords {
 			// t.Log(name, algorithm, pw)
 			newUserReq := &pb.NewAccountRequest{
-				Username:         name + pw,
-				Password:         pw,
-				Email:            "a@b.de",
-				FirstName:        "roman",
-				LastName:         "d",
-				HashingAlgorithm: algorithm,
+				Username:  name + pw,
+				Password:  pw,
+				Email:     "a@b.de",
+				FirstName: "roman",
+				LastName:  "d",
 			}
-			if err := test.Manager.NewAccount(newUserReq); err != nil {
+			if err := test.Manager.NewAccount(newUserReq, algorithm); err != nil {
 				t.Errorf("failed to add user %q: %v", newUserReq.Username, err)
 				continue
 			}
@@ -168,7 +167,7 @@ func TestNewAccountValidation(t *testing.T) {
 		}},
 	}
 	for _, c := range cases {
-		err := test.Manager.NewAccount(c.request)
+		err := test.Manager.NewAccount(c.request, pb.HashingAlgorithm_DEFAULT)
 		if err != nil && c.valid {
 			t.Errorf("failed to add valid user: %v", err)
 		}
@@ -193,7 +192,7 @@ func TestGetAccount(t *testing.T) {
 		FirstName: "Felix",
 		LastName:  "Heisenberg",
 	}
-	if err := test.Manager.NewAccount(newUserReq); err != nil {
+	if err := test.Manager.NewAccount(newUserReq, pb.HashingAlgorithm_DEFAULT); err != nil {
 		t.Fatalf("failed to add user: %v", err)
 	}
 
@@ -252,7 +251,7 @@ func TestDeleteAccount(t *testing.T) {
 			Email:     "felix@web.de",
 			FirstName: "Felix",
 			LastName:  "Heisenberg",
-		}); err != nil {
+		}, pb.HashingAlgorithm_DEFAULT); err != nil {
 			t.Fatalf("failed to add user: %v", err)
 		}
 	}

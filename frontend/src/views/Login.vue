@@ -40,19 +40,19 @@
             ></b-form-input>
           </b-form-group>
 
-          <b-form-group
-            inline
-            label-cols-sm="3"
-            class="mb-0"
-          >
+          <b-form-group inline label-cols-sm="3" class="mb-0">
             <b-form-row>
-            <b-col>
-              <b-form-checkbox size="sm" v-model="form.remember">Remember me</b-form-checkbox>
-            </b-col>
-            <b-col>
-              <b-button size="sm" type="submit" variant="primary">Log in</b-button>
-            </b-col>
-          </b-form-row>
+              <b-col>
+                <b-form-checkbox size="sm" v-model="form.remember"
+                  >Remember me</b-form-checkbox
+                >
+              </b-col>
+              <b-col>
+                <b-button size="sm" type="submit" variant="primary"
+                  >Log in</b-button
+                >
+              </b-col>
+            </b-form-row>
           </b-form-group>
         </b-form>
       </b-card-body>
@@ -64,17 +64,16 @@
 import { Component, Vue } from "vue-property-decorator";
 
 @Component({
-  components: {
-  }
+  components: {}
 })
 export default class Login extends Vue {
-  show = true
+  show = true;
   form = {
     username: "",
     password: "",
-    remember: true,
-  }
-  foods = ["a", "b"]
+    remember: true
+  };
+  foods = ["a", "b"];
 
   onSubmit() {
     // TODO: Perform a auth request, save in cookie, show error if invalid
@@ -82,17 +81,8 @@ export default class Login extends Vue {
     // Password for <?php print $LDAP['admin_bind_dn'] <-- inject these into the frontend somehow
   }
 
-  onReset() {
-    
-  }
+  onReset() {}
 }
 </script>
 
-<style lang="sass" scoped>
-.login
-  position: relative
-  top: 100px
-  min-width: 600px
-  width: 50%
-  margin: 0 auto
-</style>
+<style lang="sass" scoped></style>

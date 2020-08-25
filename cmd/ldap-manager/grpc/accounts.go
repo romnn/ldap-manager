@@ -41,7 +41,7 @@ func (s *LDAPManagerServer) GetAccount(ctx context.Context, in *pb.GetAccountReq
 
 // NewAccount ...
 func (s *LDAPManagerServer) NewAccount(ctx context.Context, in *pb.NewAccountRequest) (*pb.Empty, error) {
-	if err := s.Manager.NewAccount(in); err != nil {
+	if err := s.Manager.NewAccount(in, pb.HashingAlgorithm_DEFAULT); err != nil {
 		log.Error(err)
 		return &pb.Empty{}, status.Error(codes.Internal, "error while creating new account")
 	}

@@ -1,5 +1,13 @@
 <template>
   <div class="account-list-container">
+    <b-card body-class="p-1" bg-variant="dark" v-for="user in list">
+      <div>
+        This is some content without the default
+        <samp>&lt;b-card-body&gt;</samp> section. Notice the lack of padding
+        between the card's border and this gray <samp>&lt;div&gt;</samp>.
+      </div>
+    </b-card>
+    <!--
     <b-card class="login" header-tag="header" footer-tag="footer">
       <template v-slot:header>
         <h6 class="mb-0">Login</h6>
@@ -57,21 +65,30 @@
         </b-form>
       </b-card-body>
     </b-card>
+    -->
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
+import { AccountModule, UserList } from "../../store/modules/accounts";
 
 @Component({
-  components: {
-  }
+  components: {}
 })
-export default class Login extends Vue {
-  accounts: Account[] = []
+export default class AccountList extends Vue {
+  list: UserList = { users: [] };
+
+  mounted() {
+    AccountModule.listAccounts()
+      .then((list: UserList) => {
+        this.list = list;
+      })
+      .catch(err => {
+        debugger;
+      });
+  }
 }
 </script>
 
-<style lang="sass" scoped>
-
-</style>
+<style lang="sass" scoped></style>
