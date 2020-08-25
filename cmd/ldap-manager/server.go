@@ -81,6 +81,19 @@ func main() {
 			EnvVars: []string{"HTTP_PORT", "PORT"},
 			Usage:   "http service port",
 		},
+		&cli.BoolFlag{
+			Name:    "static",
+			Value:   true,
+			Aliases: []string{"serve-static"},
+			EnvVars: []string{"STATIC", "SERVE_STATIC"},
+			Usage:   "serve static frontend",
+		},
+		&cli.StringFlag{
+			Name:    "static-root",
+			Value:   "./frontend/dist",
+			EnvVars: []string{"STATIC_DIR", "STATIC_ROOT"},
+			Usage:   "root source directory of the static files to be served",
+		},
 	}
 
 	configFlags := []cli.Flag{

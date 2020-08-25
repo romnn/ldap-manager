@@ -1,1 +1,1 @@
-export const API_ENDPOINT = "http://localhost:5000/v1";
+export const API_ENDPOINT = "http://" + window.location.hostname + ":5000/api/v1";

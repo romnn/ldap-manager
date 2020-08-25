@@ -26,30 +26,6 @@ type LDAPManagerServer struct {
 	Mux          *runtime.ServeMux
 }
 
-/*
-type MyMarshaler struct {}
-
-func (m *MyMarshaler) Marshal(v interface{}) ([]byte, error) {
-	return []byte{}, nil
-}
-
-func (m *MyMarshaler) Unmarshal(data []byte, v interface{}) error {
-	return nil
-}
-
-func (m *MyMarshaler) NewDecoder(r io.Reader) json.Decoder {
-
-}
-
-func (m *MyMarshaler) NewEncoder(w io.Writer) json.Encoder {
-
-}
-
-func (m *MyMarshaler) ContentType(w io.Writer) json.Encoder {
-
-}
-*/
-
 // NewHTTPLDAPManagerServer ...
 func NewHTTPLDAPManagerServer(base *ldapbase.LDAPManagerServer, listener, grpcListener net.Listener) *LDAPManagerServer {
 	mux := runtime.NewServeMux(
@@ -61,12 +37,6 @@ func NewHTTPLDAPManagerServer(base *ldapbase.LDAPManagerServer, listener, grpcLi
 				return key, false
 			}
 		}),
-		/*
-			runtime.WithMarshalerOption("application/octet-stream", &m{
-				// JSONPb: &runtime.JSONPb{EmitDefaults: true},
-				// unmarshaler: &jsonpb.Unmarshaler{AllowUnknownFields: false}, // explicit "false", &jsonpb.Unmarshaler{} would have the same effect
-			}),
-		*/
 	)
 	return &LDAPManagerServer{
 		LDAPManagerServer: base,
@@ -93,15 +63,38 @@ func (s *LDAPManagerServer) Connect(ctx *cli.Context, listener net.Listener) {
 	s.LDAPManagerServer.Connect(ctx, listener)
 }
 
+func (s *LDAPManagerServer) bootstrapHTTP(ctx *cli.Context) *http.ServeMux {
+	rootMux := http.NewServeMux()
+	if ctx.Bool("static") {
+		// static frontend
+		rootMux.Handle("/", http.FileServer(http.Dir(ctx.String("static-root"))))
+	}
+	// health check
+	rootMux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		if s.LDAPManagerServer.Service.Healthy {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("ok"))
+		} else {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("service is not available"))
+		}
+	})
+	// gateway grpc API
+	rootMux.Handle("/api/", http.StripPrefix("/api", s.Mux))
+	return rootMux
+}
+
 // Serve ...
 func (s *LDAPManagerServer) Serve(wg *sync.WaitGroup, ctx *cli.Context) error {
 	defer wg.Done()
-	s.Service.HTTPServer = &http.Server{Handler: s.Mux}
+	s.Service.HTTPServer = &http.Server{Handler: s.bootstrapHTTP(ctx)}
+
 	if err := s.Service.Bootstrap(ctx); err != nil {
 		return err
 	}
 
 	go s.Connect(ctx, s.Listener)
+
 	if err := s.Service.HTTPServer.Serve(s.Listener); err != nil && err != http.ErrServerClosed {
 		return err
 	}
