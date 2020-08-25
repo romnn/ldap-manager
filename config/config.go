@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	// tc "github.com/romnnn/testcontainers"
 )
 
 // OpenLDAPConfig ...

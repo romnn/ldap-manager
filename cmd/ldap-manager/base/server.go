@@ -1,6 +1,7 @@
 package base
 
 import (
+	"fmt"
 	"net"
 
 	gogrpcservice "github.com/romnnn/go-grpc-service"
@@ -29,41 +30,57 @@ func (s *LDAPManagerServer) Shutdown() {
 
 // NewLDAPManagerServer ...
 func NewLDAPManagerServer(ctx *cli.Context) *LDAPManagerServer {
+	hasReadonlyUser := ctx.String("openldap-readonly-user") != ""
+	baseDN := ctx.String("openldap-base-dn")
+	groupsOU := ctx.String("groups-ou")
+	usersOU := ctx.String("users-ou")
+
+	groupsDN := ctx.String("groups-dn")
+	if groupsDN == "" {
+		groupsDN = fmt.Sprintf("ou=%s,%s", groupsOU, baseDN)
+	}
+	userGroupDN := ctx.String("users-dn")
+	if userGroupDN == "" {
+		userGroupDN = fmt.Sprintf("ou=%s,%s", usersOU, baseDN)
+	}
+
+	manager := &ldapmanager.LDAPManager{
+		OpenLDAPConfig: ldapconfig.OpenLDAPConfig{
+			Host:                 ctx.String("openldap-host"),
+			Port:                 ctx.Int("openldap-port"),
+			Protocol:             ctx.String("openldap-protocol"),
+			Organization:         ctx.String("openldap-organization"),
+			Domain:               ctx.String("openldap-domain"),
+			BaseDN:               baseDN,
+			AdminPassword:        ctx.String("openldap-admin-password"),
+			ConfigPassword:       ctx.String("openldap-config-password"),
+			ReadonlyUser:         hasReadonlyUser,
+			ReadonlyUserUsername: ctx.String("openldap-readonly-user"),
+			ReadonlyUserPassword: ctx.String("openldap-readonly-password"),
+			TLS:                  ctx.Bool("openldap-tls"),
+			UseRFC2307BISSchema:  ctx.Bool("openldap-use-rfc2307bis"),
+		},
+		GroupsOU:                 groupsOU,
+		UsersOU:                  usersOU,
+		GroupsDN:                 groupsDN,
+		UserGroupDN:              userGroupDN,
+		GroupMembershipAttribute: ctx.String("group-membership-attribute"),
+		GroupMembershipUsesUID:   ctx.Bool("group-membership-uses-uid"),
+		AccountAttribute:         ctx.String("account-attribute"),
+		GroupAttribute:           ctx.String("group-attribute"),
+		DefaultUserGroup:         ctx.String("default-user-group"),
+		DefaultAdminGroup:        ctx.String("default-admin-group"),
+		DefaultUserShell:         ctx.String("default-login-shell"),
+	}
+
 	return &LDAPManagerServer{
 		Service: gogrpcservice.Service{
 			Name:               "ldap manager service",
 			Version:            ldapmanager.Version,
 			BuildTime:          Rev,
-			HTTPHealthCheckURL: "health/healthz",
+			HTTPHealthCheckURL: "/healthz",
 		},
-		Manager: &ldapmanager.LDAPManager{
-			OpenLDAPConfig: ldapconfig.OpenLDAPConfig{
-				Host:                 ctx.String("openldap-host"),
-				Port:                 ctx.Int("openldap-port"),
-				Protocol:             ctx.String("openldap-protocol"),
-				Organization:         "Example Inc.",
-				Domain:               "example.org",
-				BaseDN:               "dc=example,dc=org",
-				AdminPassword:        ctx.String("openldap-admin-password"),
-				ConfigPassword:       "config",
-				ReadonlyUser:         true,
-				ReadonlyUserUsername: "readonly",
-				ReadonlyUserPassword: "readonly",
-				TLS:                  false,
-				UseRFC2307BISSchema:  true,
-			},
-			GroupsOU:                 "groups",
-			UsersOU:                  "users",
-			GroupsDN:                 "ou=groups,dc=example,dc=org",
-			UserGroupDN:              "ou=users,dc=example,dc=org",
-			GroupMembershipAttribute: "uniqueMember", // uniquemember or memberUID
-			GroupMembershipUsesUID:   false,
-			AccountAttribute:         "uid",
-			GroupAttribute:           "gid",
-			DefaultUserGroup:         "users",
-			DefaultAdminGroup:        "admins",
-			DefaultUserShell:         "/bin/bash",
-		},
+		Manager: manager,
 	}
 }
 

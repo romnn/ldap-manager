@@ -70,7 +70,7 @@ func (s *LDAPManagerServer) bootstrapHTTP(ctx *cli.Context) *http.ServeMux {
 		rootMux.Handle("/", http.FileServer(http.Dir(ctx.String("static-root"))))
 	}
 	// health check
-	rootMux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+	rootMux.HandleFunc(s.LDAPManagerServer.Service.HTTPHealthCheckURL, func(w http.ResponseWriter, r *http.Request) {
 		if s.LDAPManagerServer.Service.Healthy {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("ok"))

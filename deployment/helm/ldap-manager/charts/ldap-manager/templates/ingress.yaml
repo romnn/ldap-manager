@@ -1,6 +1,7 @@
 {{- if .Values.ingress.enabled -}}
 {{- $fullName := include "ldap-manager.fullname" . -}}
-{{- $svcPort := .Values.service.port -}}
+{{- $svcHttpPort := .Values.service.httpPort -}}
+{{- $svcGrpcPort := .Values.service.grpcPort -}}
 {{- if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
 apiVersion: networking.k8s.io/v1beta1
 {{- else -}}
@@ -27,7 +28,7 @@ spec:
     {{- end }}
   {{- end }}
   rules:
-    {{- range .Values.ingress.hosts }}
+    {{- range .Values.ingress.httpHosts }}
     - host: {{ .host | quote }}
       http:
         paths:
@@ -35,7 +36,18 @@ spec:
           - path: {{ . }}
             backend:
               serviceName: {{ $fullName }}
-              servicePort: {{ $svcPort }}
+              servicePort: {{ $svcHttpPort }}
+          {{- end }}
+    {{- end }}
+    {{- range .Values.ingress.grpcHosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ . }}
+            backend:
+              serviceName: {{ $fullName }}
+              servicePort: {{ $svcGrpcPort }}
           {{- end }}
     {{- end }}
   {{- end }}

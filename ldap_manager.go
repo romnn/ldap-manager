@@ -16,7 +16,7 @@ const Version = "0.0.2"
 // LDAPManager ...
 type LDAPManager struct {
 	ldapconfig.OpenLDAPConfig
-	ldap ldap.Client
+	ldap *ldap.Conn // Client
 
 	GroupsDN    string
 	UserGroupDN string
@@ -57,6 +57,7 @@ func NewLDAPManager(cfg ldapconfig.OpenLDAPConfig) *LDAPManager {
 // Close ...
 func (m *LDAPManager) Close() {
 	if m.ldap != nil {
+		// FIXME: This will panic if the connection was not established
 		m.ldap.Close()
 	}
 }

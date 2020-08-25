@@ -40,7 +40,9 @@ COPY --from=PROTO_BUILD /app /app
 ENV SKIPPROTOCOMPILATION 1
 RUN cd frontend && npm install && npm rebuild node-sass && npm run build
 
-FROM gcr.io/distroless/static
+# FROM gcr.io/distroless/static
+FROM romnn/distroless-base-grpc-health
+
 COPY --from=GO_BUILD /app/app /app
 COPY --from=NODE_BUILD /app/frontend/dist /frontend/dist
 
@@ -50,4 +52,4 @@ ENV GRPC_PORT 9090
 EXPOSE 80
 EXPOSE 9090
 
-ENTRYPOINT [ "/app" ]
+ENTRYPOINT [ "/app", "serve" ]

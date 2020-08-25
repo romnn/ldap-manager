@@ -1,10 +1,6 @@
 package main
 
 import (
-	// "context"
-	// "fmt"
-	// "net"
-	// "net/http"
 	"fmt"
 	"net"
 	"os"
@@ -12,24 +8,14 @@ import (
 	"sync"
 	"syscall"
 
-	// "time"
-
-	// "crypto/tls"
-
-	// "github.com/labstack/echo/v4"
 	ldapbase "github.com/romnnn/ldap-manager/cmd/ldap-manager/base"
 	ldapgrpc "github.com/romnnn/ldap-manager/cmd/ldap-manager/grpc"
 	ldaphttp "github.com/romnnn/ldap-manager/cmd/ldap-manager/http"
 
-	ldapmanager "github.com/romnnn/ldap-manager"
-	// ldapconfig "github.com/romnnn/ldap-manager/config"
-
 	"github.com/romnnn/flags4urfavecli/flags"
-	// "github.com/romnnn/flags4urfavecli/values"
-
-	// gogrpcservice "github.com/romnnn/go-grpc-service"
-	// log "github.com/sirupsen/logrus"
+	"github.com/romnnn/flags4urfavecli/values"
 	"github.com/romnnn/go-grpc-service/versioning"
+	ldapmanager "github.com/romnnn/ldap-manager"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
@@ -53,18 +39,6 @@ func main() {
 		grpcServer.Shutdown()
 		httpServer.Shutdown()
 	}()
-
-	/*
-		&cli.GenericFlag{
-			Name: "format",
-			Value: &values.EnumValue{
-				Enum:    []string{"json", "xml", "csv"},
-				Default: "xml",
-			},
-			EnvVars: []string{"FILEFORMAT"},
-			Usage:   "input file format",
-		},
-	*/
 
 	serverFlags := []cli.Flag{
 		&flags.LogLevelFlag,
@@ -96,19 +70,8 @@ func main() {
 		},
 	}
 
-	configFlags := []cli.Flag{
-		&cli.StringFlag{
-			Name:    "ldap-uri",
-			Value:   "ldap://localhost:389",
-			EnvVars: []string{"LDAP_URI", "LDAP_CONNECTION_URI"},
-			Usage:   "ldap connection URI",
-		},
-		&cli.StringFlag{
-			Name:    "user-group-dn",
-			Value:   "ldap://localhost:389",
-			EnvVars: []string{"LDAP_URI", "LDAP_CONNECTION_URI"},
-			Usage:   "ldap connection URI",
-		},
+	ldapConfigFlags := []cli.Flag{
+		// Connection
 		&cli.StringFlag{
 			Name:    "openldap-host",
 			Value:   "localhost",
@@ -133,6 +96,126 @@ func main() {
 			EnvVars: []string{"OPENLDAP_ADMIN_PASSWORD"},
 			Usage:   "openldap admin password",
 		},
+		&cli.StringFlag{
+			Name:    "openldap-config-password",
+			Value:   "config",
+			EnvVars: []string{"OPENLDAP_CONFIG_PASSWORD"},
+			Usage:   "openldap config password",
+		},
+		&cli.StringFlag{
+			Name:    "openldap-readonly-user",
+			Value:   "", // no readonly user
+			EnvVars: []string{"OPENLDAP_READONLY_USER"},
+			Usage:   "openldap readonly user",
+		},
+		&cli.StringFlag{
+			Name:    "openldap-readonly-password",
+			Value:   "", // no readonly user
+			EnvVars: []string{"OPENLDAP_READONLY_PASSWORD"},
+			Usage:   "openldap readonly password",
+		},
+		&cli.StringFlag{
+			Name:    "openldap-organization",
+			Value:   "Example Inc.",
+			EnvVars: []string{"OPENLDAP_ORGANIZATION"},
+			Usage:   "openldap organization",
+		},
+		&cli.StringFlag{
+			Name:    "openldap-domain",
+			Value:   "example.org",
+			EnvVars: []string{"OPENLDAP_DOMAIN"},
+			Usage:   "openldap domain",
+		},
+		&cli.StringFlag{
+			Name:    "openldap-base-dn",
+			Value:   "dc=example,dc=org",
+			EnvVars: []string{"OPENLDAP_BASE_DN"},
+			Usage:   "openldap base DN",
+		},
+		&cli.BoolFlag{
+			Name:    "openldap-tls",
+			Value:   false,
+			EnvVars: []string{"OPENLDAP_TLS"},
+			Usage:   "openldap tls",
+		},
+		&cli.BoolFlag{
+			Name:    "openldap-use-rfc230bis",
+			Value:   true,
+			EnvVars: []string{"OPENLDAP_USE_RFC230BIS"},
+			Usage:   "openldap use RFC230BIS schema",
+		},
+	}
+
+	ldapManagerFlags := []cli.Flag{
+		&cli.StringFlag{
+			Name:    "groups-ou",
+			Value:   "groups",
+			EnvVars: []string{"GROUPS_OU"},
+			Usage:   "group organizational unit",
+		},
+		&cli.StringFlag{
+			Name:    "users-ou",
+			Value:   "users",
+			EnvVars: []string{"USERS_OU"},
+			Usage:   "user organizational unit",
+		},
+		&cli.StringFlag{
+			Name:    "groups-dn",
+			Value:   "", // default is ou=GROUPS_OU,BASE_DN
+			EnvVars: []string{"GROUPS_DN"},
+			Usage:   "groups DN (default is ou=$GROUPS_OU,$BASE_DN)",
+		},
+		&cli.StringFlag{
+			Name:    "users-dn",
+			Value:   "", // default is ou=USERS_DN,BASE_DN
+			EnvVars: []string{"USERS_DN"},
+			Usage:   "users DN (default is ou=$USERS_DN,$BASE_DN)",
+		},
+		&cli.GenericFlag{
+			Name: "group-membership-attribute",
+			Value: &values.EnumValue{
+				Enum:    []string{"uniqueMember", "memberUID"},
+				Default: "uniqueMember",
+			},
+			EnvVars: []string{"GROUP_MEMBERSHIP_ATTRIBUTE"},
+			Usage:   "group membership attribute (e.g. uniqueMember)",
+		},
+		&cli.BoolFlag{
+			Name:    "group-membership-uses-uid",
+			Value:   false,
+			EnvVars: []string{"GROUP_MEMBERSHIP_USES_UID"},
+			Usage:   "group membership uses UID only instead of full DN",
+		},
+		&cli.StringFlag{
+			Name:    "account-attribute",
+			Value:   "uid",
+			EnvVars: []string{"ACCOUNT_ATTRIBUTE"},
+			Usage:   "account attribute",
+		},
+		&cli.StringFlag{
+			Name:    "group-attribute",
+			Value:   "gid",
+			EnvVars: []string{"GROUP_ATTRIBUTE"},
+			Usage:   "group attribute",
+		},
+		&cli.StringFlag{
+			Name:    "default-user-group",
+			Value:   "users",
+			EnvVars: []string{"DEFAULT_USER_GROUP"},
+			Usage:   "default user group",
+		},
+		&cli.StringFlag{
+			Name:    "default-admin-group",
+			Value:   "admins",
+			EnvVars: []string{"DEFAULT_ADMIN_GROUP"},
+			Usage:   "default admin group",
+		},
+		&cli.StringFlag{
+			Name:    "default-login-shell",
+			Value:   "/bin/bash",
+			EnvVars: []string{"DEFAULT_LOGIN_SHELL"},
+			Usage:   "default login shell",
+		},
 	}
 
 	name := "ldap manager service"
@@ -141,7 +224,7 @@ func main() {
 		Name:    name,
 		Version: versioning.BinaryVersion(ldapmanager.Version, ldapbase.Rev),
 		Usage:   "manages ldap user accounts",
-		Flags:   configFlags,
+		Flags:   append(ldapConfigFlags, ldapManagerFlags...),
 		Commands: []*cli.Command{
 			{
 				Name:  "serve",
@@ -168,6 +251,7 @@ func main() {
 					return nil
 				},
 			},
+			// TODO: Implement CLI interface with more commands
 		},
 	}
 	err := app.Run(os.Args)

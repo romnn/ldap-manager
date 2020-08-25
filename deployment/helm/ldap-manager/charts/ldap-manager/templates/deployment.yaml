@@ -1,0 +1,182 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ldap-manager.fullname" . }}
+  labels:
+    {{- include "ldap-manager.labels" . | nindent 4 }}
+spec:
+{{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include "ldap-manager.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "ldap-manager.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ldap-manager.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+            - name: grpc
+              containerPort: 9090
+          readinessProbe:
+            exec:
+              command: ["/bin/sh", "-c", "/usr/bin/grpc_health_probe -addr=:9090 && curl --silent --show-error --fail http://localhost/healthz"]
+            initialDelaySeconds: 5
+          livenessProbe:
+            exec:
+              # command: ["/usr/bin/grpc_health_probe", "-addr=:9090"]
+              command: ["/bin/sh", "-c", "/usr/bin/grpc_health_probe -addr=:9090 && curl --silent --show-error --fail http://localhost/healthz"]
+            initialDelaySeconds: 10
+          # TODO: Create secrets for all passwords
+          env:
+          {{- if .Values.log }}
+          - name: LOG
+            value: {{ .Values.log }}
+          {{- end }}
+          {{- if .Values.static.enabled }}
+          - name: STATIC
+            value: {{ .Values.static.enabled }}
+          {{- end }}
+          {{- if .Values.static.root }}
+          - name: STATIC_ROOT
+            value: {{ .Values.static.root }}
+          {{- end }}
+          # OPENLDAP config
+          {{- if .Values.ldap.host }}
+          - name: OPENLDAP_HOST
+            value: {{ .Values.ldap.host }}
+          {{- end }}
+          {{- if .Values.ldap.port }}
+          - name: OPENLDAP_PORT
+            value: {{ .Values.ldap.port }}
+          {{- end }}
+          {{- if .Values.ldap.protocol }}
+          - name: OPENLDAP_PROTOCOL
+            value: {{ .Values.ldap.protocol }}
+          {{- end }}
+          {{- if .Values.ldap.adminPassword }}
+          - name: OPENLDAP_ADMIN_PASSWORD
+            value: {{ .Values.ldap.adminPassword }}
+          {{- end }}
+          {{- if .Values.ldap.configPassword }}
+          - name: OPENLDAP_CONFIG_PASSWORD
+            value: {{ .Values.ldap.configPassword }}
+          {{- end }}
+          {{- if .Values.ldap.readonly.user }}
+          - name: OPENLDAP_READONLY_USER
+            value: {{ .Values.ldap.readonly.user }}
+          {{- end }}
+          {{- if .Values.ldap.readonly.password }}
+          - name: OPENLDAP_READONLY_PASSWORD
+            value: {{ .Values.ldap.readonly.password }}
+          {{- end }}
+          {{- if .Values.ldap.readonly.password }}
+          - name: OPENLDAP_READONLY_PASSWORD
+            value: {{ .Values.ldap.readonly.password }}
+          {{- end }}
+          {{- if .Values.ldap.organization }}
+          - name: OPENLDAP_ORGANIZATION
+            value: {{ .Values.ldap.organization }}
+          {{- end }}
+          {{- if .Values.ldap.domain }}
+          - name: OPENLDAP_DOMAIN
+            value: {{ .Values.ldap.domain }}
+          {{- end }}
+          {{- if .Values.ldap.baseDN }}
+          - name: OPENLDAP_BASE_DN
+            value: {{ .Values.ldap.baseDN }}
+          {{- end }}
+          {{- if .Values.ldap.tls }}
+          - name: OPENLDAP_TLS
+            value: {{ .Values.ldap.tls }}
+          {{- end }}
+          {{- if .Values.ldap.useRFC230BIS }}
+          - name: OPENLDAP_USE_RFC230BIS
+            value: {{ .Values.ldap.useRFC230BIS }}
+          {{- end }}
+
+          # LDAP manager flags
+          {{- if .Values.groupsOU }}
+          - name: GROUPS_OU
+            value: {{ .Values.groupsOU }}
+          {{- end }}
+          {{- if .Values.usersOU }}
+          - name: USERS_OU
+            value: {{ .Values.usersOU }}
+          {{- end }}
+          {{- if .Values.groupsDN }}
+          - name: GROUPS_DN
+            value: {{ .Values.groupsDN }}
+          {{- end }}
+          {{- if .Values.usersDN }}
+          - name: USERS_DN
+            value: {{ .Values.usersDN }}
+          {{- end }}
+          {{- if .Values.groupMembershipAttribute }}
+          - name: GROUP_MEMBERSHIP_ATTRIBUTE
+            value: {{ .Values.groupMembershipAttribute }}
+          {{- end }}
+          {{- if .Values.groupMembershipUsesUID }}
+          - name: GROUP_MEMBERSHIP_USES_UID
+            value: {{ .Values.groupMembershipUsesUID }}
+          {{- end }}
+          {{- if .Values.accountAttribute }}
+          - name: ACCOUNT_ATTRIBUTE
+            value: {{ .Values.accountAttribute }}
+          {{- end }}
+          {{- if .Values.groupAttribute }}
+          - name: GROUP_ATTRIBUTE
+            value: {{ .Values.groupAttribute }}
+          {{- end }}
+          {{- if .Values.defaultUserGroup }}
+          - name: DEFAULT_USER_GROUP
+            value: {{ .Values.defaultUserGroup }}
+          {{- end }}
+          {{- if .Values.defaultAdminGroup }}
+          - name: DEFAULT_ADMIN_GROUP
+            value: {{ .Values.defaultAdminGroup }}
+          {{- end }}
+          {{- if .Values.defaultLoginShell }}
+          - name: DEFAULT_LOGIN_SHELL
+            value: {{ .Values.defaultLoginShell }}
+          {{- end }}
+
+          # Any additional environment variables
+          {{- range .Values.additionalEnv }}
+          - name: {{ .name }}
+            value: {{ .value }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
