@@ -87,7 +87,7 @@ func TestGetGroup(t *testing.T) {
 	}
 	assertHasGroups(t, test.Manager, []string{groupName})
 
-	group, err := test.Manager.GetGroup(&pb.GetGroupRequest{Group: groupName})
+	group, err := test.Manager.GetGroup(&pb.GetGroupRequest{Name: groupName})
 	if err != nil {
 		t.Errorf("failed to add get group: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestGetGroup(t *testing.T) {
 
 	// get a non-existent group
 	nonExistentGroup := "i-dont-exist"
-	if _, err := test.Manager.GetGroup(&pb.GetGroupRequest{Group: nonExistentGroup}); err == nil {
+	if _, err := test.Manager.GetGroup(&pb.GetGroupRequest{Name: nonExistentGroup}); err == nil {
 		t.Errorf("expected error getting non-existant group %q", nonExistentGroup)
 	}
 }

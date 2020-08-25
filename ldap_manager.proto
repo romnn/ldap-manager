@@ -3,6 +3,7 @@ package ldapmanager;
 option go_package = "github.com/romnnn/ldap-manager/grpc/ldap-manager;ldapmanager";
 
 import "google/protobuf/descriptor.proto";
+import "google/api/annotations.proto";
 
 extend google.protobuf.MethodOptions {
   bool require_admin = 51234;
@@ -107,13 +108,13 @@ message GroupMemberStatus {
 }
 
 message GetGroupRequest {
-  string group = 1;
+  string name = 1;
   ListOptions options = 2;
 }
 
 message Group {
-  repeated string members = 1;
-	string name = 2;
+  string name = 1;
+  repeated string members = 2;
 }
 
 message GroupMember {
@@ -127,52 +128,126 @@ message ChangePasswordRequest {
 	HashingAlgorithm hashing_algorithm = 100;
 }
 
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message Token {
+  string token = 1;
+}
+
 service LDAPManager {
+  // Authentication
+  rpc Login(LoginRequest) returns (Token) {
+    option (google.api.http) = {
+      post: "/v1/login"
+      body: "*"
+    };
+  }
+  rpc Logout(Empty) returns (Empty) {
+    option (google.api.http) = {
+      post: "/v1/logout"
+      body: "*"
+    };
+  }
+
   // Accounts
   rpc GetUserList(GetUserListRequest) returns (UserList) {
     option (require_admin) = true;
+    option (google.api.http) = {
+      get: "/v1/accounts"
+    };
   }
   rpc AuthenticateUser(AuthenticateUserRequest) returns (Empty) {
     option (require_admin) = true;
+    option (google.api.http) = {
+      post: "/v1/example/echo"
+      body: "*"
+    };
   }
   rpc GetAccount(GetAccountRequest) returns (User) {
     option (require_admin) = true;
+    option (google.api.http) = {
+      get: "/v1/account"
+    };
   }
   rpc NewAccount(NewAccountRequest) returns (Empty) {
     option (require_admin) = true;
+    option (google.api.http) = {
+      put: "/v1/account"
+      body: "*"
+    };
   }
   rpc DeleteAccount(DeleteAccountRequest) returns (Empty) {
     option (require_admin) = true;
+    option (google.api.http) = {
+      delete: "/v1/account/{username}"
+    };
   }
   rpc ChangePassword(ChangePasswordRequest) returns (Empty) {
     option (require_admin) = true;
+    option (google.api.http) = {
+      post: "/v1/account/password"
+      body: "*"
+    };
   }
 
   // Groups
   rpc NewGroup(NewGroupRequest) returns (Empty) {
     option (require_admin) = true;
+    option (google.api.http) = {
+      put: "/v1/group"
+      body: "*"
+    };
   }
   rpc DeleteGroup(DeleteGroupRequest) returns (Empty) {
     option (require_admin) = true;
+    option (google.api.http) = {
+      delete: "/v1/group/{name}"
+    };
   }
   rpc RenameGroup(RenameGroupRequest) returns (Empty) {
     option (require_admin) = true;
+    option (google.api.http) = {
+      post: "/v1/group/rename"
+      body: "*"
+    };
   }
   rpc GetGroupList(GetGroupListRequest) returns (GroupList) {
     option (require_admin) = true;
+    option (google.api.http) = {
+      get: "/v1/groups"
+    };
   }
 
   // Group members
   rpc IsGroupMember(IsGroupMemberRequest) returns (GroupMemberStatus) {
     option (require_admin) = true;
+    /*
+    option (google.api.http) = {
+      post: "/v1/example/echo"
+      body: "*"
+    };
+    */
   }
   rpc GetGroup(GetGroupRequest) returns (Group) {
     option (require_admin) = true;
+    option (google.api.http) = {
+      get: "/v1/group/{name}"
+    };
   }
   rpc AddGroupMember(GroupMember) returns (Empty) {
     option (require_admin) = true;
+    option (google.api.http) = {
+      put: "/v1/group/{group}/members"
+      body: "*"
+    };
   }
   rpc DeleteGroupMember(GroupMember) returns (Empty) {
     option (require_admin) = true;
+    option (google.api.http) = {
+      delete: "/v1/group/{group}/members"
+    };
   }
 }

@@ -11,11 +11,7 @@ Your description goes here...
 ```bash
 go get github.com/romnnn/ldap-manager
 
-# run the HTTP server
-go run github.com/romnnn/ldap-manager/cmd/ldap-manager serve --port 8090 http
-
-# run the gRPC server
-go run github.com/romnnn/ldap-manager/cmd/ldap-manager serve --port 8090 grpc
+go run github.com/romnnn/ldap-manager/cmd/ldap-manager serve --http-port 8090 --grpc-port 9090
 ```
 
 You can also download pre built binaries from the [releases page](https://github.com/romnnn/ldap-manager/releases), or use the `docker` image:
@@ -81,6 +77,8 @@ If you want to (re-)generate the sample grpc service, make sure to install `prot
 You can then use the provided script:
 ```bash
 apt install -y protobuf-compiler
+go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
+go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
 go install google.golang.org/protobuf/cmd/protoc-gen-go
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
 invoke compile-proto
@@ -94,6 +92,12 @@ sudo apt install ldap-utils
 # For debugging, it is a good idea to add the entries manually one after the other
 ldapmodify -h localhost -p 389 -D cn=admin,dc=example,dc=org -w "admin" -f dev/pre-configured-users/1_add_ous.ldif
 ldapmodify -h localhost -p 389 -D cn=admin,dc=example,dc=org -w "admin" -f dev/pre-configured-users/2_add_admin_group.ldif
+
+ldapsearch -LLL -o ldif-wrap=no -h localhost -p 389 \
+    -b "ou=groups,dc=example,dc=org" \
+    -D "cn=admin,dc=example,dc=org" \
+    -w "admin" \
+    '(cn=admins)' dn
 ```
 
 #### Generate LDAP passwords

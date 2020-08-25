@@ -9,9 +9,9 @@ import (
 	"strconv"
 
 	"github.com/go-ldap/ldap"
-	"github.com/neko-neko/echo-logrus/v2/log"
 	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 	ldaphash "github.com/romnnn/ldap-manager/hash"
+	log "github.com/sirupsen/logrus"
 )
 
 var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
@@ -59,7 +59,7 @@ func (e *AccountValidationError) Error() string {
 }
 
 func validEmail(e string) bool {
-	if len(e) < 3 && len(e) > 254 {
+	if len(e) < 3 || len(e) > 254 {
 		return false
 	}
 	return emailRegex.MatchString(e)

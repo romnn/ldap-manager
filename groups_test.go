@@ -156,7 +156,7 @@ func TestRenameGroup(t *testing.T) {
 		t.Fatalf("failed to add sample group: %v", err)
 	}
 	assertHasGroups(t, test.Manager, []string{groupName})
-	groupBefore, err := test.Manager.GetGroup(&pb.GetGroupRequest{Group: groupName})
+	groupBefore, err := test.Manager.GetGroup(&pb.GetGroupRequest{Name: groupName})
 	if err != nil {
 		t.Fatalf("failed to get the group %q before rename: %v", groupName, err)
 	}
@@ -169,7 +169,7 @@ func TestRenameGroup(t *testing.T) {
 	assertHasGroups(t, test.Manager, []string{renamedGroupName})
 
 	// make sure members are left untouched
-	groupAfter, err := test.Manager.GetGroup(&pb.GetGroupRequest{Group: renamedGroupName})
+	groupAfter, err := test.Manager.GetGroup(&pb.GetGroupRequest{Name: renamedGroupName})
 	if err != nil {
 		t.Fatalf("failed to get the renamed group %q before rename: %v", renamedGroupName, err)
 	}
@@ -178,7 +178,7 @@ func TestRenameGroup(t *testing.T) {
 	}
 
 	// make sure the old name is really gone
-	if _, err := test.Manager.GetGroup(&pb.GetGroupRequest{Group: groupName}); err == nil {
+	if _, err := test.Manager.GetGroup(&pb.GetGroupRequest{Name: groupName}); err == nil {
 		t.Errorf("expected error getting the renamed group by the old name %q", groupName)
 	}
 }

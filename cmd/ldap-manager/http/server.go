@@ -1,23 +1,45 @@
 package http
 
 import (
+	"context"
+	"net"
 	"net/http"
+	"sync"
 
-	"github.com/labstack/echo/v4"
-	"github.com/neko-neko/echo-logrus/v2/log"
 	ldapbase "github.com/romnnn/ldap-manager/cmd/ldap-manager/base"
+	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	gw "github.com/romnnn/ldap-manager/grpc/ldap-manager"
+	"google.golang.org/grpc"
 )
 
 // LDAPManagerServer ...
 type LDAPManagerServer struct {
 	*ldapbase.LDAPManagerServer
+	Listener     net.Listener
+	GRPCListener net.Listener
+	Mux          *runtime.ServeMux
 }
 
 // NewHTTPLDAPManagerServer ...
-func NewHTTPLDAPManagerServer(base *ldapbase.LDAPManagerServer) *LDAPManagerServer {
+func NewHTTPLDAPManagerServer(base *ldapbase.LDAPManagerServer, listener, grpcListener net.Listener) *LDAPManagerServer {
+	mux := runtime.NewServeMux(
+		runtime.WithIncomingHeaderMatcher(func(key string) (string, bool) {
+			switch key {
+			case "X-Custom-Header2":
+				return "custom-header2", true
+			default:
+				return key, false
+			}
+		}),
+	)
 	return &LDAPManagerServer{
 		LDAPManagerServer: base,
+		Listener:          listener,
+		GRPCListener:      grpcListener,
+		Mux:               mux,
 	}
 }
 
@@ -28,42 +50,25 @@ func (s *LDAPManagerServer) Shutdown() {
 	}
 }
 
-func (s *LDAPManagerServer) setupRouter() *echo.Echo {
-	e := echo.New()
-
-	// Authentication
-	e.POST("/api/login", s.loginHandler)
-	e.POST("/api/logout", s.logoutHandler)
-
-	// Account management (admin only)
-	e.GET("/api/accounts", s.listAccountsHandler)
-	e.PUT("/api/accounts", s.newAccountHandler)
-
-	// Group management (admin only)
-	e.GET("/api/groups", s.listGroupsHandler)
-	e.DELETE("/api/group/:group", s.deleteGroupHandler)
-	e.PUT("/api/groups", s.newGroupHandler)
-	e.POST("/api/group/:group/add", s.addGroupMemberHandler)
-	e.POST("/api/group/:group/remove", s.removeGroupMemberHandler)
-	e.POST("/api/group/:group/rename", s.renameGroupHandler)
-	e.GET("/api/group/:group", s.getGroupHandler)
-
-	// Edit personal account
-	e.GET("/api/account/:username", s.getAccountHandler)
-	e.DELETE("/api/account/:username", s.deleteAccountHandler)
-	e.PUT("/api/account/:username", s.updateAccountHandler)
-	e.PUT("/api/account/:username/password", s.updatePasswordHandler)
-
-	e.Static("/", "./frontend/dist")
-	return e
+// Connect ...
+func (s *LDAPManagerServer) Connect(ctx *cli.Context, listener net.Listener) {
+	opts := []grpc.DialOption{grpc.WithInsecure(), grpc.WithBlock()}
+	if err := gw.RegisterLDAPManagerHandlerFromEndpoint(context.Background(), s.Mux, s.GRPCListener.Addr().String(), opts); err != nil {
+		log.Error(err)
+		s.Shutdown()
+	}
+	s.LDAPManagerServer.Connect(ctx, listener)
 }
 
 // Serve ...
-func (s *LDAPManagerServer) Serve(ctx *cli.Context) error {
-	if err := s.Service.BootstrapHTTP(ctx, s.setupRouter(), nil); err != nil {
+func (s *LDAPManagerServer) Serve(wg *sync.WaitGroup, ctx *cli.Context) error {
+	defer wg.Done()
+	s.Service.HTTPServer = &http.Server{Handler: s.Mux}
+	if err := s.Service.Bootstrap(ctx); err != nil {
 		return err
 	}
-	go s.Connect(ctx)
+
+	go s.Connect(ctx, s.Listener)
 	if err := s.Service.HTTPServer.Serve(s.Listener); err != nil && err != http.ErrServerClosed {
 		return err
 	}

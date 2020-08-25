@@ -18,6 +18,9 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LDAPManagerClient interface {
+	// Authentication
+	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*Token, error)
+	Logout(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	// Accounts
 	GetUserList(ctx context.Context, in *GetUserListRequest, opts ...grpc.CallOption) (*UserList, error)
 	AuthenticateUser(ctx context.Context, in *AuthenticateUserRequest, opts ...grpc.CallOption) (*Empty, error)
@@ -43,6 +46,24 @@ type lDAPManagerClient struct {
 
 func NewLDAPManagerClient(cc grpc.ClientConnInterface) LDAPManagerClient {
 	return &lDAPManagerClient{cc}
+}
+
+func (c *lDAPManagerClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*Token, error) {
+	out := new(Token)
+	err := c.cc.Invoke(ctx, "/ldapmanager.LDAPManager/Login", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *lDAPManagerClient) Logout(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/ldapmanager.LDAPManager/Logout", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *lDAPManagerClient) GetUserList(ctx context.Context, in *GetUserListRequest, opts ...grpc.CallOption) (*UserList, error) {
@@ -175,6 +196,9 @@ func (c *lDAPManagerClient) DeleteGroupMember(ctx context.Context, in *GroupMemb
 // All implementations must embed UnimplementedLDAPManagerServer
 // for forward compatibility
 type LDAPManagerServer interface {
+	// Authentication
+	Login(context.Context, *LoginRequest) (*Token, error)
+	Logout(context.Context, *Empty) (*Empty, error)
 	// Accounts
 	GetUserList(context.Context, *GetUserListRequest) (*UserList, error)
 	AuthenticateUser(context.Context, *AuthenticateUserRequest) (*Empty, error)
@@ -199,6 +223,12 @@ type LDAPManagerServer interface {
 type UnimplementedLDAPManagerServer struct {
 }
 
+func (*UnimplementedLDAPManagerServer) Login(context.Context, *LoginRequest) (*Token, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (*UnimplementedLDAPManagerServer) Logout(context.Context, *Empty) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Logout not implemented")
+}
 func (*UnimplementedLDAPManagerServer) GetUserList(context.Context, *GetUserListRequest) (*UserList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserList not implemented")
 }
@@ -245,6 +275,42 @@ func (*UnimplementedLDAPManagerServer) mustEmbedUnimplementedLDAPManagerServer()
 
 func RegisterLDAPManagerServer(s *grpc.Server, srv LDAPManagerServer) {
 	s.RegisterService(&_LDAPManager_serviceDesc, srv)
+}
+
+func _LDAPManager_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LDAPManagerServer).Login(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ldapmanager.LDAPManager/Login",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LDAPManagerServer).Login(ctx, req.(*LoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LDAPManager_Logout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LDAPManagerServer).Logout(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ldapmanager.LDAPManager/Logout",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LDAPManagerServer).Logout(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _LDAPManager_GetUserList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -503,6 +569,14 @@ var _LDAPManager_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "ldapmanager.LDAPManager",
 	HandlerType: (*LDAPManagerServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Login",
+			Handler:    _LDAPManager_Login_Handler,
+		},
+		{
+			MethodName: "Logout",
+			Handler:    _LDAPManager_Logout_Handler,
+		},
 		{
 			MethodName: "GetUserList",
 			Handler:    _LDAPManager_GetUserList_Handler,

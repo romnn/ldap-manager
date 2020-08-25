@@ -91,16 +91,20 @@ def coverage(c, publish=False):
 def compile_proto(c):
     """Build the project
     """
+    # Generate golang grpc server and client stubs
     c.run(str(" ").join([
         "protoc",
         "--proto_path=%s" % ROOT_DIR,
         "--go_out=grpc/ldap-manager",
         "--go-grpc_out=grpc/ldap-manager",
+        "--grpc-gateway_out=grpc/ldap-manager",
         "--go_opt=paths=source_relative",
         "--go-grpc_opt=paths=source_relative",
+        "--go-grpc_opt=paths=source_relative",
+        "--grpc-gateway_opt=logtostderr=true,paths=source_relative",
         os.path.join(ROOT_DIR, "ldap_manager.proto"),
     ]))
-
+    
 
 @task
 def cc(c):

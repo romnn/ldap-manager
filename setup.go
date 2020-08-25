@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/go-ldap/ldap"
-	"github.com/neko-neko/echo-logrus/v2/log"
 	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
+	log "github.com/sirupsen/logrus"
 )
 
 // BindReadOnly ...
@@ -83,7 +83,7 @@ func (m *LDAPManager) setupAdminsGroup() error {
 	if err := m.NewGroup(&pb.NewGroupRequest{Name: m.DefaultAdminGroup}, strict); err != nil {
 		return err
 	}
-	adminGroup, err := m.GetGroup(&pb.GetGroupRequest{Group: m.DefaultAdminGroup})
+	adminGroup, err := m.GetGroup(&pb.GetGroupRequest{Name: m.DefaultAdminGroup})
 	if err != nil {
 		return err
 	}

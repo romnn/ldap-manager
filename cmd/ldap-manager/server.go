@@ -5,8 +5,11 @@ import (
 	// "fmt"
 	// "net"
 	// "net/http"
+	"fmt"
+	"net"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	// "time"
@@ -25,16 +28,20 @@ import (
 	// "github.com/romnnn/flags4urfavecli/values"
 
 	// gogrpcservice "github.com/romnnn/go-grpc-service"
-	"github.com/neko-neko/echo-logrus/v2/log"
+	// log "github.com/sirupsen/logrus"
 	"github.com/romnnn/go-grpc-service/versioning"
+	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
 
-var server LDAPManagerServer
+var (
+	grpcServer LDAPManagerServer
+	httpServer LDAPManagerServer
+)
 
 // LDAPManagerServer ...
 type LDAPManagerServer interface {
-	Serve(*cli.Context) error
+	Serve(*sync.WaitGroup, *cli.Context) error
 	Shutdown()
 }
 
@@ -43,7 +50,8 @@ func main() {
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-shutdown
-		server.Shutdown()
+		grpcServer.Shutdown()
+		httpServer.Shutdown()
 	}()
 
 	/*
@@ -61,10 +69,17 @@ func main() {
 	serverFlags := []cli.Flag{
 		&flags.LogLevelFlag,
 		&cli.IntFlag{
-			Name:    "port",
+			Name:    "grpc-port",
+			Value:   9090,
+			EnvVars: []string{"GRPC_PORT"},
+			Usage:   "grpc service port",
+		},
+		&cli.IntFlag{
+			Name:    "http-port",
 			Value:   80,
-			EnvVars: []string{"PORT"},
-			Usage:   "service port",
+			Aliases: []string{"port"},
+			EnvVars: []string{"HTTP_PORT", "PORT"},
+			Usage:   "http service port",
 		},
 	}
 
@@ -119,31 +134,25 @@ func main() {
 				Name:  "serve",
 				Usage: "serve ldap manager service",
 				Flags: serverFlags,
-				Subcommands: []*cli.Command{
-					{
-						Name:  "grpc",
-						Usage: "serve ldap manager grpc service",
-						Action: func(ctx *cli.Context) error {
-							base, err := ldapbase.NewLDAPManagerServer(ctx)
-							if err != nil {
-								return err
-							}
-							server = ldapgrpc.NewGRPCLDAPManagerServer(base)
-							return server.Serve(ctx)
-						},
-					},
-					{
-						Name:  "http",
-						Usage: "serve ldap manager http service",
-						Action: func(ctx *cli.Context) error {
-							base, err := ldapbase.NewLDAPManagerServer(ctx)
-							if err != nil {
-								return err
-							}
-							server = ldaphttp.NewHTTPLDAPManagerServer(base)
-							return server.Serve(ctx)
-						},
-					},
+				Action: func(ctx *cli.Context) error {
+					grpcListener, err := net.Listen("tcp", fmt.Sprintf(":%d", ctx.Int("grpc-port")))
+					if err != nil {
+						return fmt.Errorf("failed to listen: %v", err)
+					}
+					httpListener, err := net.Listen("tcp", fmt.Sprintf(":%d", ctx.Int("http-port")))
+					if err != nil {
+						return fmt.Errorf("failed to listen: %v", err)
+					}
+
+					base := ldapbase.NewLDAPManagerServer(ctx)
+					grpcServer = ldapgrpc.NewGRPCLDAPManagerServer(base, grpcListener)
+					httpServer = ldaphttp.NewHTTPLDAPManagerServer(base, httpListener, grpcListener)
+					var wg sync.WaitGroup
+					wg.Add(2)
+					go grpcServer.Serve(&wg, ctx)
+					go httpServer.Serve(&wg, ctx)
+					wg.Wait()
+					return nil
 				},
 			},
 		},

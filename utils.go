@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-ldap/ldap"
-	"github.com/neko-neko/echo-logrus/v2/log"
+	log "github.com/sirupsen/logrus"
 )
 
 const (

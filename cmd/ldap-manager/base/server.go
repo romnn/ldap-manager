@@ -1,13 +1,12 @@
 package base
 
 import (
-	"fmt"
 	"net"
 
-	"github.com/neko-neko/echo-logrus/v2/log"
 	gogrpcservice "github.com/romnnn/go-grpc-service"
 	ldapmanager "github.com/romnnn/ldap-manager"
 	ldapconfig "github.com/romnnn/ldap-manager/config"
+	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
 
@@ -20,8 +19,7 @@ const Version = "0.0.1"
 // LDAPManagerServer ...
 type LDAPManagerServer struct {
 	gogrpcservice.Service
-	Manager  *ldapmanager.LDAPManager
-	Listener net.Listener
+	Manager *ldapmanager.LDAPManager
 }
 
 // Shutdown ...
@@ -33,9 +31,8 @@ func (s *LDAPManagerServer) Shutdown() {
 }
 
 // NewLDAPManagerServer ...
-func NewLDAPManagerServer(ctx *cli.Context) (*LDAPManagerServer, error) {
-	var err error
-	s := &LDAPManagerServer{
+func NewLDAPManagerServer(ctx *cli.Context) *LDAPManagerServer {
+	return &LDAPManagerServer{
 		Service: gogrpcservice.Service{
 			Name:               "ldap manager service",
 			Version:            Version,
@@ -71,13 +68,6 @@ func NewLDAPManagerServer(ctx *cli.Context) (*LDAPManagerServer, error) {
 			DefaultUserShell:         "/bin/bash",
 		},
 	}
-
-	port := fmt.Sprintf(":%d", ctx.Int("port"))
-	s.Listener, err = net.Listen("tcp", port)
-	if err != nil {
-		return nil, fmt.Errorf("failed to listen: %v", err)
-	}
-	return s, nil
 }
 
 // Setup prepares the service
@@ -89,7 +79,7 @@ func (s *LDAPManagerServer) Setup(ctx *cli.Context) error {
 }
 
 // Connect starts the service
-func (s *LDAPManagerServer) Connect(ctx *cli.Context) {
+func (s *LDAPManagerServer) Connect(ctx *cli.Context, listener net.Listener) {
 	log.Info("connecting...")
 	if err := s.Setup(ctx); err != nil {
 		log.Error(err)
@@ -98,5 +88,5 @@ func (s *LDAPManagerServer) Connect(ctx *cli.Context) {
 	}
 	s.Service.Ready = true
 	s.Service.SetHealthy(true)
-	log.Infof("%s ready at %s", s.Service.Name, s.Listener.Addr())
+	log.Infof("%s ready at %s", s.Service.Name, listener.Addr())
 }

@@ -1,9 +1,12 @@
 package grpc
 
 import (
-	"github.com/neko-neko/echo-logrus/v2/log"
+	"net"
+	"sync"
+
 	ldapbase "github.com/romnnn/ldap-manager/cmd/ldap-manager/base"
 	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
+	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
 
@@ -11,12 +14,14 @@ import (
 type LDAPManagerServer struct {
 	pb.UnimplementedLDAPManagerServer
 	*ldapbase.LDAPManagerServer
+	Listener net.Listener
 }
 
 // NewGRPCLDAPManagerServer ...
-func NewGRPCLDAPManagerServer(base *ldapbase.LDAPManagerServer) *LDAPManagerServer {
+func NewGRPCLDAPManagerServer(base *ldapbase.LDAPManagerServer, listener net.Listener) *LDAPManagerServer {
 	return &LDAPManagerServer{
 		LDAPManagerServer: base,
+		Listener:          listener,
 	}
 }
 
@@ -28,11 +33,12 @@ func (s *LDAPManagerServer) Shutdown() {
 }
 
 // Serve ...
-func (s *LDAPManagerServer) Serve(ctx *cli.Context) error {
+func (s *LDAPManagerServer) Serve(wg *sync.WaitGroup, ctx *cli.Context) error {
+	defer wg.Done()
 	if err := s.Service.BootstrapGrpc(ctx, nil); err != nil {
 		return err
 	}
-	go s.Connect(ctx)
+	go s.Connect(ctx, s.Listener)
 	pb.RegisterLDAPManagerServer(s.Service.GrpcServer, s)
 	if err := s.Service.ServeGrpc(s.Listener); err != nil {
 		return err

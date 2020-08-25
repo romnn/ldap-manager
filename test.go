@@ -6,11 +6,11 @@ import (
 	tclog "log"
 	"testing"
 
-	"github.com/neko-neko/echo-logrus/v2/log"
 	ldapconfig "github.com/romnnn/ldap-manager/config"
 	ldaptest "github.com/romnnn/ldap-manager/test"
 	tc "github.com/romnnn/testcontainers"
 	"github.com/romnnn/testcontainers-go"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -21,17 +21,6 @@ const (
 	skipGroupTests          = false
 	skipGroupMemberTests    = false
 )
-
-func init() {
-	// This will disable the native `log.Printf` calls by testcontainers-go
-	tclog.SetFlags(0)
-	tclog.SetOutput(ioutil.Discard)
-
-	// This wil disable the application logger
-	log.Logger().SetOutput(ioutil.Discard)
-
-	// Note: if you want to log in tests, use `t.Log`
-}
 
 // Test ...
 type Test struct {
@@ -46,6 +35,15 @@ func (test *Test) Setup(t *testing.T) *Test {
 	if parallel {
 		t.Parallel()
 	}
+
+	// This will disable the native `log.Printf` calls by testcontainers-go
+	tclog.SetFlags(0)
+	tclog.SetOutput(ioutil.Discard)
+
+	// This wil disable the application logger
+	log.SetOutput(ioutil.Discard)
+
+	// Note: if you want to log in tests, use `t.Log`
 
 	containerOptions := tc.ContainerOptions{
 		ContainerRequest: testcontainers.ContainerRequest{},

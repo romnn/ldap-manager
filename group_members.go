@@ -5,8 +5,8 @@ import (
 	"sort"
 
 	"github.com/go-ldap/ldap"
-	"github.com/neko-neko/echo-logrus/v2/log"
 	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
+	log "github.com/sirupsen/logrus"
 )
 
 // RemoveLastGroupMemberError ...
@@ -78,7 +78,7 @@ func (m *LDAPManager) IsGroupMember(req *pb.IsGroupMemberRequest) (*pb.GroupMemb
 
 // GetGroup ...
 func (m *LDAPManager) GetGroup(req *pb.GetGroupRequest) (*pb.Group, error) {
-	group, err := m.getGroup(req.GetGroup())
+	group, err := m.getGroup(req.GetName())
 	if err != nil {
 		return nil, err
 	}

@@ -207,7 +207,7 @@ func TestGetAccount(t *testing.T) {
 	}
 
 	// Make sure that the new account is in the users group
-	group, err := test.Manager.GetGroup(&pb.GetGroupRequest{Group: test.Manager.DefaultUserGroup})
+	group, err := test.Manager.GetGroup(&pb.GetGroupRequest{Name: test.Manager.DefaultUserGroup})
 	if err != nil {
 		t.Fatalf("failed to get members of the group %q: %v", test.Manager.DefaultUserGroup, err)
 	}

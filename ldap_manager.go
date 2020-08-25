@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/go-ldap/ldap"
-	"github.com/neko-neko/echo-logrus/v2/log"
 	ldapconfig "github.com/romnnn/ldap-manager/config"
 	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
+	log "github.com/sirupsen/logrus"
 )
 
 // LDAPManager ...
