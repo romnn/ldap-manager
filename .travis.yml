@@ -70,7 +70,7 @@ before_script:
 - go get -u golang.org/x/lint/golint
 - go get github.com/fzipp/gocyclo
 - go get github.com/mitchellh/gox
-- curl -L https://git.io/get_helm.sh | bash
+- curl -L https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 script:
 - env GO111MODULE=on go build ${MOD}
 - invoke pre-commit
