@@ -21,7 +21,7 @@ import (
 	ldapgrpc "github.com/romnnn/ldap-manager/cmd/ldap-manager/grpc"
 	ldaphttp "github.com/romnnn/ldap-manager/cmd/ldap-manager/http"
 
-	// ldapmanager "github.com/romnnn/ldap-manager"
+	ldapmanager "github.com/romnnn/ldap-manager"
 	// ldapconfig "github.com/romnnn/ldap-manager/config"
 
 	"github.com/romnnn/flags4urfavecli/flags"
@@ -126,7 +126,7 @@ func main() {
 
 	app := &cli.App{
 		Name:    name,
-		Version: versioning.BinaryVersion(ldapbase.Version, ldapbase.Rev),
+		Version: versioning.BinaryVersion(ldapmanager.Version, ldapbase.Rev),
 		Usage:   "manages ldap user accounts",
 		Flags:   configFlags,
 		Commands: []*cli.Command{

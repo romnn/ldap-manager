@@ -13,9 +13,6 @@ import (
 // Rev is set on build time to the git HEAD
 var Rev = ""
 
-// Version is incremented using bump2version
-const Version = "0.0.1"
-
 // LDAPManagerServer ...
 type LDAPManagerServer struct {
 	gogrpcservice.Service
@@ -35,7 +32,7 @@ func NewLDAPManagerServer(ctx *cli.Context) *LDAPManagerServer {
 	return &LDAPManagerServer{
 		Service: gogrpcservice.Service{
 			Name:               "ldap manager service",
-			Version:            Version,
+			Version:            ldapmanager.Version,
 			BuildTime:          Rev,
 			HTTPHealthCheckURL: "health/healthz",
 		},
