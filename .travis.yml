@@ -13,6 +13,13 @@ jobs:
   - go: tip
   fast_finish: true
   include:
+  - stage: test
+    name: Lint helm chart
+    os: linux
+    go: master
+    script:
+    - helm lint deployment/helm/ldap-manager/
+
   - stage: deploy
     name: Publish release
     os: linux
@@ -29,6 +36,32 @@ jobs:
       on:
         repo: romnnn/ldap-manager
         tags: true
+
+  - stage: deploy
+    name: Publish helm chart release
+    os: linux
+    go: master
+    script:
+    - helm init --client-only
+    - mkdir -p ./public
+    - "echo \"User-Agent: *\nDisallow: /\" > ./public/robots.txt"
+    - touch ./public/.nojekyll
+    - helm package deployment/helm/ldap-manager --destination ./public/charts
+    - export TRAVIS_REPO_OWNER=${TRAVIS_REPO_SLUG%/*}
+    - export TRAVIS_REPO_NAME=${TRAVIS_REPO_SLUG#*/}
+    - helm repo index --url https://${TRAVIS_REPO_OWNER}.github.io/${TRAVIS_REPO_NAME} .
+    - mv index.yaml ./public/charts
+    python: 3.6
+    deploy:
+      provider: pages
+      local_dir: docs/build
+      skip_cleanup: true
+      # Generate a GitHub access token for public repositories
+      # In your travis ci settings, set the token as a secret environment variable $GH_TOKEN
+      token: "$GH_TOKEN"
+      keep_history: true
+      on:
+        branch: master
 install: true
 notifications:
   email: false
@@ -37,10 +70,10 @@ before_script:
 - go get -u golang.org/x/lint/golint
 - go get github.com/fzipp/gocyclo
 - go get github.com/mitchellh/gox
+- curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
 script:
 - env GO111MODULE=on go build ${MOD}
 - invoke pre-commit
-- if [ "$TRAVIS_OS_NAME" = "linux" ]; then env GO111MODULE=on go test -v -race -coverprofile=coverage.txt
-  -coverpkg=all -covermode=atomic ./... ; fi
+- if [ "$TRAVIS_OS_NAME" = "linux" ]; then env GO111MODULE=on go test -v -race -coverprofile=coverage.txt -coverpkg=all -covermode=atomic ./... ; fi
 after_success:
 - bash <(curl -s https://codecov.io/bash)
