@@ -5,6 +5,10 @@
  [![Docker Pulls](https://img.shields.io/docker/pulls/romnn/ldap-manager)](https://hub.docker.com/r/romnn/ldap-manager) [![Test Coverage](https://codecov.io/gh/romnnn/ldap-manager/branch/master/graph/badge.svg)](https://codecov.io/gh/romnnn/ldap-manager)
 [![Release](https://img.shields.io/github/release/romnnn/ldap-manager)](https://github.com/romnnn/ldap-manager/releases/latest)
 
+<p align="center">
+  <img width="200" src="icon/icon_lg.jpg">
+</p>
+
 Your description goes here...
 
 
