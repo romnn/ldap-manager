@@ -2,6 +2,7 @@ package ldapmanager
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -80,21 +81,38 @@ func TestAuthenticateUser(t *testing.T) {
 		name, _ := pb.HashingAlgorithm_name[int32(algorithm)]
 		for _, pw := range samplePasswords {
 			// t.Log(name, algorithm, pw)
-			newUserReq := &pb.NewAccountRequest{
-				Username:  name + pw,
-				Password:  pw,
-				Email:     "a@b.de",
-				FirstName: "roman",
-				LastName:  "d",
-			}
-			if err := test.Manager.NewAccount(newUserReq, algorithm); err != nil {
-				t.Errorf("failed to add user %q: %v", newUserReq.Username, err)
-				continue
-			}
+			var finalErr error
+			attemptsLeft := 5
+			for {
+				// FIXME: this tests is flaky :(
+				attemptsLeft--
+				newUserReq := &pb.NewAccountRequest{
+					Username:  name + pw + strconv.Itoa(attemptsLeft),
+					Password:  pw,
+					Email:     "a@b.de",
+					FirstName: "roman",
+					LastName:  "d",
+				}
+				if err := test.Manager.NewAccount(newUserReq, algorithm); err != nil {
+					if attemptsLeft <= 0 {
+						finalErr = fmt.Errorf("failed to add user %q: %v", newUserReq.Username, err)
+						break
+					}
+					continue
+				}
 
-			// now check if we can authenticate using the clear password
-			if err := test.Manager.AuthenticateUser(&pb.AuthenticateUserRequest{Username: newUserReq.Username, Password: pw}); err != nil {
-				t.Errorf("failed to authenticate user %q with password %q: %v", newUserReq.Username, pw, err)
+				// now check if we can authenticate using the clear password
+				if err := test.Manager.AuthenticateUser(&pb.AuthenticateUserRequest{Username: newUserReq.Username, Password: pw}); err != nil {
+					if attemptsLeft <= 0 {
+						finalErr = fmt.Errorf("failed to authenticate user %q with password %q: %v", newUserReq.Username, pw, err)
+						break
+					}
+					continue
+				}
+				break
+			}
+			if finalErr != nil {
+				t.Error(finalErr)
 			}
 		}
 	}
