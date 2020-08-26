@@ -11,7 +11,7 @@ from invoke import task
 import webbrowser
 
 PKG = "github.com/romnnn/ldap-manager"
-CMD_PKG = PKG
+CMD_PKG = "github.com/romnnn/ldap-manager/cmd/ldap-manager"
 
 
 
@@ -117,8 +117,9 @@ def cc(c):
     if TRAVIS_TAG and BINARY:
         output = "%s-%s-{{.OS}}-{{.Arch}}" % (BINARY, TRAVIS_TAG)
     
+    # FIXME: compiling github.com/docker/docker/pkg/system on windows fails, so windows is disabled for now
     c.run(
-        'gox -os="linux darwin windows" -arch="amd64" -output="build/%s" -ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose %s'
+        'gox -os="linux darwin" -arch="amd64" -output="build/%s" -ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose %s'
         % (output, CMD_PKG)
     )
 
