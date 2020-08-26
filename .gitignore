@@ -27,3 +27,4 @@ coverage*
 build/
 **/dist
 **/node_modules
+**/debug.yaml

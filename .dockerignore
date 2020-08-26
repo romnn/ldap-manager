@@ -26,4 +26,6 @@ coverage*
 build/
 **/dist
 **/node_modules
-icon
+icon/
+**/debug.yaml
+deployment/

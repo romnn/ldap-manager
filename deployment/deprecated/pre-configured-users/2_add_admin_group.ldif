@@ -1,6 +1,0 @@
-dn: cn=admins,ou=groups,dc=example,dc=org
-changetype: add
-objectClass: groupofuniquenames
-cn: admins
-description: the admins group
-uniqueMember: cn=admin,ou=users,dc=example,dc=org

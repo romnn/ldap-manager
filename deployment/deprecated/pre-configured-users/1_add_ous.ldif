@@ -1,9 +1,0 @@
-dn: ou=users,dc=example,dc=org
-changetype: add
-objectClass: organizationalUnit
-ou: users
-
-dn: ou=groups,dc=example,dc=org
-changetype: add
-objectClass: organizationalUnit
-ou: groups
