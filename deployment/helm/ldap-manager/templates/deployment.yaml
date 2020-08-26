@@ -40,131 +40,134 @@ spec:
               containerPort: 9090
           readinessProbe:
             exec:
-              command: ["/bin/sh", "-c", "/usr/bin/grpc_health_probe -addr=:9090 && curl --silent --show-error --fail http://localhost/healthz"]
+              command: ["/usr/bin/grpc_health_probe", "-addr=:9090"]
+              # as of now we can only check the health of the grpc service because the distroless image has neither a shell nor curl
+              # command: ["/bin/sh", "-c", "/usr/bin/grpc_health_probe -addr=:9090 && curl --silent --show-error --fail http://localhost/healthz"]
             initialDelaySeconds: 5
           livenessProbe:
             exec:
-              # command: ["/usr/bin/grpc_health_probe", "-addr=:9090"]
-              command: ["/bin/sh", "-c", "/usr/bin/grpc_health_probe -addr=:9090 && curl --silent --show-error --fail http://localhost/healthz"]
+              command: ["/usr/bin/grpc_health_probe", "-addr=:9090"]
+              # as of now we can only check the health of the grpc service because the distroless image has neither a shell nor curl
+              # command: ["/bin/sh", "-c", "/usr/bin/grpc_health_probe -addr=:9090 && curl --silent --show-error --fail http://localhost/healthz"]
             initialDelaySeconds: 10
           # TODO: Create secrets for all passwords
           env:
           {{- if .Values.log }}
           - name: LOG
-            value: {{ .Values.log }}
+            value: {{ .Values.log | quote }}
           {{- end }}
           {{- if .Values.static.enabled }}
           - name: STATIC
-            value: {{ .Values.static.enabled }}
+            value: {{ .Values.static.enabled | quote }}
           {{- end }}
           {{- if .Values.static.root }}
           - name: STATIC_ROOT
-            value: {{ .Values.static.root }}
+            value: {{ .Values.static.root | quote }}
           {{- end }}
           # OPENLDAP config
           {{- if .Values.ldap.host }}
           - name: OPENLDAP_HOST
-            value: {{ .Values.ldap.host }}
+            value: {{ .Values.ldap.host | quote }}
           {{- end }}
           {{- if .Values.ldap.port }}
           - name: OPENLDAP_PORT
-            value: {{ .Values.ldap.port }}
+            value: {{ .Values.ldap.port | quote }}
           {{- end }}
           {{- if .Values.ldap.protocol }}
           - name: OPENLDAP_PROTOCOL
-            value: {{ .Values.ldap.protocol }}
+            value: {{ .Values.ldap.protocol | quote }}
           {{- end }}
           {{- if .Values.ldap.adminPassword }}
           - name: OPENLDAP_ADMIN_PASSWORD
-            value: {{ .Values.ldap.adminPassword }}
+            value: {{ .Values.ldap.adminPassword | quote }}
           {{- end }}
           {{- if .Values.ldap.configPassword }}
           - name: OPENLDAP_CONFIG_PASSWORD
-            value: {{ .Values.ldap.configPassword }}
+            value: {{ .Values.ldap.configPassword | quote }}
           {{- end }}
           {{- if .Values.ldap.readonly.user }}
           - name: OPENLDAP_READONLY_USER
-            value: {{ .Values.ldap.readonly.user }}
+            value: {{ .Values.ldap.readonly.user | quote }}
           {{- end }}
           {{- if .Values.ldap.readonly.password }}
           - name: OPENLDAP_READONLY_PASSWORD
-            value: {{ .Values.ldap.readonly.password }}
+            value: {{ .Values.ldap.readonly.password | quote }}
           {{- end }}
           {{- if .Values.ldap.readonly.password }}
           - name: OPENLDAP_READONLY_PASSWORD
-            value: {{ .Values.ldap.readonly.password }}
+            value: {{ .Values.ldap.readonly.password | quote }}
           {{- end }}
           {{- if .Values.ldap.organization }}
           - name: OPENLDAP_ORGANIZATION
-            value: {{ .Values.ldap.organization }}
+            value: {{ .Values.ldap.organization | quote }}
           {{- end }}
           {{- if .Values.ldap.domain }}
           - name: OPENLDAP_DOMAIN
-            value: {{ .Values.ldap.domain }}
+            value: {{ .Values.ldap.domain | quote }}
           {{- end }}
           {{- if .Values.ldap.baseDN }}
           - name: OPENLDAP_BASE_DN
-            value: {{ .Values.ldap.baseDN }}
+            value: {{ .Values.ldap.baseDN | quote }}
           {{- end }}
           {{- if .Values.ldap.tls }}
           - name: OPENLDAP_TLS
-            value: {{ .Values.ldap.tls }}
+            value: {{ .Values.ldap.tls | quote }}
           {{- end }}
           {{- if .Values.ldap.useRFC230BIS }}
           - name: OPENLDAP_USE_RFC230BIS
-            value: {{ .Values.ldap.useRFC230BIS }}
+            value: {{ .Values.ldap.useRFC230BIS | quote }}
           {{- end }}
 
           # LDAP manager flags
           {{- if .Values.groupsOU }}
           - name: GROUPS_OU
-            value: {{ .Values.groupsOU }}
+            value: {{ .Values.groupsOU | quote }}
           {{- end }}
           {{- if .Values.usersOU }}
           - name: USERS_OU
-            value: {{ .Values.usersOU }}
+            value: {{ .Values.usersOU | quote }}
           {{- end }}
           {{- if .Values.groupsDN }}
           - name: GROUPS_DN
-            value: {{ .Values.groupsDN }}
+            value: {{ .Values.groupsDN | quote }}
           {{- end }}
           {{- if .Values.usersDN }}
           - name: USERS_DN
-            value: {{ .Values.usersDN }}
+            value: {{ .Values.usersDN | quote }}
           {{- end }}
           {{- if .Values.groupMembershipAttribute }}
           - name: GROUP_MEMBERSHIP_ATTRIBUTE
-            value: {{ .Values.groupMembershipAttribute }}
+            value: {{ .Values.groupMembershipAttribute | quote }}
           {{- end }}
           {{- if .Values.groupMembershipUsesUID }}
           - name: GROUP_MEMBERSHIP_USES_UID
-            value: {{ .Values.groupMembershipUsesUID }}
+            value: {{ .Values.groupMembershipUsesUID | quote }}
           {{- end }}
           {{- if .Values.accountAttribute }}
           - name: ACCOUNT_ATTRIBUTE
-            value: {{ .Values.accountAttribute }}
+            value: {{ .Values.accountAttribute | quote }}
           {{- end }}
           {{- if .Values.groupAttribute }}
           - name: GROUP_ATTRIBUTE
-            value: {{ .Values.groupAttribute }}
+            value: {{ .Values.groupAttribute | quote }}
           {{- end }}
           {{- if .Values.defaultUserGroup }}
           - name: DEFAULT_USER_GROUP
-            value: {{ .Values.defaultUserGroup }}
+            value: {{ .Values.defaultUserGroup | quote }}
           {{- end }}
           {{- if .Values.defaultAdminGroup }}
           - name: DEFAULT_ADMIN_GROUP
-            value: {{ .Values.defaultAdminGroup }}
+            value: {{ .Values.defaultAdminGroup | quote }}
           {{- end }}
           {{- if .Values.defaultLoginShell }}
           - name: DEFAULT_LOGIN_SHELL
-            value: {{ .Values.defaultLoginShell }}
+            value: {{ .Values.defaultLoginShell | quote }}
           {{- end }}
 
           # Any additional environment variables
           {{- range .Values.additionalEnv }}
           - name: {{ .name }}
-            value: {{ .value }}
+            value: {{ .value | quote }}
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
