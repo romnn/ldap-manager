@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "scripts": {
     "serve": "./gen-protos.sh vue-cli-service serve",
