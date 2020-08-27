@@ -25,6 +25,7 @@
 coverage*
 *.exe
 build/
+public/charts
 **/dist
 **/node_modules
 **/debug.yaml

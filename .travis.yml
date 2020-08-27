@@ -42,9 +42,6 @@ jobs:
     os: linux
     go: master
     script:
-    # - helm init --client-only
-    - mkdir -p ./public
-    - "echo \"User-Agent: *\nDisallow: /\" > ./public/robots.txt"
     - touch ./public/.nojekyll
     - helm package deployment/helm/ldap-manager --destination ./public/charts
     - export TRAVIS_REPO_OWNER=${TRAVIS_REPO_SLUG%/*}
@@ -54,7 +51,7 @@ jobs:
     python: 3.6
     deploy:
       provider: pages
-      local_dir: docs/build
+      local_dir: public
       skip_cleanup: true
       # Generate a GitHub access token for public repositories
       # In your travis ci settings, set the token as a secret environment variable $GH_TOKEN
