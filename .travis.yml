@@ -61,7 +61,11 @@ jobs:
       token: "$GH_TOKEN"
       keep_history: true
       on:
-        branch: master
+        repo: romnnn/ldap-manager
+        tags: false
+        branches:
+          only:
+            - master
 install: true
 notifications:
   email: false
