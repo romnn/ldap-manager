@@ -284,8 +284,8 @@ func TestDeleteAccount(t *testing.T) {
 	}
 
 	// Now delete the first user
-	leaveGroups := false
-	if err := test.Manager.DeleteAccount(&pb.DeleteAccountRequest{Username: users[0]}, leaveGroups); err != nil {
+	keepGroups := false
+	if err := test.Manager.DeleteAccount(&pb.DeleteAccountRequest{Username: users[0]}, keepGroups); err != nil {
 		t.Fatalf("failed to delete user %q: %v", users[0], err)
 	}
 

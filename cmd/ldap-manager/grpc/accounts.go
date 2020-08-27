@@ -13,6 +13,7 @@ import (
 
 // GetUserList ...
 func (s *LDAPManagerServer) GetUserList(ctx context.Context, in *pb.GetUserListRequest) (*pb.UserList, error) {
+	log.Info(in)
 	result, err := s.Manager.GetUserList(in)
 	if err != nil {
 		log.Error(err)

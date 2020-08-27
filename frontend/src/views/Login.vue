@@ -80,8 +80,6 @@ export default class Login extends Vue {
     // continues with run_checks
     // Password for <?php print $LDAP['admin_bind_dn'] <-- inject these into the frontend somehow
   }
-
-  onReset() {}
 }
 </script>
 

@@ -1,56 +1,50 @@
 <template>
-  <div class="list-account-container">
+  <div class="list-group-container">
     <table-view-c
       :inactive="pendingConfirmation !== null"
       :error="error"
       :loading="loading"
       :processing="processing"
       v-on:search="startSearch"
-      searchLabel="Username:"
+      searchLabel="Name:"
     >
       <!-- No results -->
-      <div class="setup-account m-5" v-if="count < 1">
+      <div class="setup-group m-5" v-if="count < 1">
         <div v-if="search.length < 1">
-          <p>There are no accounts yet</p>
+          <p>There are no groups yet</p>
           <p>
-            <router-link :to="{ name: 'NewAccountRoute' }"
+            <router-link :to="{ name: 'NewGroupRoute' }"
               ><b-button size="sm" variant="primary"
-                >Create an account</b-button
+                >Create a new group</b-button
               ></router-link
             >
           </p>
         </div>
         <div v-else>
-          <p>Did not find any accounts</p>
+          <p>Did not find any groups</p>
         </div>
       </div>
       <div v-else>
-        <table class="account-table">
+        <table class="group-table">
           <thead>
-            <td>Username</td>
-            <td>First Name</td>
-            <td>Last Name</td>
-            <td>E-Mail</td>
+            <td>Name</td>
             <td></td>
           </thead>
           <tr
-            v-for="(user, idx) in list.users"
-            v-bind:key="user.data.uid"
+            v-for="(group, idx) in groups.groups"
+            v-bind:key="group"
             :class="{
               even: idx % 2 == 0,
-              deleted: isDeleted(user.data.uid)
+              deleted: isDeleted(group)
             }"
           >
-            <td>{{ user.data.uid }}</td>
-            <td>{{ user.data.givenName }}</td>
-            <td>{{ user.data.sn }}</td>
-            <td>{{ user.data.mail }}</td>
+            <td>{{ group }}</td>
             <td>
-              <span v-if="isDeleted(user.data.uid)">Deleted</span>
+              <span v-if="isDeleted(group)">Deleted</span>
               <div v-else>
                 <b-button
                   pill
-                  @click="deleteAccount(user.data.uid)"
+                  @click="deleteGroup(group)"
                   size="sm"
                   class="mr-2 float-right"
                   variant="outline-danger"
@@ -58,8 +52,8 @@
                 >
                 <router-link
                   :to="{
-                    name: 'EditAccountRoute',
-                    params: { username: user.data.uid }
+                    name: 'EditGroupRoute',
+                    params: { name: group }
                   }"
                   ><b-button
                     pill
@@ -75,12 +69,12 @@
         </table>
 
         <b-pagination
-          class="account-pagination"
+          class="group-pagination"
           size="sm"
           v-model="currentPage"
           :total-rows="total"
           :per-page="perPage"
-          aria-controls="accounts-table"
+          aria-controls="group-table"
         ></b-pagination>
       </div>
     </table-view-c>
@@ -89,16 +83,16 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from "vue-property-decorator";
-import { AccountModule, UserList } from "../../store/modules/accounts";
+import { GroupModule, GroupList } from "../../store/modules/groups";
 import { AppModule } from "../../store/modules/app";
-import TableViewC from "../../components/TableView.vue";
 import { GatewayError } from "../../types";
+import TableViewC from "../../components/TableView.vue";
 
 @Component({
   components: { TableViewC }
 })
-export default class AccountList extends Vue {
-  list: UserList = { users: [] };
+export default class GroupListView extends Vue {
+  groups: GroupList = { groups: [] };
   deleted: string[] = [];
   error: string | null = null;
   search = "";
@@ -109,8 +103,13 @@ export default class AccountList extends Vue {
   total = 100;
   perPage = 40;
 
+  @Watch("currentPage")
+  handleCurrentPageChange() {
+    this.loadGroups();
+  }
+
   get count() {
-    return this.list?.users?.length ?? 0;
+    return this.groups?.groups?.length ?? 0;
   }
 
   get pendingConfirmation() {
@@ -122,32 +121,23 @@ export default class AccountList extends Vue {
   }
 
   submitSearch() {
-    this.loadAccounts();
+    this.loadGroups();
   }
 
   isDeleted(username: string) {
     return this.deleted.includes(username);
   }
 
-  get listOptions() {
-    return {
+  loadGroups() {
+    this.error = null;
+    this.groups = { groups: [] };
+    GroupModule.getGroups({
       page: this.currentPage,
       perPage: this.perPage,
       search: this.search
-    };
-  }
-
-  @Watch("listOptions")
-  handleCurrentPageChange() {
-    this.loadAccounts();
-  }
-
-  loadAccounts() {
-    this.error = null;
-    this.list = { users: [] };
-    AccountModule.listAccounts(this.listOptions)
-      .then((list: UserList) => {
-        this.list = list;
+    })
+      .then((list: GroupList) => {
+        this.groups = list;
       })
       .catch((err: GatewayError) => {
         this.error = err.message;
@@ -155,28 +145,40 @@ export default class AccountList extends Vue {
       .finally(() => (this.loading = false));
   }
 
-  deleteAccount(username: string) {
+  deleteGroup(name: string) {
     AppModule.newConfirmation({ message: "Are you sure?", ack: "Yes, delete" })
       .then(() => {
         this.processing = true;
-        AccountModule.deleteAccount(username)
-          .then(() => this.deleted.push(username))
+        GroupModule.deleteGroup(name)
+          .then(() => this.deleted.push(name))
           .catch((err: GatewayError) => alert(err.message))
           .finally(() => (this.processing = false));
       })
       .catch(() => {
-        // Ignore
+        // Ingore
       });
   }
 
   mounted() {
-    this.loadAccounts();
+    this.loadGroups();
   }
 }
 </script>
 
 <style lang="sass" scoped>
-.account-list
+
+.confirmation
+  border: 2px #e9ecef solid
+  border-radius: 15px
+  padding: 15px
+  background-color: #ffffff
+  z-index: 999999
+  position: fixed
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+.group-list
   z-index: 100
   &.inactive
     opacity: 0.2
@@ -184,7 +186,7 @@ export default class AccountList extends Vue {
   .setup-account
     padding: 30px
 
-.account-table
+.group-table
   width: 100%
   thead
     font-weight: bolder
@@ -203,7 +205,7 @@ export default class AccountList extends Vue {
     padding: 12px
     text-align: left
 
-.account-pagination
+.group-pagination
   margin: 20px
   float: right
 </style>

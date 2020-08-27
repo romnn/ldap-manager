@@ -1,5 +1,6 @@
 import Vue from "vue";
 import VueRouter, { RouteConfig } from "vue-router";
+import { Route, RawLocation } from "vue-router";
 
 Vue.use(VueRouter);
 
@@ -19,7 +20,11 @@ const checkAuthenticated = (): boolean => {
   */
 };
 
-const checkNotAlreadyAuthenticated = (to: any, from: any, next: any) => {
+const checkNotAlreadyAuthenticated = (
+  to: Route,
+  from: Route,
+  next: (to?: RawLocation | false | void) => void
+) => {
   if (!checkAuthenticated()) {
     next();
     return;
@@ -27,7 +32,11 @@ const checkNotAlreadyAuthenticated = (to: any, from: any, next: any) => {
   next({ name: "HomeRoute" });
 };
 
-const requireAdmin = (to: any, from: any, next: any) => {
+const requireAdmin = (
+  to: Route,
+  from: Route,
+  next: (to?: RawLocation | false | void) => void
+) => {
   if (checkAuthenticated()) {
     next();
     return;
@@ -35,7 +44,11 @@ const requireAdmin = (to: any, from: any, next: any) => {
   next({ name: "LoginRoute" });
 };
 
-const requireAuth = (to: any, from: any, next: any) => {
+const requireAuth = (
+  to: Route,
+  from: Route,
+  next: (to?: RawLocation | false | void) => void
+) => {
   if (checkAuthenticated()) {
     next();
     return;
@@ -48,12 +61,18 @@ const routes: Array<RouteConfig> = [
     path: "/",
     name: "HomeRoute",
     beforeEnter: requireAuth,
+    meta: {
+      base: []
+    },
     component: () =>
       import(/* webpackChunkName: "homeAccount" */ "../views/Home.vue")
   },
   {
     path: "/login",
     name: "LoginRoute",
+    meta: {
+      base: []
+    },
     beforeEnter: checkNotAlreadyAuthenticated,
     component: () =>
       import(/* webpackChunkName: "login" */ "../views/Login.vue")
@@ -61,6 +80,10 @@ const routes: Array<RouteConfig> = [
   {
     path: "/logout",
     name: "LogoutRoute",
+    meta: {
+      // showBreadcrumb: false,
+      base: []
+    },
     component: () =>
       import(/* webpackChunkName: "logout" */ "../views/Logout.vue")
   },
@@ -76,6 +99,19 @@ const routes: Array<RouteConfig> = [
       {
         path: "new",
         name: "NewAccountRoute",
+        meta: {
+          base: [
+            {
+              text: "Accounts",
+              to: { name: "AccountsRoute" }
+            },
+            {
+              text: "New",
+              to: { name: "NewAccountRoute" },
+              active: true
+            }
+          ]
+        },
         beforeEnter: requireAdmin,
         component: () =>
           import(
@@ -85,6 +121,19 @@ const routes: Array<RouteConfig> = [
       {
         path: "list",
         name: "ListAccountsRoute",
+        meta: {
+          base: [
+            {
+              text: "Accounts",
+              to: { name: "AccountsRoute" }
+            },
+            {
+              text: "List",
+              to: { name: "ListAccountsRoute" },
+              active: true
+            }
+          ]
+        },
         beforeEnter: requireAdmin,
         component: () =>
           import(
@@ -92,9 +141,17 @@ const routes: Array<RouteConfig> = [
           )
       },
       {
-        path: ":username/edit",
+        path: ":username",
         name: "EditAccountRoute",
         props: true,
+        meta: {
+          base: [
+            {
+              text: "Accounts",
+              to: { name: "AccountsRoute" }
+            }
+          ]
+        },
         beforeEnter: requireAdmin,
         component: () =>
           import(
@@ -105,15 +162,70 @@ const routes: Array<RouteConfig> = [
   },
   {
     path: "/groups",
+    alias: "/group",
+    redirect: { name: "ListGroupsRoute" },
     name: "GroupsRoute",
+    component: () =>
+      import(/* webpackChunkName: "groups" */ "../views/groups/Base.vue"),
     beforeEnter: requireAdmin,
     children: [
       {
         path: "new",
         name: "NewGroupRoute",
+        meta: {
+          base: [
+            {
+              text: "Groups",
+              to: { name: "GroupsRoute" }
+            },
+            {
+              text: "New",
+              to: { name: "NewGroupRoute" },
+              active: true
+            }
+          ]
+        },
         beforeEnter: requireAdmin,
         component: () =>
           import(/* webpackChunkName: "newGroup" */ "../views/groups/New.vue")
+      },
+      {
+        path: "list",
+        name: "ListGroupsRoute",
+        meta: {
+          base: [
+            {
+              text: "Groups",
+              to: { name: "GroupsRoute" }
+            },
+            {
+              text: "List",
+              to: { name: "ListGroupsRoute" },
+              active: true
+            }
+          ]
+        },
+        beforeEnter: requireAdmin,
+        component: () =>
+          import(
+            /* webpackChunkName: "listGroups" */ "../views/groups/List.vue"
+          )
+      },
+      {
+        path: ":name",
+        name: "EditGroupRoute",
+        props: true,
+        meta: {
+          base: [
+            {
+              text: "Groups",
+              to: { name: "GroupsRoute" }
+            }
+          ]
+        },
+        beforeEnter: requireAdmin,
+        component: () =>
+          import(/* webpackChunkName: "editGroup" */ "../views/groups/Edit.vue")
       }
     ]
   }

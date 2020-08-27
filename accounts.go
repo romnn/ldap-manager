@@ -87,7 +87,8 @@ func parseUser(entry *ldap.Entry) *pb.User {
 	return user
 }
 
-func (m *LDAPManager) getNewAccountGroup(username string) (string, int, error) {
+func (m *LDAPManager) getGroupForAccount(username string) (string, int, error) {
+	// First, try to get the default user group
 	group := m.DefaultUserGroup
 	if defaultGID, err := m.getGroupGID(m.DefaultUserGroup); err == nil {
 		return group, defaultGID, nil
@@ -97,7 +98,7 @@ func (m *LDAPManager) getNewAccountGroup(username string) (string, int, error) {
 	// Because we need the GID to create the user, strict checking of members remains disabled because they are added after the group
 	strict := false
 	if err := m.NewGroup(&pb.NewGroupRequest{Name: m.DefaultUserGroup, Members: []string{username}}, strict); err != nil {
-		// Fall back to create a new group group for the user
+		// Fall back to create a new group for the user
 		if err := m.NewGroup(&pb.NewGroupRequest{Name: username, Members: []string{username}}, strict); err != nil {
 			if _, ok := err.(*GroupAlreadyExistsError); !ok {
 				return group, 0, fmt.Errorf("failed to create group for user %q: %v", username, err)
@@ -123,18 +124,15 @@ func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, err
 	if len(req.Fields) < 1 {
 		req.Fields = m.defaultUserFields()
 	}
-	if req.GetOptions() == nil {
-		req.Options = &pb.ListOptions{}
+	if req.GetSortKey() == "" {
+		req.SortKey = m.AccountAttribute
 	}
-	options := req.GetOptions()
-	if options.GetSortKey() == "" {
-		options.SortKey = m.AccountAttribute
-	}
-	filter := fmt.Sprintf("(&(%s=*)%s)", m.AccountAttribute, req.Filters)
+	filter := parseFilter(req.Filter)
+	log.Info(filter)
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.UserGroupDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		filter,
+		fmt.Sprintf("(&(%s=*)%s)", m.AccountAttribute, filter),
 		req.Fields,
 		[]ldap.Control{},
 	))
@@ -143,7 +141,7 @@ func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, err
 	}
 	users := make(map[string]*pb.User)
 	for _, entry := range result.Entries {
-		if entryKey := entry.GetAttributeValue(options.GetSortKey()); entryKey != "" {
+		if entryKey := entry.GetAttributeValue(req.GetSortKey()); entryKey != "" {
 			users[entryKey] = parseUser(entry)
 		}
 	}
@@ -155,17 +153,17 @@ func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, err
 	// Sort
 	sort.Slice(keys, func(i, j int) bool {
 		asc := keys[i] < keys[j]
-		if options.GetSortOrder() == pb.SortOrder_ASCENDING {
+		if req.GetSortOrder() == pb.SortOrder_ASCENDING {
 			return !asc
 		}
 		return asc
 	})
 	// Clip
 	clippedKeys := keys
-	clipped := &pb.UserList{}
-	if options.GetStart() >= 0 && options.GetEnd() < int32(len(keys)) && options.GetStart() < options.GetEnd() {
-		clippedKeys = keys[options.GetStart():options.GetEnd()]
+	if req.GetStart() >= 0 && req.GetEnd() < int32(len(keys)) && req.GetStart() < req.GetEnd() {
+		clippedKeys = keys[req.GetStart():req.GetEnd()]
 	}
+	clipped := &pb.UserList{}
 	for _, key := range clippedKeys {
 		clipped.Users = append(clipped.Users, users[key])
 	}
@@ -269,20 +267,40 @@ func (m *LDAPManager) NewAccount(req *pb.NewAccountRequest, algorithm pb.Hashing
 	if len(result.Entries) > 0 {
 		return fmt.Errorf("account with username %q already exists", req.GetUsername())
 	}
-	highestUID, err := m.getHighestID(m.AccountAttribute)
-	if err != nil {
-		if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
-			// Try to recover by running the setup
-			_ = m.setupLastUID()
-			highestUID, err = m.getHighestID(m.AccountAttribute)
-		}
-		if err != nil {
-			return fmt.Errorf("failed to get highest %s: %v", m.AccountAttribute, err)
-		}
+
+	loginShell := req.GetLoginShell()
+	if loginShell == "" {
+		loginShell = m.DefaultUserShell
 	}
-	newUID := highestUID + 1
-	userDN := m.AccountNamed(req.GetUsername())
-	group, GID, err := m.getNewAccountGroup(req.GetUsername())
+
+	homeDirectory := req.GetHomeDirectory()
+	if homeDirectory == "" {
+		homeDirectory = fmt.Sprintf("/home/%s", req.GetUsername())
+	}
+
+	newUID := int(req.GetUid())
+	if newUID < MinUID {
+		highestUID, err := m.getHighestID(m.AccountAttribute)
+		if err != nil {
+			if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
+				// Try to recover by running the setup
+				_ = m.setupLastUID()
+				highestUID, err = m.getHighestID(m.AccountAttribute)
+			}
+			if err != nil {
+				return fmt.Errorf("failed to get highest %s: %v", m.AccountAttribute, err)
+			}
+		}
+		newUID = highestUID + 1
+	}
+
+	var group string
+	GID := int(req.GetGid())
+	if GID < MinGID {
+		group, GID, err = m.getGroupForAccount(req.GetUsername())
+	} else {
+		group, GID, err = m.getGroupByGID(GID)
+	}
 	if err != nil {
 		return err
 	}
@@ -305,12 +323,13 @@ func (m *LDAPManager) NewAccount(req *pb.NewAccountRequest, algorithm pb.Hashing
 		{Type: "displayName", Vals: []string{fullName}},
 		{Type: "uidNumber", Vals: []string{strconv.Itoa(newUID)}},
 		{Type: "gidNumber", Vals: []string{strconv.Itoa(GID)}},
-		{Type: "loginShell", Vals: []string{m.DefaultUserShell}},
-		{Type: "homeDirectory", Vals: []string{fmt.Sprintf("/home/%s", req.GetUsername())}},
+		{Type: "loginShell", Vals: []string{loginShell}},
+		{Type: "homeDirectory", Vals: []string{homeDirectory}},
 		{Type: "userPassword", Vals: []string{hashedPassword}},
 		{Type: "mail", Vals: []string{req.GetEmail()}},
 	}
 
+	userDN := m.AccountNamed(req.GetUsername())
 	addUserRequest := &ldap.AddRequest{
 		DN:         userDN,
 		Attributes: userAttributes,
@@ -337,7 +356,7 @@ func (m *LDAPManager) NewAccount(req *pb.NewAccountRequest, algorithm pb.Hashing
 }
 
 // DeleteAccount ...
-func (m *LDAPManager) DeleteAccount(req *pb.DeleteAccountRequest, leaveGroups bool) error {
+func (m *LDAPManager) DeleteAccount(req *pb.DeleteAccountRequest, keepGroups bool) error {
 	if req.GetUsername() == "" {
 		return errors.New("username must not be empty")
 	}
@@ -347,7 +366,7 @@ func (m *LDAPManager) DeleteAccount(req *pb.DeleteAccountRequest, leaveGroups bo
 	)); err != nil {
 		return err
 	}
-	if !leaveGroups {
+	if !keepGroups {
 		// delete the account from all its groups
 		groups, err := m.GetGroupList(&pb.GetGroupListRequest{})
 		if err != nil {

@@ -24,8 +24,11 @@
           </b-row>
         </template>
         <b-card-body>
-          If you are not sure, just leave blank
-          <b-form @submit.prevent="onSubmit" @reset.prevent="onReset">
+          <p class="text-left">
+            If you are not sure about some values, just leave them blank. You
+            will be prompted to enter missing values when you submit.
+          </p>
+          <b-form @submit.prevent="onSubmit">
             <b-form-group
               label-size="sm"
               label-cols-sm="3"
@@ -77,7 +80,11 @@
                 v-model="form.uid"
                 type="number"
                 placeholder="2004"
+                aria-describedby="login-input-uid-help-block"
               ></b-form-input>
+              <b-form-text id="login-input-uid-help-block">
+                Is optional. If you leave this empty, /bin/bash will be used
+              </b-form-text>
             </b-form-group>
 
             <b-form-group
@@ -95,7 +102,11 @@
                 v-model="form.gid"
                 type="number"
                 placeholder="2001"
+                aria-describedby="login-input-gid-help-block"
               ></b-form-input>
+              <b-form-text id="login-input-gid-help-block">
+                Is optional. If you leave this empty, /bin/bash will be used
+              </b-form-text>
             </b-form-group>
 
             <b-form-group
@@ -113,7 +124,11 @@
                 v-model="form.login_shell"
                 type="text"
                 placeholder="/bin/bash"
+                aria-describedby="login-input-shell-help-block"
               ></b-form-input>
+              <b-form-text id="login-input-shell-help-block">
+                Is optional. If you leave this empty, /bin/bash will be used
+              </b-form-text>
             </b-form-group>
 
             <b-form-group
@@ -131,7 +146,12 @@
                 v-model="form.home_dir"
                 type="text"
                 placeholder="/home/max123"
+                aria-describedby="login-input-home-dir-help-block"
               ></b-form-input>
+              <b-form-text id="login-input-home-dir-help-block">
+                Is optional. If you leave this empty, the /home/USERNAME is
+                chosen
+              </b-form-text>
             </b-form-group>
 
             <b-form-group
@@ -164,10 +184,17 @@
                 id="login-input-email"
                 size="sm"
                 v-model="form.email"
+                :state="validEmail"
                 type="email"
                 required
                 placeholder="max.mustermann@example.com"
               ></b-form-input>
+              <b-form-invalid-feedback :state="validEmail">
+                This is not a valid email
+              </b-form-invalid-feedback>
+              <b-form-valid-feedback :state="validEmail">
+                All good
+              </b-form-valid-feedback>
             </b-form-group>
 
             <b-form-group>
@@ -186,7 +213,13 @@
                   type="password"
                   required
                   placeholder=""
+                  aria-describedby="login-input-password-help-block"
                 ></b-form-input>
+                <b-form-text id="login-input-password-help-block">
+                  Good passwords must be 8-20 characters long, contain letters
+                  and numbers, and must not contain spaces, special characters,
+                  or emoji.
+                </b-form-text>
               </b-form-group>
 
               <b-form-group
@@ -201,15 +234,22 @@
                   id="login-input-confirm-password"
                   size="sm"
                   v-model="form.password_confirm"
+                  :state="passwordsMatch"
                   type="password"
                   required
                   placeholder="Confirm password"
                 ></b-form-input>
+                <b-form-invalid-feedback :state="passwordsMatch">
+                  Passwords do not match
+                </b-form-invalid-feedback>
+                <b-form-valid-feedback :state="passwordsMatch">
+                  All good
+                </b-form-valid-feedback>
               </b-form-group>
 
               <b-row align-h="end">
                 <b-col cols="9"
-                  ><b-progress max="100">
+                  ><b-progress max="6">
                     <b-progress-bar
                       :value="passwordStrength"
                       :label="passwordStrengthLabel"
@@ -238,6 +278,7 @@
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
 import { AccountModule, Account } from "../store/modules/accounts";
+import { AppModule } from "../store/modules/app";
 import { GatewayError } from "../types";
 
 // TODO: Form feedback helpers?
@@ -250,40 +291,79 @@ export default class AccountC extends Vue {
   @Prop({ default: false }) private create!: boolean;
 
   protected processing = false;
+  protected emailRegex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
   protected form: Account = {
+    /* eslint-disable-next-line @typescript-eslint/camelcase */
     first_name: "",
+    /* eslint-disable-next-line @typescript-eslint/camelcase */
     last_name: "",
     uid: undefined,
     gid: undefined,
+    /* eslint-disable-next-line @typescript-eslint/camelcase */
     login_shell: "",
+    /* eslint-disable-next-line @typescript-eslint/camelcase */
     home_directory: "",
     username: "",
     email: "",
     password: "",
+    /* eslint-disable-next-line @typescript-eslint/camelcase */
     password_confirm: ""
   };
 
   get passwordStrengthVariant() {
-    return "success"; // "warning", "danger"
+    if (this.passwordStrength < 3) return "danger";
+    if (this.passwordStrength < 6) return "warning";
+    return "success";
   }
 
   get passwordStrength() {
-    return this.form.password.length;
+    return (
+      1 +
+      Number(/.{8,}/.test(this.form.password)) /* at least 8 characters */ *
+        (Number(/.{12,}/.test(this.form.password)) /* bonus if longer */ +
+        Number(/[a-z]/.test(this.form.password)) /* a lower letter */ +
+        Number(/[A-Z]/.test(this.form.password)) /* a upper letter */ +
+        Number(/\d/.test(this.form.password)) /* a digit */ +
+          Number(
+            /[^A-Za-z0-9]/.test(this.form.password)
+          )) /* a special character */
+    );
+  }
+
+  get passwordsMatch() {
+    return (
+      (this.form.password + this.form.password_confirm).length > 0 &&
+      this.form.password == this.form.password_confirm
+    );
+  }
+
+  get validEmail() {
+    return this.emailRegex.test(this.form.email);
   }
 
   get passwordStrengthLabel() {
-    return "weak!";
+    if (this.passwordStrength < 3) return "weak!";
+    if (this.passwordStrength < 6) return "fair enough";
+    return "good";
   }
 
-  deleteAccount() {
-    this.processing = true;
-    AccountModule.deleteAccount(this.account)
-      .catch((err: GatewayError) => alert(err.message))
-      .finally(() => (this.processing = false));
+  deleteAccount(username: string) {
+    AppModule.newConfirmation({ message: "Are you sure?", ack: "Yes, delete" })
+      .then(() => {
+        this.processing = true;
+        AccountModule.deleteAccount(username)
+          .then(() => this.$router.push({ name: "AccountsRoute" }))
+          .catch((err: GatewayError) => alert(err.message))
+          .finally(() => (this.processing = false));
+      })
+      .catch(() => {
+        // Ignore
+      });
   }
 
   createAccount() {
+    if (this.form.password !== this.form.password_confirm) return;
     this.processing = true;
     AccountModule.newAccount(this.form)
       .catch((err: GatewayError) => alert(err.message))
@@ -300,8 +380,6 @@ export default class AccountC extends Vue {
     // continues with run_checks
     // Password for <?php print $LDAP['admin_bind_dn'] <-- inject these into the frontend somehow
   }
-
-  onReset() {}
 }
 </script>
 

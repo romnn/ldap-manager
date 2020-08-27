@@ -4,16 +4,16 @@ import Vue from "vue";
 import { API_ENDPOINT } from "../../constants";
 import { GatewayError } from "../../types";
 
-export interface Group {}
+export interface Group {
+  name: string;
+}
 
 export interface GroupList {
   groups: Group[];
 }
 
-export interface GroupState {}
-
 @Module({ dynamic: true, store, name: "groups" })
-class GroupMod extends VuexModule implements GroupState {
+class GroupMod extends VuexModule {
   @Action({ rawError: true })
   public async newGroup(group: Group): Promise<void> {
     return new Promise<void>((resolve, reject) => {
@@ -57,9 +57,21 @@ class GroupMod extends VuexModule implements GroupState {
   }
 
   @Action({ rawError: true })
-  public async getGroups(): Promise<GroupList> {
+  public async getGroups(req: {
+    page: number;
+    perPage: number;
+    search: string;
+  }): Promise<GroupList> {
+    // we will not configure sort_key or sort_order
+    const request: { start?: number; end?: number; filters?: string } = {
+      start: (req.page - 1) * req.perPage,
+      end: req.page * req.perPage
+    };
+    if (req.search.length > 0) {
+      request.filters = `(cn=*${req.search}*)`;
+    }
     return new Promise<GroupList>((resolve, reject) => {
-      Vue.axios.get(API_ENDPOINT + "/groups/", {}).then(
+      Vue.axios.get(API_ENDPOINT + "/groups", { params: request }).then(
         response => {
           resolve(response.data);
         },

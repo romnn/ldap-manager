@@ -92,17 +92,16 @@ func (m *LDAPManager) GetGroup(req *pb.GetGroupRequest) (*pb.Group, error) {
 	}
 
 	// Sort
-	options := req.GetOptions()
 	sort.Slice(normGroup.Members, func(i, j int) bool {
 		asc := normGroup.Members[i] < normGroup.Members[j]
-		if options.GetSortOrder() == pb.SortOrder_DESCENDING {
+		if req.GetSortOrder() == pb.SortOrder_DESCENDING {
 			return !asc
 		}
 		return asc
 	})
 	// Clip
-	if options.GetStart() >= 0 && options.GetEnd() < int32(len(normGroup.GetMembers())) && options.GetStart() < options.GetEnd() {
-		normGroup.Members = normGroup.Members[options.GetStart():options.GetEnd()]
+	if req.GetStart() >= 0 && req.GetEnd() < int32(len(normGroup.GetMembers())) && req.GetStart() < req.GetEnd() {
+		normGroup.Members = normGroup.Members[req.GetStart():req.GetEnd()]
 		return normGroup, nil
 	}
 	return normGroup, nil

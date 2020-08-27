@@ -20,6 +20,8 @@ const (
 	SortAscending = "asc"
 	// SortDescending ...
 	SortDescending = "desc"
+
+	hex = "0123456789abcdef"
 )
 
 // ListOptions ...
@@ -30,11 +32,35 @@ type ListOptions struct {
 	SortKey   string `json:"sort_key" form:"sort_key"`
 }
 
+func isValidAttribute(attr string) bool {
+	switch attr {
+	case "uid":
+		return true
+	case "cn":
+		return true
+	case "uidNumber":
+		return true
+	case "gidNumber":
+		return true
+	case "mail":
+		return true
+	case "sn":
+		return true
+	case "givenName":
+		return true
+	case "displayName":
+		return true
+	case "loginShell":
+		return true
+	case "homeDirectory":
+		return true
+	}
+	return false
+}
+
 func escapeFilter(s string) string {
 	return ldap.EscapeFilter(s)
 }
-
-var hex = "0123456789abcdef"
 
 func mustescapeFilter(c byte) bool {
 	if c > 0x7f {
@@ -74,6 +100,18 @@ func escapeDN(dn string) string {
 	return string(buf)
 }
 
+func parseFilter(filters []string) string {
+	var filter string
+	for _, f := range filters {
+		if pair := strings.Split(f, "="); len(pair) == 2 {
+			if attr := strings.ToLower(pair[0]); isValidAttribute(attr) {
+				filter += fmt.Sprintf("(%s=*%s*)", attr, escapeFilter(pair[1]))
+			}
+		}
+	}
+	return filter
+}
+
 func extractAttribute(dn string, attribute string) (string, error) {
 	reg, err := regexp.Compile(fmt.Sprintf("%s=(?P<Attribute>.*?),", attribute))
 	if err != nil {
@@ -95,6 +133,28 @@ func (m *LDAPManager) findGroup(groupName string, attributes []string) (*ldap.Se
 		attributes,
 		[]ldap.Control{},
 	))
+}
+
+func (m *LDAPManager) getGroupByGID(gid int) (string, int, error) {
+	result, err := m.ldap.Search(ldap.NewSearchRequest(
+		m.GroupsDN,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		fmt.Sprintf("(gid=%d)", gid),
+		[]string{"cn"},
+		[]ldap.Control{},
+	))
+	if err != nil {
+		return "", 0, err
+	}
+	if len(result.Entries) != 1 {
+		return "", 0, fmt.Errorf("zero or multiple groups with gid=%d", gid)
+	}
+	group := result.Entries[0]
+	cn := group.GetAttributeValue("cn")
+	if cn == "" {
+		return "", 0, fmt.Errorf("group with gid=%d has no valid cn attribute", gid)
+	}
+	return cn, gid, nil
 }
 
 func (m *LDAPManager) updateLastID(cn string, newID int) error {

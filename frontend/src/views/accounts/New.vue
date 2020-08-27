@@ -6,11 +6,15 @@
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
-import { AccountModule, UserList } from "../../store/modules/accounts";
 import AccountC from "../../components/Account.vue";
+import { AppModule } from "../../store/modules/app";
 
 @Component({ components: { AccountC } })
-export default class NewAccount extends Vue {}
+export default class NewAccount extends Vue {
+  get all() {
+    return AppModule.all;
+  }
+}
 </script>
 
 <style lang="sass" scoped></style>

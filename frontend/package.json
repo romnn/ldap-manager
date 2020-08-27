@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "0.1.0",
+  "version": "0.0.3",
   "private": true,
   "scripts": {
     "serve": "./gen-protos.sh vue-cli-service serve",
@@ -69,7 +69,9 @@
     "parserOptions": {
       "ecmaVersion": 2020
     },
-    "rules": {},
+    "rules": {
+      "@typescript-eslint/no-var-requires": 0
+    },
     "overrides": [
       {
         "files": [

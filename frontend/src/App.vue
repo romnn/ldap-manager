@@ -60,7 +60,15 @@
       </b-navbar>
     </div>
     <div class="app-content">
-      <b-breadcrumb :items="items"></b-breadcrumb>
+      <div v-if="pendingConfirmation !== null">
+        <confirmation-c
+          :message="pendingConfirmation.message"
+          :ackMessage="pendingConfirmation.ack"
+          v-on:cancel="cancelConfirmation"
+          v-on:confirm="confirmConfirmation"
+        ></confirmation-c>
+      </div>
+      <b-breadcrumb v-if="items.length > 0" :items="items"></b-breadcrumb>
       <router-view />
     </div>
   </div>
@@ -70,27 +78,54 @@
 import { Component, Vue } from "vue-property-decorator";
 import "bootstrap/dist/css/bootstrap.css";
 import "bootstrap-vue/dist/bootstrap-vue.css";
+import { Dictionary } from "vue-router/types/router";
+import { AppModule } from "./store/modules/app";
+import ConfirmationC from "./components/Confirmation.vue";
+
+export interface BreadcrumbItem {
+  text: string;
+  active?: boolean;
+  to?: { name?: string; params?: Dictionary<string> };
+}
 
 @Component({
-  components: {}
+  components: { ConfirmationC }
 })
 export default class App extends Vue {
   activeUser = "TODO";
-  version = "v0.0.1";
-  items = [
-    {
-      text: "Admin",
-      href: "#"
-    },
-    {
-      text: "Manage",
-      href: "#"
-    },
-    {
-      text: "Library",
-      active: true
-    }
-  ];
+
+  get pendingConfirmation() {
+    return AppModule.pendingConfirmation;
+  }
+
+  cancelConfirmation() {
+    AppModule.cancelConfirmation();
+  }
+
+  confirmConfirmation() {
+    AppModule.confirmConfirmation();
+  }
+
+  get version() {
+    return process.env.STABLE_VERSION;
+  }
+
+  get items(): BreadcrumbItem[] {
+    if (!(this.$route.meta?.showBreadcrumb ?? true)) return [];
+    const base = this.$route?.meta?.base ?? [];
+    const params = this.$route?.params ?? {};
+    const paramsItems = Object.values(params).reduce((acc, param) => {
+      const name = this.$route.name;
+      if (name)
+        acc.push({
+          text: param,
+          to: { name: name, params: this.$route.params },
+          active: true
+        });
+      return acc;
+    }, [] as BreadcrumbItem[]);
+    return base.concat(paramsItems);
+  }
 }
 </script>
 
@@ -105,6 +140,7 @@ export default class App extends Vue {
 .app-content
   position: relative
   top: 70px
+  padding-bottom: 70px
   min-width: 600px
   width: 70%
   margin: 0 auto

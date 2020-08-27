@@ -5,8 +5,8 @@ import { API_ENDPOINT } from "../../constants";
 import { GatewayError } from "../../types";
 
 export interface UserList {
-  users: {
-    data: {
+  users?: {
+    data?: {
       givenName: string;
       mail: string;
       sn: string;
@@ -30,18 +30,24 @@ export interface Account {
   [key: string]: string | number | undefined;
 }
 
-export interface AccountState {}
-
 @Module({ dynamic: true, store, name: "accounts" })
-class AccountMod extends VuexModule implements AccountState {
-  get filename(): (name: string) => string {
-    return (name: string) => name.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-  }
-
+class AccountMod extends VuexModule {
   @Action({ rawError: true })
-  public async listAccounts(): Promise<UserList> {
+  public async listAccounts(req: {
+    page: number;
+    perPage: number;
+    search: string;
+  }): Promise<UserList> {
+    // we will not configure sort_key or sort_order
+    const request: { start?: number; end?: number; filter?: string[] } = {
+      start: (req.page - 1) * req.perPage,
+      end: req.page * req.perPage
+    };
+    if (req.search.length > 0) {
+      request.filter = ["uid=" + req.search];
+    }
     return new Promise<UserList>((resolve, reject) => {
-      Vue.axios.get(API_ENDPOINT + "/accounts", {}).then(
+      Vue.axios.get(API_ENDPOINT + "/accounts", { params: request }).then(
         response => {
           resolve(response.data);
         },

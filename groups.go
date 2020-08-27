@@ -65,11 +65,7 @@ func (m *LDAPManager) getGroupGID(groupName string) (int, error) {
 	if len(result.Entries) != 1 {
 		return 0, &ZeroOrMultipleGroupsError{Group: groupName, Count: len(result.Entries)}
 	}
-	gidNumbers := result.Entries[0].GetAttributeValues("gidNumber")
-	if len(gidNumbers) != 1 {
-		return 0, fmt.Errorf("group %q does not have gidNumber or multiple", groupName)
-	}
-	return strconv.Atoi(gidNumbers[0])
+	return strconv.Atoi(result.Entries[0].GetAttributeValue("gidNumber"))
 }
 
 // IsProtectedGroup ...
@@ -198,11 +194,11 @@ func (m *LDAPManager) RenameGroup(req *pb.RenameGroupRequest) error {
 
 // GetGroupList ...
 func (m *LDAPManager) GetGroupList(req *pb.GetGroupListRequest) (*pb.GroupList, error) {
-	filter := fmt.Sprintf("(&(objectClass=*)%s)", req.GetFilters())
+	filter := parseFilter(req.Filter)
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		filter,
+		fmt.Sprintf("(&(objectClass=*)%s)", filter),
 		[]string{},
 		[]ldap.Control{},
 	))
@@ -216,21 +212,17 @@ func (m *LDAPManager) GetGroupList(req *pb.GetGroupListRequest) (*pb.GroupList, 
 		}
 	}
 	// Sort
-	if req.GetOptions() == nil {
-		req.Options = &pb.ListOptions{}
-	}
-	options := req.GetOptions()
 	groups := groupList.GetGroups()
 	sort.Slice(groups, func(i, j int) bool {
 		asc := groups[i] < groups[j]
-		if options.GetSortOrder() == pb.SortOrder_DESCENDING {
+		if req.GetSortOrder() == pb.SortOrder_DESCENDING {
 			return !asc
 		}
 		return asc
 	})
 	// Clip
-	if options.GetStart() >= 0 && options.GetEnd() < int32(len(groups)) && options.GetStart() < options.GetEnd() {
-		groupList.Groups = groups[options.GetStart():options.GetEnd()]
+	if req.GetStart() >= 0 && req.GetEnd() < int32(len(groups)) && req.GetStart() < req.GetEnd() {
+		groupList.Groups = groups[req.GetStart():req.GetEnd()]
 	}
 	return groupList, nil
 }

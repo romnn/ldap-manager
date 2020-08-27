@@ -62,8 +62,8 @@ func TestIsGroupMember(t *testing.T) {
 
 	// make sure after a user is deleted it is not longer a member of any group
 	allGroups, _ := test.Manager.GetGroupList(&pb.GetGroupListRequest{})
-	leaveGroups := false
-	if err := test.Manager.DeleteAccount(&pb.DeleteAccountRequest{Username: users[0]}, leaveGroups); err != nil {
+	keepGroups := false
+	if err := test.Manager.DeleteAccount(&pb.DeleteAccountRequest{Username: users[0]}, keepGroups); err != nil {
 		t.Fatalf("failed to delete user %q: %v", users[0], err)
 	}
 	for _, group := range allGroups.GetGroups() {

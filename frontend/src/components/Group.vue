@@ -14,7 +14,7 @@
             <b-col
               ><b-button
                 v-if="!create"
-                @click="deleteAccount"
+                @click="deleteGroup"
                 pill
                 variant="outline-danger"
                 size="sm"
@@ -24,59 +24,22 @@
           </b-row>
         </template>
         <b-card-body>
-          If you are not sure, just leave blank
-          <b-form @submit.prevent="onSubmit" @reset.prevent="onReset">
+          <b-form @submit.prevent="onSubmit">
             <b-form-group
               label-size="sm"
               label-cols-sm="3"
-              label="First name:"
-              class="account-label"
-              label-for="login-input-username"
+              label="Group name:"
+              class="group-label"
+              label-for="login-input-name"
             >
               <b-form-input
                 autocomplete="off"
-                id="login-input-first-name"
+                id="login-input-name"
                 size="sm"
-                v-model="form.first_name"
+                v-model="form.name"
                 type="text"
                 required
-                placeholder="Max"
-              ></b-form-input>
-            </b-form-group>
-
-            <b-form-group
-              label-size="sm"
-              label-cols-sm="3"
-              label="Last name:"
-              class="account-label"
-              label-for="login-input-last-name"
-            >
-              <b-form-input
-                autocomplete="off"
-                id="login-input-last-name"
-                size="sm"
-                v-model="form.last_name"
-                type="text"
-                required
-                placeholder="Mustermann"
-              ></b-form-input>
-            </b-form-group>
-
-            <b-form-group
-              v-if="all"
-              label-size="sm"
-              label-cols-sm="3"
-              label="UID:"
-              class="account-label"
-              label-for="login-input-uid"
-            >
-              <b-form-input
-                autocomplete="off"
-                id="login-input-uid"
-                size="sm"
-                v-model="form.uid"
-                type="number"
-                placeholder="2004"
+                placeholder="My group"
               ></b-form-input>
             </b-form-group>
 
@@ -85,138 +48,21 @@
               label-size="sm"
               label-cols-sm="3"
               label="GID:"
-              class="account-label"
-              label-for="login-input-gid"
+              class="group-label"
+              label-for="group-input-gid"
             >
               <b-form-input
                 autocomplete="off"
-                id="login-input-gid"
+                id="group-input-gid"
                 size="sm"
                 v-model="form.gid"
                 type="number"
                 placeholder="2001"
+                aria-describedby="group-input-gid-help-block"
               ></b-form-input>
-            </b-form-group>
-
-            <b-form-group
-              v-if="all"
-              label-size="sm"
-              label-cols-sm="3"
-              label="Login shell:"
-              class="account-label"
-              label-for="login-input-shell"
-            >
-              <b-form-input
-                autocomplete="off"
-                id="login-input-shell"
-                size="sm"
-                v-model="form.login_shell"
-                type="text"
-                placeholder="/bin/bash"
-              ></b-form-input>
-            </b-form-group>
-
-            <b-form-group
-              v-if="all"
-              label-size="sm"
-              label-cols-sm="3"
-              label="Home directory:"
-              class="account-label"
-              label-for="login-input-home-dir"
-            >
-              <b-form-input
-                autocomplete="off"
-                id="login-input-home-dir"
-                size="sm"
-                v-model="form.home_dir"
-                type="text"
-                placeholder="/home/max123"
-              ></b-form-input>
-            </b-form-group>
-
-            <b-form-group
-              label-size="sm"
-              label-cols-sm="3"
-              label="Username:"
-              class="account-label"
-              label-for="login-input-username"
-            >
-              <b-form-input
-                autocomplete="off"
-                id="login-input-username"
-                size="sm"
-                v-model="form.username"
-                type="text"
-                required
-                placeholder="max123"
-              ></b-form-input>
-            </b-form-group>
-
-            <b-form-group
-              label-size="sm"
-              label-cols-sm="3"
-              label="Email:"
-              class="account-label"
-              label-for="login-input-email"
-            >
-              <b-form-input
-                autocomplete="off"
-                id="login-input-email"
-                size="sm"
-                v-model="form.email"
-                type="email"
-                required
-                placeholder="max.mustermann@example.com"
-              ></b-form-input>
-            </b-form-group>
-
-            <b-form-group>
-              <b-form-group
-                label-size="sm"
-                label-cols-sm="3"
-                label="Password:"
-                class="account-label"
-                label-for="login-input-password"
-              >
-                <b-form-input
-                  autocomplete="off"
-                  id="login-input-password"
-                  size="sm"
-                  v-model="form.password"
-                  type="password"
-                  required
-                  placeholder=""
-                ></b-form-input>
-              </b-form-group>
-
-              <b-form-group
-                label-size="sm"
-                label-cols-sm="3"
-                label="Confirm:"
-                class="account-label"
-                label-for="login-input-confirm-password"
-              >
-                <b-form-input
-                  autocomplete="off"
-                  id="login-input-confirm-password"
-                  size="sm"
-                  v-model="form.password_confirm"
-                  type="password"
-                  required
-                  placeholder="Confirm password"
-                ></b-form-input>
-              </b-form-group>
-
-              <b-row align-h="end">
-                <b-col cols="9"
-                  ><b-progress max="100">
-                    <b-progress-bar
-                      :value="passwordStrength"
-                      :label="passwordStrengthLabel"
-                      :variant="passwordStrengthVariant"
-                    ></b-progress-bar> </b-progress
-                ></b-col>
-              </b-row>
+              <b-form-text id="group-input-gid-help-block">
+                Is optional. If you leave this empty, will be auto calculated
+              </b-form-text>
             </b-form-group>
 
             <b-form-group>
@@ -237,76 +83,57 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
-import { AccountModule, Account } from "../store/modules/accounts";
 import { GatewayError } from "../types";
-
-// TODO: Form feedback helpers?
+import { GroupModule } from "../store/modules/groups";
+import { AppModule } from "../store/modules/app";
 
 @Component
 export default class GroupC extends Vue {
-  @Prop() private account!: string;
-  @Prop({ default: "Account" }) private title!: string;
+  @Prop() private name!: string;
+  @Prop({ default: "Group" }) private title!: string;
   @Prop({ default: false }) private all!: boolean;
   @Prop({ default: false }) private create!: boolean;
 
   protected processing = false;
 
-  protected form: Account = {
-    first_name: "",
-    last_name: "",
-    uid: undefined,
-    gid: undefined,
-    login_shell: "",
-    home_directory: "",
-    username: "",
-    email: "",
-    password: "",
-    password_confirm: ""
+  protected form = {
+    name: "",
+    gid: 0
   };
 
-  get passwordStrengthVariant() {
-    return "success"; // "warning", "danger"
+  deleteGroup(name: string) {
+    AppModule.newConfirmation({ message: "Are you sure?", ack: "Yes, delete" })
+      .then(() => {
+        this.processing = true;
+        GroupModule.deleteGroup(name)
+          .then(() => this.$router.push({ name: "GroupsRoute" }))
+          .catch((err: GatewayError) => alert(err.message))
+          .finally(() => (this.processing = false));
+      })
+      .catch(() => {
+        // Ingore
+      });
   }
 
-  get passwordStrength() {
-    return this.form.password.length;
-  }
-
-  get passwordStrengthLabel() {
-    return "weak!";
-  }
-
-  deleteAccount() {
+  createGroup() {
     this.processing = true;
-    AccountModule.deleteAccount(this.account)
+    GroupModule.newGroup(this.form)
       .catch((err: GatewayError) => alert(err.message))
       .finally(() => (this.processing = false));
   }
 
-  createAccount() {
-    this.processing = true;
-    AccountModule.newAccount(this.form)
-      .catch((err: GatewayError) => alert(err.message))
-      .finally(() => (this.processing = false));
-  }
-
-  updateAccount() {
+  updateGroup() {
     this.processing = true;
   }
 
   onSubmit() {
-    this.create ? this.createAccount() : this.updateAccount();
-    // TODO: Perform a auth request, save in cookie, show error if invalid
-    // continues with run_checks
-    // Password for <?php print $LDAP['admin_bind_dn'] <-- inject these into the frontend somehow
+    this.create ? this.createGroup() : this.updateGroup();
   }
-
-  onReset() {}
 }
 </script>
 
 <style scoped lang="sass">
-.account-label
+group-label
     text-align: right
     font-weight: bold
 </style>

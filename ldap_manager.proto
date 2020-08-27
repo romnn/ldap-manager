@@ -17,16 +17,13 @@ enum SortOrder {
   DESCENDING = 1;
 }
 
-message ListOptions {
+message GetUserListRequest {
   int32 start = 1;
 	int32 end = 2;
 	SortOrder sort_order = 3;
-	string sort_key = 4;
-}
-
-message GetUserListRequest {
-  ListOptions options = 1;
-  string filters = 10;
+  string sort_key = 4;
+  
+  repeated string filter = 10;
 	repeated string fields = 11;
 }
 
@@ -97,8 +94,11 @@ message RenameGroupRequest {
 }
 
 message GetGroupListRequest {
-  ListOptions options = 1;
-	string filters = 2;
+  int32 start = 1;
+	int32 end = 2;
+	SortOrder sort_order = 3;
+  string sort_key = 4;
+	repeated string filter = 10;
 }
 
 message GroupList {
@@ -115,8 +115,11 @@ message GroupMemberStatus {
 }
 
 message GetGroupRequest {
-  string name = 1;
-  ListOptions options = 2;
+  int32 start = 1;
+	int32 end = 2;
+	SortOrder sort_order = 3;
+  string sort_key = 4;
+  string name = 10;
 }
 
 message Group {

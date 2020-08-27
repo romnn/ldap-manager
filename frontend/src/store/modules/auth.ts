@@ -2,10 +2,13 @@ import { VuexModule, Module, Action, getModule } from "vuex-module-decorators";
 import store from "@/store";
 import { GatewayError } from "../../types";
 
-export interface AuthState {}
+export interface AuthState {
+  token: string;
+}
 
 @Module({ dynamic: true, store, name: "auth" })
 class AuthMod extends VuexModule implements AuthState {
+  token = "";
   /*
   let token = response.data.token;
   localStorage.setItem("user-token", token);

@@ -5,10 +5,8 @@ import { API_ENDPOINT } from "../../constants";
 import { Group } from "./groups";
 import { GatewayError } from "../../types";
 
-export interface GroupMemberState {}
-
 @Module({ dynamic: true, store, name: "groups" })
-class GroupMemberMod extends VuexModule implements GroupMemberState {
+class GroupMemberMod extends VuexModule {
   @Action({ rawError: true })
   public async getGroup(name: string): Promise<Group> {
     return new Promise<Group>((resolve, reject) => {

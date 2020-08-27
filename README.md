@@ -93,7 +93,7 @@ invoke compile-proto
 To quickly work around CORS during development, you can use `proxybootstrap`:
 ```bash
 pip install proxybootstrap
-proxybootstrap --port 5000 /v1@http://127.0.0.1:8090 /@http://127.0.0.1:8081
+proxybootstrap --port 5000 /api@http://127.0.0.1:8090 /@http://127.0.0.1:8081
 ```
 
 Note that 8090 is the HTTP service and 8081 is the frontend served via npm.
@@ -137,21 +137,28 @@ This project is still in the alpha stage and should not be considered production
 
 #### TODO
 
-- Implement frontend
-- Implement token based authentication
-- Fully configure travis
-- Implement generic interface
-- Implement GRPC and HTTP interface
-- Update internal methods to use GRPC generated structs that are also used for serialization in the frontend via JSON
-- Implement CLI interface
-    - new acc
-    - change password
-    - add group
-    - add member to group
-    - list users
-    - verify?
-- Publish helm chart via github pages
-- Add images to the readme
-- Rename users to accounts
-- Implement missing password hashing algorithms
-- Embed crypt(3) as vendored?
+- v1
+    - Implement frontend
+    - Implement token based authentication
+        - token encodes the users DN after successful login with username and password
+        - server: validate JWT
+            - if admin: lookup the user dn to check if is in admin group, else fail
+            - if not admin: check that the requested username matches
+    - Publish helm chart via github pages
+
+- v2
+    - documentation
+    - add images to the readme
+    - Fix flaky tests using fuzzy testing and check slappasswd source
+    - Implement missing password hashing algorithms
+    - Embed crypt(3) as vendored?
+
+- nice to have
+    - Implement CLI interface
+        - new acc
+        - change password
+        - add group
+        - add member to group
+        - list users
+        - verify?
+    - Rename users to accounts
