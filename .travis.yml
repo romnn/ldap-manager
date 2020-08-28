@@ -43,6 +43,7 @@ jobs:
     go: master
     script:
     - touch ./public/.nojekyll
+    - deployment/helm/charts/ldap-manager/add-repos.sh
     - helm package --dependency-update --destination ./public/charts deployment/helm/charts/ldap-manager
     - export TRAVIS_REPO_OWNER=${TRAVIS_REPO_SLUG%/*}
     - export TRAVIS_REPO_NAME=${TRAVIS_REPO_SLUG#*/}
