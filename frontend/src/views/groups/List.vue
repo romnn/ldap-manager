@@ -155,7 +155,7 @@ export default class GroupListView extends Vue {
           .finally(() => (this.processing = false));
       })
       .catch(() => {
-        // Ingore
+        // Ignore
       });
   }
 

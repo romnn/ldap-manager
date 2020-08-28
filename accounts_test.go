@@ -244,10 +244,18 @@ func TestGetAccount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to get account: %v", err)
 	}
-	if len(account.GetData()) != 4 {
-		t.Errorf("expected GetAccount to return account with 4 propertiesm, but got: %v", account)
+	expected := map[string]string{
+		"cn":            "Felix Heisenberg",
+		"displayName":   "Felix Heisenberg",
+		"gidNumber":     "2001",
+		"givenName":     "Felix",
+		"homeDirectory": "/home/felix",
+		"loginShell":    "/bin/bash",
+		"mail":          "felix@web.de",
+		"sn":            "Heisenberg",
+		"uid":           "felix",
+		"uidNumber":     "2001",
 	}
-	expected := map[string]string{"givenName": "Felix", "mail": "felix@web.de", "sn": "Heisenberg", "uid": "felix"}
 	if diff := cmp.Diff(expected, account.GetData()); diff != "" {
 		t.Errorf("got unexpected account result: (-want +got):\n%s", diff)
 	}

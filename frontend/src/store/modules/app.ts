@@ -50,8 +50,8 @@ class AppMod extends VuexModule implements AppState {
 
   @Mutation
   public confirmConfirmation() {
-    if (this.pendingConfirmation && this.pendingConfirmation.reject)
-      this.pendingConfirmation.reject();
+    if (this.pendingConfirmation && this.pendingConfirmation.resolve)
+      this.pendingConfirmation.resolve();
     this.pendingConfirmation = null;
   }
 

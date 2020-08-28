@@ -7,10 +7,12 @@ import (
 	"github.com/go-ldap/ldap"
 	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
 )
 
 // RemoveLastGroupMemberError ...
 type RemoveLastGroupMemberError struct {
+	ApplicationError
 	Group string
 }
 
@@ -19,14 +21,25 @@ func (e *RemoveLastGroupMemberError) Error() string {
 	return fmt.Sprintf("cannot remove the only remaining group member from group %q. consider deleting the group.", e.Group)
 }
 
+// Code ...
+func (e *RemoveLastGroupMemberError) Code() codes.Code {
+	return codes.FailedPrecondition
+}
+
 // NoSuchMemberError ...
 type NoSuchMemberError struct {
+	ApplicationError
 	Group, Member string
 }
 
 // NoSuchMemberError ...
 func (e *NoSuchMemberError) Error() string {
 	return fmt.Sprintf("no such member %q in group %q", e.Member, e.Group)
+}
+
+// Code ...
+func (e *NoSuchMemberError) Code() codes.Code {
+	return codes.NotFound
 }
 
 func (m *LDAPManager) getGroup(groupName string) (*pb.Group, error) {
@@ -137,7 +150,7 @@ func (m *LDAPManager) GetGroup(req *pb.GetGroupRequest) (*pb.Group, error) {
 // AddGroupMember ...
 func (m *LDAPManager) AddGroupMember(req *pb.GroupMember, allowNonExistent bool) error {
 	if req.GetGroup() == "" || req.GetUsername() == "" {
-		return &GroupValidationError{"group and user name can not be empty"}
+		return &GroupValidationError{Message: "group and user name can not be empty"}
 	}
 	if !allowNonExistent && !m.IsProtectedGroup(req.GetGroup()) {
 		memberStatus, err := m.IsGroupMember(&pb.IsGroupMemberRequest{Username: req.GetUsername(), Group: m.DefaultUserGroup})
@@ -171,10 +184,10 @@ func (m *LDAPManager) AddGroupMember(req *pb.GroupMember, allowNonExistent bool)
 // DeleteGroupMember ...
 func (m *LDAPManager) DeleteGroupMember(req *pb.GroupMember, allowDeleteOfDefaultGroups bool) error {
 	if req.GetGroup() == "" || req.GetUsername() == "" {
-		return &GroupValidationError{"group and user name can not be empty"}
+		return &GroupValidationError{Message: "group and user name can not be empty"}
 	}
 	if !allowDeleteOfDefaultGroups && m.IsProtectedGroup(req.GetGroup()) {
-		return &GroupValidationError{"deleting members from the default user or admin group is not allowed"}
+		return &GroupValidationError{Message: "deleting members from the default user or admin group is not allowed"}
 	}
 	username := escapeDN(req.GetUsername())
 	if !m.GroupMembershipUsesUID {
@@ -188,7 +201,7 @@ func (m *LDAPManager) DeleteGroupMember(req *pb.GroupMember, allowDeleteOfDefaul
 	log.Debug(modifyRequest)
 	if err := m.ldap.Modify(modifyRequest); err != nil {
 		if ldap.IsErrorWithCode(err, ldap.LDAPResultObjectClassViolation) {
-			return &RemoveLastGroupMemberError{req.GetGroup()}
+			return &RemoveLastGroupMemberError{Group: req.GetGroup()}
 		}
 		if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) || ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchAttribute) {
 			return &NoSuchMemberError{Group: req.GetGroup(), Member: req.GetUsername()}

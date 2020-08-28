@@ -4,10 +4,12 @@ import (
 	"net"
 	"sync"
 
+	ldapmanager "github.com/romnnn/ldap-manager"
 	ldapbase "github.com/romnnn/ldap-manager/cmd/ldap-manager/base"
 	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"google.golang.org/grpc/status"
 )
 
 // LDAPManagerServer ...
@@ -30,6 +32,10 @@ func (s *LDAPManagerServer) Shutdown() {
 	if s.LDAPManagerServer != nil {
 		s.LDAPManagerServer.Shutdown()
 	}
+}
+
+func toStatus(e ldapmanager.Error) error {
+	return status.Error(e.Code(), e.Error())
 }
 
 // Serve ...

@@ -66,6 +66,13 @@
             </b-form-group>
 
             <b-form-group>
+              <b-row>
+                <b-col><member-list-c></member-list-c></b-col>
+                <b-col><member-list-c></member-list-c></b-col>
+              </b-row>
+            </b-form-group>
+
+            <b-form-group>
               <b-button
                 class="float-right"
                 size="sm"
@@ -86,8 +93,11 @@ import { Component, Prop, Vue } from "vue-property-decorator";
 import { GatewayError } from "../types";
 import { GroupModule } from "../store/modules/groups";
 import { AppModule } from "../store/modules/app";
+import MemberListC from "./MemberList.vue";
 
-@Component
+@Component({
+  components: {MemberListC}
+})
 export default class GroupC extends Vue {
   @Prop() private name!: string;
   @Prop({ default: "Group" }) private title!: string;

@@ -139,12 +139,14 @@ This project is still in the alpha stage and should not be considered production
 
 - v1
     - Implement frontend
+        - Implement group edit page
+        - Implement user update 
+    - Improve GRPC error messages
     - Implement token based authentication
         - token encodes the users DN after successful login with username and password
         - server: validate JWT
             - if admin: lookup the user dn to check if is in admin group, else fail
             - if not admin: check that the requested username matches
-    - Publish helm chart via github pages
 
 - v2
     - documentation
@@ -161,4 +163,4 @@ This project is still in the alpha stage and should not be considered production
         - add member to group
         - list users
         - verify?
-    - Rename users to accounts
+    - decide on a consistent naming (user vs account)

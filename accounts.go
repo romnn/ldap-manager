@@ -3,10 +3,11 @@ package ldapmanager
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"regexp"
 	"sort"
 	"strconv"
+
+	"google.golang.org/grpc/codes"
 
 	"github.com/go-ldap/ldap"
 	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
@@ -18,6 +19,7 @@ var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z
 
 // AccountAlreadyExistsError ...
 type AccountAlreadyExistsError struct {
+	ApplicationError
 	Username string
 }
 
@@ -26,18 +28,16 @@ func (e *AccountAlreadyExistsError) Error() string {
 	return fmt.Sprintf("account with username %q already exists", e.Username)
 }
 
-// ZeroOrMultipleAccountsError ...
-type ZeroOrMultipleAccountsError struct {
-	Username string
-	Count    int
+// Code ...
+func (e *AccountAlreadyExistsError) Code() codes.Code {
+	return codes.AlreadyExists
 }
 
-// Status ...
-func (e *ZeroOrMultipleAccountsError) Status() int {
-	if e.Count > 1 {
-		return http.StatusConflict
-	}
-	return http.StatusNotFound
+// ZeroOrMultipleAccountsError ...
+type ZeroOrMultipleAccountsError struct {
+	ApplicationError
+	Username string
+	Count    int
 }
 
 // Error ...
@@ -48,14 +48,28 @@ func (e *ZeroOrMultipleAccountsError) Error() string {
 	return fmt.Sprintf("no account with username %q", e.Username)
 }
 
+// Code ...
+func (e *ZeroOrMultipleAccountsError) Code() codes.Code {
+	if e.Count > 1 {
+		return codes.Internal
+	}
+	return codes.NotFound
+}
+
 // AccountValidationError ...
 type AccountValidationError struct {
+	ApplicationError
 	Invalid []string
 }
 
 // Error ...
 func (e *AccountValidationError) Error() string {
 	return fmt.Sprintf("invalid account request. missing or invalid: %v", e.Invalid)
+}
+
+// Code ...
+func (e *AccountValidationError) Code() codes.Code {
+	return codes.InvalidArgument
 }
 
 func validEmail(e string) bool {
