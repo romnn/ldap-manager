@@ -15,5 +15,5 @@
     name: lint helm chart
     stages: [commit]
     language: system
-    entry: helm lint deployment/helm/ldap-manager/
+    entry: helm lint deployment/helm/charts/ldap-manager/
     pass_filenames: false

@@ -29,4 +29,5 @@ build/
 **/node_modules
 icon/
 **/debug.yaml
+**/index.yaml
 deployment/
