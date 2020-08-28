@@ -5,7 +5,7 @@ import { API_ENDPOINT } from "../../constants";
 import { Group } from "./groups";
 import { GatewayError } from "../../types";
 
-@Module({ dynamic: true, store, name: "groups" })
+@Module({ dynamic: true, store, name: "members" })
 class GroupMemberMod extends VuexModule {
   @Action({ rawError: true })
   public async getGroup(name: string): Promise<Group> {
@@ -22,10 +22,15 @@ class GroupMemberMod extends VuexModule {
   }
 
   @Action({ rawError: true })
-  public async addGroupMember(group: string, member: string): Promise<void> {
+  public async addGroupMember(req: {
+    group: string;
+    member: string;
+  }): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       Vue.axios
-        .put(API_ENDPOINT + "/group/" + group + "/members", { member })
+        .put(API_ENDPOINT + "/group/" + req.group + "/members", {
+          member: req.member
+        })
         .then(
           () => {
             resolve();
@@ -38,10 +43,16 @@ class GroupMemberMod extends VuexModule {
   }
 
   @Action({ rawError: true })
-  public async deleteGroupMember(group: string, member: string): Promise<void> {
+  public async deleteGroupMember(req: {
+    group: string;
+    member: string;
+  }): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       Vue.axios
-        .delete(API_ENDPOINT + "/group/" + group + "/member/" + member, {})
+        .delete(
+          API_ENDPOINT + "/group/" + req.group + "/member/" + req.member,
+          {}
+        )
         .then(
           () => {
             resolve();

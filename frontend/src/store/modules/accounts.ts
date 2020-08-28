@@ -14,6 +14,22 @@ export interface UserList {
       [key: string]: string;
     };
   }[];
+  total?: string;
+}
+
+export interface RemoteAccount {
+  data?: {
+    cn?: string;
+    displayName?: string;
+    gidNumber?: string;
+    givenName?: string;
+    homeDirectory?: string;
+    loginShell?: string;
+    mail?: string;
+    sn?: string;
+    uid?: string;
+    uidNumber?: string;
+  };
 }
 
 export interface Account {
@@ -27,7 +43,7 @@ export interface Account {
   email: string;
   password: string;
   password_confirm: string;
-  [key: string]: string | number | undefined;
+  // [key: string]: string | number | undefined;
 }
 
 @Module({ dynamic: true, store, name: "accounts" })
@@ -61,8 +77,8 @@ class AccountMod extends VuexModule {
   // TODO: AuthenticateUser
 
   @Action({ rawError: true })
-  public async getAccount(username: string): Promise<Account> {
-    return new Promise<Account>((resolve, reject) => {
+  public async getAccount(username: string): Promise<RemoteAccount> {
+    return new Promise<RemoteAccount>((resolve, reject) => {
       Vue.axios.get(API_ENDPOINT + "/account/" + username, {}).then(
         response => {
           resolve(response.data);

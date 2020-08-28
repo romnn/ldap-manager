@@ -76,7 +76,9 @@ func validUsername(un string) bool {
 }
 
 func (m *LDAPManager) defaultUserFields() []string {
-	return []string{m.AccountAttribute, "givenname", "sn", "mail"}
+	return []string{
+		m.AccountAttribute,
+		"givenName", "sn", "cn", "displayName", "uidNumber", "gidNumber", "loginShell", "homeDirectory", "mail"}
 }
 
 func parseUser(entry *ldap.Entry) *pb.User {
@@ -119,11 +121,22 @@ func (m *LDAPManager) AccountNamed(name string) string {
 	return fmt.Sprintf("%s=%s,%s", m.AccountAttribute, escapeDN(name), m.UserGroupDN)
 }
 
+func (m *LDAPManager) countAccounts() (int, error) {
+	result, err := m.ldap.Search(ldap.NewSearchRequest(
+		m.UserGroupDN,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		fmt.Sprintf("(%s=*)", m.AccountAttribute),
+		[]string{"dn"},
+		[]ldap.Control{},
+	))
+	if err != nil {
+		return 0, err
+	}
+	return len(result.Entries), nil
+}
+
 // GetUserList ...
 func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, error) {
-	if len(req.Fields) < 1 {
-		req.Fields = m.defaultUserFields()
-	}
 	if req.GetSortKey() == "" {
 		req.SortKey = m.AccountAttribute
 	}
@@ -133,9 +146,13 @@ func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, err
 		m.UserGroupDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		fmt.Sprintf("(&(%s=*)%s)", m.AccountAttribute, filter),
-		req.Fields,
+		m.defaultUserFields(),
 		[]ldap.Control{},
 	))
+	if err != nil {
+		return nil, err
+	}
+	total, err := m.countAccounts()
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +180,7 @@ func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, err
 	if req.GetStart() >= 0 && req.GetEnd() < int32(len(keys)) && req.GetStart() < req.GetEnd() {
 		clippedKeys = keys[req.GetStart():req.GetEnd()]
 	}
-	clipped := &pb.UserList{}
+	clipped := &pb.UserList{Total: int64(total)}
 	for _, key := range clippedKeys {
 		clipped.Users = append(clipped.Users, users[key])
 	}
@@ -316,7 +333,7 @@ func (m *LDAPManager) NewAccount(req *pb.NewAccountRequest, algorithm pb.Hashing
 	fullName := fmt.Sprintf("%s %s", req.GetFirstName(), req.GetLastName())
 	userAttributes := []ldap.Attribute{
 		{Type: "objectClass", Vals: []string{"person", "inetOrgPerson", "posixAccount"}},
-		{Type: "uid", Vals: []string{req.GetUsername()}},
+		{Type: m.AccountAttribute, Vals: []string{req.GetUsername()}},
 		{Type: "givenName", Vals: []string{req.GetFirstName()}},
 		{Type: "sn", Vals: []string{req.GetLastName()}},
 		{Type: "cn", Vals: []string{fullName}},

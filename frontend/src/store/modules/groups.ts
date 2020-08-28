@@ -9,7 +9,8 @@ export interface Group {
 }
 
 export interface GroupList {
-  groups: Group[];
+  groups: string[];
+  total?: string;
 }
 
 @Module({ dynamic: true, store, name: "groups" })
@@ -72,6 +73,20 @@ class GroupMod extends VuexModule {
     }
     return new Promise<GroupList>((resolve, reject) => {
       Vue.axios.get(API_ENDPOINT + "/groups", { params: request }).then(
+        response => {
+          resolve(response.data);
+        },
+        err => {
+          reject(err.response?.data as GatewayError);
+        }
+      );
+    });
+  }
+
+  @Action({ rawError: true })
+  public async getUserGroups(username: string): Promise<GroupList> {
+    return new Promise<GroupList>((resolve, reject) => {
+      Vue.axios.get(API_ENDPOINT + "/account/" + username + "/groups", {}).then(
         response => {
           resolve(response.data);
         },

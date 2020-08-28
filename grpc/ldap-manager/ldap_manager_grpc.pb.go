@@ -33,6 +33,7 @@ type LDAPManagerClient interface {
 	DeleteGroup(ctx context.Context, in *DeleteGroupRequest, opts ...grpc.CallOption) (*Empty, error)
 	RenameGroup(ctx context.Context, in *RenameGroupRequest, opts ...grpc.CallOption) (*Empty, error)
 	GetGroupList(ctx context.Context, in *GetGroupListRequest, opts ...grpc.CallOption) (*GroupList, error)
+	GetUserGroups(ctx context.Context, in *GetUserGroupsRequest, opts ...grpc.CallOption) (*GroupList, error)
 	// Group members
 	IsGroupMember(ctx context.Context, in *IsGroupMemberRequest, opts ...grpc.CallOption) (*GroupMemberStatus, error)
 	GetGroup(ctx context.Context, in *GetGroupRequest, opts ...grpc.CallOption) (*Group, error)
@@ -156,6 +157,15 @@ func (c *lDAPManagerClient) GetGroupList(ctx context.Context, in *GetGroupListRe
 	return out, nil
 }
 
+func (c *lDAPManagerClient) GetUserGroups(ctx context.Context, in *GetUserGroupsRequest, opts ...grpc.CallOption) (*GroupList, error) {
+	out := new(GroupList)
+	err := c.cc.Invoke(ctx, "/ldapmanager.LDAPManager/GetUserGroups", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *lDAPManagerClient) IsGroupMember(ctx context.Context, in *IsGroupMemberRequest, opts ...grpc.CallOption) (*GroupMemberStatus, error) {
 	out := new(GroupMemberStatus)
 	err := c.cc.Invoke(ctx, "/ldapmanager.LDAPManager/IsGroupMember", in, out, opts...)
@@ -211,6 +221,7 @@ type LDAPManagerServer interface {
 	DeleteGroup(context.Context, *DeleteGroupRequest) (*Empty, error)
 	RenameGroup(context.Context, *RenameGroupRequest) (*Empty, error)
 	GetGroupList(context.Context, *GetGroupListRequest) (*GroupList, error)
+	GetUserGroups(context.Context, *GetUserGroupsRequest) (*GroupList, error)
 	// Group members
 	IsGroupMember(context.Context, *IsGroupMemberRequest) (*GroupMemberStatus, error)
 	GetGroup(context.Context, *GetGroupRequest) (*Group, error)
@@ -258,6 +269,9 @@ func (*UnimplementedLDAPManagerServer) RenameGroup(context.Context, *RenameGroup
 }
 func (*UnimplementedLDAPManagerServer) GetGroupList(context.Context, *GetGroupListRequest) (*GroupList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetGroupList not implemented")
+}
+func (*UnimplementedLDAPManagerServer) GetUserGroups(context.Context, *GetUserGroupsRequest) (*GroupList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserGroups not implemented")
 }
 func (*UnimplementedLDAPManagerServer) IsGroupMember(context.Context, *IsGroupMemberRequest) (*GroupMemberStatus, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsGroupMember not implemented")
@@ -493,6 +507,24 @@ func _LDAPManager_GetGroupList_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LDAPManager_GetUserGroups_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserGroupsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LDAPManagerServer).GetUserGroups(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ldapmanager.LDAPManager/GetUserGroups",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LDAPManagerServer).GetUserGroups(ctx, req.(*GetUserGroupsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _LDAPManager_IsGroupMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(IsGroupMemberRequest)
 	if err := dec(in); err != nil {
@@ -616,6 +648,10 @@ var _LDAPManager_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetGroupList",
 			Handler:    _LDAPManager_GetGroupList_Handler,
+		},
+		{
+			MethodName: "GetUserGroups",
+			Handler:    _LDAPManager_GetUserGroups_Handler,
 		},
 		{
 			MethodName: "IsGroupMember",

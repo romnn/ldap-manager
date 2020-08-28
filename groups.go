@@ -192,6 +192,20 @@ func (m *LDAPManager) RenameGroup(req *pb.RenameGroupRequest) error {
 	return nil
 }
 
+func (m *LDAPManager) countGroups() (int, error) {
+	result, err := m.ldap.Search(ldap.NewSearchRequest(
+		m.GroupsDN,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		"(objectClass=*)",
+		[]string{"cn"},
+		[]ldap.Control{},
+	))
+	if err != nil {
+		return 0, err
+	}
+	return len(result.Entries), nil
+}
+
 // GetGroupList ...
 func (m *LDAPManager) GetGroupList(req *pb.GetGroupListRequest) (*pb.GroupList, error) {
 	filter := parseFilter(req.Filter)
@@ -205,7 +219,11 @@ func (m *LDAPManager) GetGroupList(req *pb.GetGroupListRequest) (*pb.GroupList, 
 	if err != nil {
 		return nil, err
 	}
-	groupList := &pb.GroupList{}
+	total, err := m.countGroups()
+	if err != nil {
+		return nil, err
+	}
+	groupList := &pb.GroupList{Total: int64(total)}
 	for _, group := range result.Entries {
 		if cn := group.GetAttributeValue("cn"); cn != "" {
 			groupList.Groups = append(groupList.Groups, cn)

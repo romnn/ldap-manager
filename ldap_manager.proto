@@ -24,7 +24,7 @@ message GetUserListRequest {
   string sort_key = 4;
   
   repeated string filter = 10;
-	repeated string fields = 11;
+	// repeated string fields = 11;
 }
 
 message User {
@@ -33,6 +33,7 @@ message User {
 
 message UserList {
   repeated User users = 1;
+  int64 total = 10;
 }
 
 message AuthenticateUserRequest {
@@ -42,6 +43,7 @@ message AuthenticateUserRequest {
 
 message GetAccountRequest {
   string username = 1;
+  // repeated string fields = 10;
 }
 
 enum HashingAlgorithm {
@@ -71,7 +73,7 @@ message NewAccountRequest {
   string username = 20;
   string email = 21;
 	string password = 22;
-  // exclude from here because we will use this interface publicly
+  // exclude hashing_algorithm because we will use this interface publicly
   // HashingAlgorithm hashing_algorithm = 100;
 }
 
@@ -103,6 +105,7 @@ message GetGroupListRequest {
 
 message GroupList {
   repeated string groups = 1;
+  int64 total = 10;
 }
 
 message IsGroupMemberRequest {
@@ -122,9 +125,14 @@ message GetGroupRequest {
   string name = 10;
 }
 
+message GetUserGroupsRequest {
+  string username = 1;
+}
+
 message Group {
   string name = 1;
   repeated string members = 2;
+  int64 total = 10;
 }
 
 message GroupMember {
@@ -228,6 +236,12 @@ service LDAPManager {
     option (require_admin) = true;
     option (google.api.http) = {
       get: "/v1/groups"
+    };
+  }
+
+  rpc GetUserGroups(GetUserGroupsRequest) returns (GroupList) {
+    option (google.api.http) = {
+      get: "/v1/account/{username}/groups"
     };
   }
 

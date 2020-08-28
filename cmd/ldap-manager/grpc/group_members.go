@@ -29,6 +29,16 @@ func (s *LDAPManagerServer) GetGroup(ctx context.Context, in *pb.GetGroupRequest
 	return group, nil
 }
 
+// GetUserGroups ...
+func (s *LDAPManagerServer) GetUserGroups(ctx context.Context, in *pb.GetUserGroupsRequest) (*pb.GroupList, error) {
+	groups, err := s.Manager.GetUserGroups(in)
+	if err != nil {
+		log.Error(err)
+		return &pb.GroupList{}, status.Error(codes.Internal, "error while getting groups")
+	}
+	return groups, nil
+}
+
 // AddGroupMember ...
 func (s *LDAPManagerServer) AddGroupMember(ctx context.Context, in *pb.GroupMember) (*pb.Empty, error) {
 	if err := s.Manager.AddGroupMember(in, false); err != nil {
