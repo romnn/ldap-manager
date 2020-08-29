@@ -126,10 +126,6 @@ spec:
           - name: OPENLDAP_READONLY_PASSWORD
             value: {{ .Values.ldap.readonly.password | quote }}
           {{- end }}
-          {{- if .Values.ldap.readonly.password }}
-          - name: OPENLDAP_READONLY_PASSWORD
-            value: {{ .Values.ldap.readonly.password | quote }}
-          {{- end }}
           {{- if .Values.ldap.organization }}
           - name: OPENLDAP_ORGANIZATION
             value: {{ .Values.ldap.organization | quote }}

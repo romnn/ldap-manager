@@ -19,8 +19,8 @@ openldap:
 
 ldap:
   host: ldapmanager-openldap
-  # port: 389
-  # protocol: "ldap"
+  port: 389
+  protocol: "ldap"
   adminPassword: admin
   configPassword: config
   readonly:

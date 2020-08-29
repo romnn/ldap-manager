@@ -12,12 +12,12 @@ import (
 
 // BindReadOnly ...
 func (m *LDAPManager) BindReadOnly() error {
-	return m.ldap.Bind(fmt.Sprintf("cn=%s,dc=example,dc=org", m.OpenLDAPConfig.ReadonlyUserUsername), m.OpenLDAPConfig.ReadonlyUserPassword)
+	return m.ldap.Bind(fmt.Sprintf("cn=%s,%s", m.OpenLDAPConfig.ReadonlyUserUsername, m.OpenLDAPConfig.BaseDN), m.OpenLDAPConfig.ReadonlyUserPassword)
 }
 
 // BindAdmin ...
 func (m *LDAPManager) BindAdmin() error {
-	return m.ldap.Bind(fmt.Sprintf("cn=%s,dc=example,dc=org", "admin"), m.OpenLDAPConfig.AdminPassword)
+	return m.ldap.Bind(fmt.Sprintf("cn=%s,%s", "admin", m.OpenLDAPConfig.BaseDN), m.OpenLDAPConfig.AdminPassword)
 }
 
 func (m *LDAPManager) setupOU(dn, ou string) error {
@@ -133,10 +133,6 @@ func (m *LDAPManager) setupDefaultAdmin() error {
 		return errors.New("no admin user created")
 	}
 	return nil
-}
-
-func (m *LDAPManager) setupAuth(adminPassword string) error {
-	return m.ldap.Bind(fmt.Sprintf("cn=%s,dc=example,dc=org", "admin"), adminPassword)
 }
 
 // SetupLDAP ...
