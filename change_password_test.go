@@ -32,6 +32,8 @@ func TestChangePassword(t *testing.T) {
 		t.Fatalf("failed to authenticate user %q with password %q: %v", username, initialPassword, err)
 	}
 
+	userListBefore, _ := test.Manager.GetUserList(&pb.GetUserListRequest{})
+
 	// Invalid change password request
 	if err := test.Manager.ChangePassword(&pb.ChangePasswordRequest{
 		Username: username,
@@ -60,8 +62,10 @@ func TestChangePassword(t *testing.T) {
 	}
 
 	// Assert the number of users did not change in the process
-	userList, _ := test.Manager.GetUserList(&pb.GetUserListRequest{})
-	if len(userList.GetUsers()) != 1 {
-		t.Fatalf("expected exactly one user, but got %d", len(userList.GetUsers()))
+	userListAfter, _ := test.Manager.GetUserList(&pb.GetUserListRequest{})
+	before := len(userListBefore.GetUsers())
+	after := len(userListAfter.GetUsers())
+	if before != after {
+		t.Fatalf("expected the number of users to not change, but got %d after and %d before", after, before)
 	}
 }

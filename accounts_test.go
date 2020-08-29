@@ -3,12 +3,22 @@ package ldapmanager
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 	ldaphash "github.com/romnnn/ldap-manager/hash"
 )
+
+func contains(list []string, a string) bool {
+	for _, b := range list {
+		if strings.ToLower(b) == strings.ToLower(a) {
+			return true
+		}
+	}
+	return false
+}
 
 func containsUsers(observed *pb.UserList, expected []string, attr string) error {
 	for _, e := range expected {
@@ -219,7 +229,7 @@ func TestGetAccount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to get list of all groups: %v", err)
 	}
-	if groups.GetGroups()[0] != test.Manager.DefaultUserGroup {
+	if !contains(groups.GetGroups(), test.Manager.DefaultUserGroup) {
 		t.Fatalf("expected the default user group %q to have been created", test.Manager.DefaultUserGroup)
 	}
 
@@ -228,7 +238,7 @@ func TestGetAccount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to get members of the group %q: %v", test.Manager.DefaultUserGroup, err)
 	}
-	if group.Members[0] != newUserReq.Username {
+	if !contains(group.Members, newUserReq.Username) {
 		t.Fatalf("expected the new user %q to be a member of the default user group %q", newUserReq.Username, test.Manager.DefaultUserGroup)
 	}
 
@@ -247,14 +257,14 @@ func TestGetAccount(t *testing.T) {
 	expected := map[string]string{
 		"cn":            "Felix Heisenberg",
 		"displayName":   "Felix Heisenberg",
-		"gidNumber":     "2001",
+		"gidNumber":     "2001", // users group should be 2001
 		"givenName":     "Felix",
 		"homeDirectory": "/home/felix",
 		"loginShell":    "/bin/bash",
 		"mail":          "felix@web.de",
 		"sn":            "Heisenberg",
 		"uid":           "felix",
-		"uidNumber":     "2001",
+		"uidNumber":     "2002", // admin user should be 2001
 	}
 	if diff := cmp.Diff(expected, account.GetData()); diff != "" {
 		t.Errorf("got unexpected account result: (-want +got):\n%s", diff)

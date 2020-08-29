@@ -2,6 +2,7 @@ package ldapmanager
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -52,7 +53,12 @@ func assertHasGroups(t *testing.T, manager *LDAPManager, expected []string) {
 	if err != nil {
 		t.Errorf("failed to get groups: %v", err)
 	}
-	if diff := cmp.Diff(append(expected, manager.DefaultUserGroup), groups.GetGroups()); diff != "" {
+	// Sort for deterministic order
+	expected = append(expected, []string{manager.DefaultUserGroup, manager.DefaultAdminGroup}...)
+	sort.Strings(expected)
+	observed := groups.GetGroups()
+	sort.Strings(observed)
+	if diff := cmp.Diff(expected, observed); diff != "" {
 		t.Errorf("got unexpected groups: (-want +got):\n%s", diff)
 	}
 }
