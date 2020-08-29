@@ -1,5 +1,5 @@
 {{- if .Values.ingress.enabled -}}
-{{- $fullName := include "ldap-manager.fullname" . -}}
+{{- $fullName := include "ldapmanager.fullname" . -}}
 {{- $svcHttpPort := .Values.service.httpPort -}}
 {{- $svcGrpcPort := .Values.service.grpcPort -}}
 {{- if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
@@ -11,7 +11,7 @@ kind: Ingress
 metadata:
   name: {{ $fullName }}
   labels:
-    {{- include "ldap-manager.labels" . | nindent 4 }}
+    {{- include "ldapmanager.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}

@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "ldap-manager.fullname" . }}
+  name: {{ include "ldapmanager.fullname" . }}
   labels:
-    {{- include "ldap-manager.labels" . | nindent 4 }}
+    {{- include "ldapmanager.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "ldap-manager.fullname" . }}
+    name: {{ include "ldapmanager.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

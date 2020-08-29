@@ -1,10 +1,10 @@
-# Default values for ldap-manager.
+# Default values for ldapmanager.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
 openldap:
   enabled: true
-  fullnameOverride: ldap-manager-openldap
+  fullnameOverride: ldapmanager-openldap
   adminPassword: admin
   configPassword: config
   env:
@@ -18,7 +18,7 @@ openldap:
     LDAP_RFC2307BIS_SCHEMA: "true"
 
 ldap:
-  host: ldap-manager-openldap
+  host: ldapmanager-openldap
   # port: 389
   # protocol: "ldap"
   adminPassword: admin
@@ -115,9 +115,9 @@ ingress:
   httpHosts:
     - host: ldapmanager.example.org
       paths: ["/"]
-  grpcHosts:
-    - host: ldapmanager.example.org
-      paths: ["/"]
+  grpcHosts: {}
+  #   - host: ldapmanager.example.org
+  #     paths: ["/"]
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:

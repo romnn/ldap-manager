@@ -18,7 +18,7 @@ jobs:
     os: linux
     go: master
     script:
-    - helm lint deployment/helm/charts/ldap-manager/
+    - helm lint deployment/helm/charts/ldapmanager/
 
   - stage: deploy
     name: Publish release
@@ -43,8 +43,8 @@ jobs:
     go: master
     script:
     - touch ./public/.nojekyll
-    - deployment/helm/charts/ldap-manager/add-repos.sh
-    - helm package --dependency-update --destination ./public/charts deployment/helm/charts/ldap-manager
+    - deployment/helm/charts/ldapmanager/add-repos.sh
+    - helm package --dependency-update --destination ./public/charts deployment/helm/charts/ldapmanager
     - export TRAVIS_REPO_OWNER=${TRAVIS_REPO_SLUG%/*}
     - export TRAVIS_REPO_NAME=${TRAVIS_REPO_SLUG#*/}
     - helm repo index --url https://${TRAVIS_REPO_OWNER}.github.io/${TRAVIS_REPO_NAME}/charts ./public/charts

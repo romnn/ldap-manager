@@ -1,5 +1,5 @@
 apiVersion: v2
-name: ldap-manager
+name: ldapmanager
 description: cloud-native LDAP management service with a web interface
 
 # A chart can be either an 'application' or a 'library' chart.

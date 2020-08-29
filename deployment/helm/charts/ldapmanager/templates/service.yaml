@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "ldap-manager.fullname" . }}
+  name: {{ include "ldapmanager.fullname" . }}
   labels:
-    {{- include "ldap-manager.labels" . | nindent 4 }}
+    {{- include "ldapmanager.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -16,4 +16,4 @@ spec:
       protocol: TCP
       name: grpc
   selector:
-    {{- include "ldap-manager.selectorLabels" . | nindent 4 }}
+    {{- include "ldapmanager.selectorLabels" . | nindent 4 }}
