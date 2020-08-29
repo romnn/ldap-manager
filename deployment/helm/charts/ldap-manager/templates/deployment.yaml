@@ -64,6 +64,39 @@ spec:
           - name: STATIC_ROOT
             value: {{ .Values.static.root | quote }}
           {{- end }}
+          # JWT auth
+          {{- if .Values.auth.privateKey }}
+          - name: PRIVATE_KEY
+            value: {{ .Values.auth.privateKey | quote }}
+          {{- end }}
+          {{- if .Values.auth.jwksJSON }}
+          - name: JWKS_JSON
+            value: {{ .Values.auth.jwksJSON | quote }}
+          {{- end }}
+          {{- if .Values.auth.privateKeyFile }}
+          - name: PRIVATE_KEY_FILE
+            value: {{ .Values.auth.privateKeyFile | quote }}
+          {{- end }}
+          {{- if .Values.auth.jwksJSONFile }}
+          - name: JWKS_JSON_FILE
+            value: {{ .Values.auth.jwksJSONFile | quote }}
+          {{- end }}
+          {{- if .Values.auth.generateKeys }}
+          - name: GENERATE
+            value: {{ .Values.auth.generateKeys | quote }}
+          {{- end }}
+          {{- if .Values.auth.expirationSeconds }}
+          - name: EXPIRATION_SEC
+            value: {{ .Values.auth.expirationSeconds | quote }}
+          {{- end }}
+          {{- if .Values.auth.issuer }}
+          - name: ISSUER
+            value: {{ .Values.auth.issuer | quote }}
+          {{- end }}
+          {{- if .Values.auth.audience }}
+          - name: AUDIENCE
+            value: {{ .Values.auth.audience | quote }}
+          {{- end }}
           # OPENLDAP config
           {{- if .Values.ldap.host }}
           - name: OPENLDAP_HOST
@@ -162,6 +195,18 @@ spec:
           {{- if .Values.defaultLoginShell }}
           - name: DEFAULT_LOGIN_SHELL
             value: {{ .Values.defaultLoginShell | quote }}
+          {{- end }}
+          {{- if .Values.defaultAdminUsername }}
+          - name: DEFAULT_ADMIN_USERNAME
+            value: {{ .Values.defaultAdminUsername | quote }}
+          {{- end }}
+          {{- if .Values.defaultAdminPassword }}
+          - name: DEFAULT_ADMIN_PASSWORD
+            value: {{ .Values.defaultAdminPassword | quote }}
+          {{- end }}
+          {{- if .Values.forceCreateAdmin }}
+          - name: FORCE_CREATE_ADMIN
+            value: {{ .Values.forceCreateAdmin | quote }}
           {{- end }}
 
           # Any additional environment variables

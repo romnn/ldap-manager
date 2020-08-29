@@ -37,6 +37,16 @@ static: {}
   # enabled: "true"
   # root: "./frontend/dist"
 
+auth:
+  # privateKey: ""
+  # jwksJSON: ""
+  # privateKeyFile: ""
+  # jwksJSONFile: ""
+  generateKeys: "true" 
+  # expirationSeconds: 86400
+  # issuer: "issuer@example.org"
+  # audience: "example.org"
+
 # groupsOU: "groups"
 # usersOU: "users"
 # groupsDN: "" # (if left empty, will be generated from groupsOU and baseDN (e.g.ou=groups,dc=example,dc=org))
@@ -48,6 +58,9 @@ static: {}
 # defaultUserGroup: "users"
 # defaultAdminGroup: "admins"
 # defaultLoginShell: "/bin/bash"
+# defaultAdminUsername: "admin"
+# defaultAdminPassword: "admin"
+# forceCreateAdmin: "false"
 
 # additionalEnv:
 #  - name: "USERNAME"
@@ -59,7 +72,7 @@ replicaCount: 1
 
 image:
   repository: romnn/ldap-manager
-  pullPolicy: Always # IfNotPresent
+  pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
 
