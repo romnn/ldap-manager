@@ -29,6 +29,10 @@ type LDAPManager struct {
 	DefaultAdminGroup string
 	DefaultUserShell  string
 
+	DefaultAdminUsername string
+	DefaultAdminPassword string
+	ForceCreateAdmin     bool
+
 	GroupMembershipAttribute string
 	AccountAttribute         string
 	GroupAttribute           string
@@ -51,6 +55,9 @@ func NewLDAPManager(cfg ldapconfig.OpenLDAPConfig) *LDAPManager {
 		AccountAttribute:         "uid",
 		GroupAttribute:           "gid",
 		GroupMembershipUsesUID:   false,
+		DefaultAdminUsername:     "admin",
+		DefaultAdminPassword:     "admin",
+		ForceCreateAdmin:         false,
 	}
 }
 

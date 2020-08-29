@@ -62,6 +62,7 @@ class AccountMod extends VuexModule {
     if (req.search.length > 0) {
       request.filter = ["uid=" + req.search];
     }
+
     return new Promise<UserList>((resolve, reject) => {
       Vue.axios.get(API_ENDPOINT + "/accounts", { params: request }).then(
         response => {

@@ -43,7 +43,7 @@ func (m *LDAPManager) ChangePassword(req *pb.ChangePasswordRequest) error {
 		[]ldap.Control{},
 	)
 	modifyPasswordRequest.Replace("userPassword", []string{hashedPassword})
-	log.Debug(modifyPasswordRequest)
+	log.Debugf("modifyPasswordRequest=%v", modifyPasswordRequest)
 	if err := m.ldap.Modify(modifyPasswordRequest); err != nil {
 		return fmt.Errorf("failed to modify existing user: %v", err)
 	}

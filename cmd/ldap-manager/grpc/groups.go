@@ -12,6 +12,10 @@ import (
 
 // NewGroup ...
 func (s *LDAPManagerServer) NewGroup(ctx context.Context, in *pb.NewGroupRequest) (*pb.Empty, error) {
+	_, err := s.authenticate(ctx)
+	if err != nil {
+		return &pb.Empty{}, err
+	}
 	if err := s.Manager.NewGroup(in, false); err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
 			return &pb.Empty{}, toStatus(appErr)
@@ -24,6 +28,10 @@ func (s *LDAPManagerServer) NewGroup(ctx context.Context, in *pb.NewGroupRequest
 
 // DeleteGroup ...
 func (s *LDAPManagerServer) DeleteGroup(ctx context.Context, in *pb.DeleteGroupRequest) (*pb.Empty, error) {
+	_, err := s.authenticate(ctx)
+	if err != nil {
+		return &pb.Empty{}, err
+	}
 	if err := s.Manager.DeleteGroup(in); err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
 			return &pb.Empty{}, toStatus(appErr)
@@ -36,6 +44,10 @@ func (s *LDAPManagerServer) DeleteGroup(ctx context.Context, in *pb.DeleteGroupR
 
 // RenameGroup ...
 func (s *LDAPManagerServer) RenameGroup(ctx context.Context, in *pb.RenameGroupRequest) (*pb.Empty, error) {
+	_, err := s.authenticate(ctx)
+	if err != nil {
+		return &pb.Empty{}, err
+	}
 	if err := s.Manager.RenameGroup(in); err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
 			return &pb.Empty{}, toStatus(appErr)
@@ -48,6 +60,10 @@ func (s *LDAPManagerServer) RenameGroup(ctx context.Context, in *pb.RenameGroupR
 
 // GetGroupList ...
 func (s *LDAPManagerServer) GetGroupList(ctx context.Context, in *pb.GetGroupListRequest) (*pb.GroupList, error) {
+	_, err := s.authenticate(ctx)
+	if err != nil {
+		return &pb.GroupList{}, err
+	}
 	groups, err := s.Manager.GetGroupList(in)
 	if err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {

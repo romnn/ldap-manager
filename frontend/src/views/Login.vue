@@ -5,7 +5,7 @@
         <h6 class="mb-0">Login</h6>
       </template>
       <b-card-body>
-        <b-form @submit="onSubmit" @reset="onReset">
+        <b-form @submit.prevent="onSubmit">
           <b-form-group
             label-size="sm"
             label-cols-sm="4"
@@ -14,6 +14,7 @@
             label-for="login-input-username"
           >
             <b-form-input
+              autocomplete="off"
               id="login-input-username"
               size="sm"
               v-model="form.username"
@@ -31,6 +32,7 @@
             label-for="login-input-password"
           >
             <b-form-input
+              autocomplete="off"
               id="login-input-password"
               size="sm"
               v-model="form.password"
@@ -54,6 +56,17 @@
               </b-col>
             </b-form-row>
           </b-form-group>
+
+          <b-alert
+            class="login-error"
+            dismissible
+            :show="error !== null"
+            variant="danger"
+          >
+            <h4>Login failed</h4>
+            <hr />
+            {{ error }}
+          </b-alert>
         </b-form>
       </b-card-body>
     </b-card>
@@ -62,25 +75,36 @@
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
+import { AuthModule } from "../store/modules/auth";
+import { GatewayError } from "../types";
 
 @Component({
   components: {}
 })
 export default class Login extends Vue {
-  show = true;
+  error: string | null = null;
   form = {
     username: "",
     password: "",
     remember: true
   };
-  foods = ["a", "b"];
 
   onSubmit() {
-    // TODO: Perform a auth request, save in cookie, show error if invalid
-    // continues with run_checks
-    // Password for <?php print $LDAP['admin_bind_dn'] <-- inject these into the frontend somehow
+    AuthModule.login(this.form)
+      .then(() => {
+        this.$router.push({
+          name: "EditAccountRoute",
+          params: { username: this.form.username }
+        });
+      })
+      .catch((err: GatewayError) => {
+        this.error = err.message;
+      });
   }
 }
 </script>
 
-<style lang="sass" scoped></style>
+<style lang="sass" scoped>
+.login-error
+  margin-top: 40px
+</style>

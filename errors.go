@@ -23,3 +23,19 @@ type Error interface {
 	IsLDAPManagerError() bool
 	Code() codes.Code
 }
+
+// ValidationError ...
+type ValidationError struct {
+	ApplicationError
+	Message string
+}
+
+// Error ...
+func (e *ValidationError) Error() string {
+	return e.Message
+}
+
+// Code ...
+func (e *ValidationError) Code() codes.Code {
+	return codes.InvalidArgument
+}

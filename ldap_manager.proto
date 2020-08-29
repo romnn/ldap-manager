@@ -7,7 +7,7 @@ import "google/api/annotations.proto";
 
 extend google.protobuf.MethodOptions {
   bool require_admin = 51234;
-  bool require_auth = 51235;
+  // bool require_auth = 51235;
 }
 
 message Empty {}
@@ -24,7 +24,6 @@ message GetUserListRequest {
   string sort_key = 4;
   
   repeated string filter = 10;
-	// repeated string fields = 11;
 }
 
 message User {
@@ -43,7 +42,6 @@ message AuthenticateUserRequest {
 
 message GetAccountRequest {
   string username = 1;
-  // repeated string fields = 10;
 }
 
 enum HashingAlgorithm {
@@ -153,6 +151,9 @@ message LoginRequest {
 
 message Token {
   string token = 1;
+  string username = 2;
+  string display_name = 3;
+  int64 expiration = 10;
 }
 
 service LDAPManager {
@@ -163,25 +164,12 @@ service LDAPManager {
       body: "*"
     };
   }
-  rpc Logout(Empty) returns (Empty) {
-    option (google.api.http) = {
-      post: "/v1/logout"
-      body: "*"
-    };
-  }
 
   // Accounts
   rpc GetUserList(GetUserListRequest) returns (UserList) {
     option (require_admin) = true;
     option (google.api.http) = {
       get: "/v1/accounts"
-    };
-  }
-  rpc AuthenticateUser(AuthenticateUserRequest) returns (Empty) {
-    option (require_admin) = true;
-    option (google.api.http) = {
-      post: "/v1/example/echo"
-      body: "*"
     };
   }
   rpc GetAccount(GetAccountRequest) returns (User) {

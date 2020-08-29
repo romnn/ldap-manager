@@ -2,8 +2,7 @@
   <div class="group-member-list-container">
     <b-card no-body bg-variant="dark" text-variant="white">
       <!-- Header -->
-      <template v-slot:header>
-      </template>
+      <template v-slot:header> </template>
 
       <!-- Body -->
       <b-card-body class="p-0">

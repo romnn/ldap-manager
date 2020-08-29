@@ -96,7 +96,7 @@ import { AppModule } from "../store/modules/app";
 import MemberListC from "./MemberList.vue";
 
 @Component({
-  components: {MemberListC}
+  components: { MemberListC }
 })
 export default class GroupC extends Vue {
   @Prop() private name!: string;

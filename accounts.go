@@ -155,7 +155,6 @@ func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, err
 		req.SortKey = m.AccountAttribute
 	}
 	filter := parseFilter(req.Filter)
-	log.Info(filter)
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.UserGroupDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
@@ -202,10 +201,10 @@ func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, err
 }
 
 // AuthenticateUser ...
-func (m *LDAPManager) AuthenticateUser(req *pb.AuthenticateUserRequest) error {
+func (m *LDAPManager) AuthenticateUser(req *pb.LoginRequest) (*ldap.Entry, error) {
 	// Validate
 	if req.GetUsername() == "" || req.GetPassword() == "" {
-		return errors.New("must provide username and password")
+		return nil, &ValidationError{Message: "must provide username and password"}
 	}
 	// Search for the DN for the given username. If found, try binding with the DN and user's password.
 	// If the binding succeeds, return the DN.
@@ -213,22 +212,22 @@ func (m *LDAPManager) AuthenticateUser(req *pb.AuthenticateUserRequest) error {
 		m.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		fmt.Sprintf("(%s=%s)", m.AccountAttribute, escapeFilter(req.GetUsername())),
-		[]string{"dn"},
+		m.defaultUserFields(),
 		[]ldap.Control{},
 	))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(result.Entries) != 1 {
-		return &ZeroOrMultipleAccountsError{Username: req.GetUsername(), Count: len(result.Entries)}
+		return nil, &ZeroOrMultipleAccountsError{Username: req.GetUsername(), Count: len(result.Entries)}
 	}
 	// Make sure to always re-bind as admin afterwards
 	defer m.BindAdmin()
 	userDN := result.Entries[0].DN
 	if err := m.ldap.Bind(userDN, req.GetPassword()); err != nil {
-		return fmt.Errorf("unable to bind as %q", req.GetUsername())
+		return nil, fmt.Errorf("unable to bind as %q", req.GetUsername())
 	}
-	return nil
+	return result.Entries[0], nil
 }
 
 // GetAccount ...
@@ -366,7 +365,7 @@ func (m *LDAPManager) NewAccount(req *pb.NewAccountRequest, algorithm pb.Hashing
 		Attributes: userAttributes,
 		Controls:   []ldap.Control{},
 	}
-	log.Debug(addUserRequest)
+	log.Debugf("addUserRequest=%v", addUserRequest)
 	if err := m.ldap.Add(addUserRequest); err != nil {
 		if ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists) {
 			return &AccountAlreadyExistsError{Username: req.GetUsername()}

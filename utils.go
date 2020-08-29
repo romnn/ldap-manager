@@ -163,7 +163,7 @@ func (m *LDAPManager) updateLastID(cn string, newID int) error {
 		[]ldap.Control{},
 	)
 	modifyRequest.Replace("serialNumber", []string{strconv.Itoa(newID)})
-	log.Debug(modifyRequest)
+	log.Debugf("modifyRequest=%v", modifyRequest)
 	if err := m.ldap.Modify(modifyRequest); err != nil {
 		return fmt.Errorf("failed to update cn=%s: %v", cn, err)
 	}

@@ -29,22 +29,6 @@ func (e *GroupAlreadyExistsError) Code() codes.Code {
 	return codes.AlreadyExists
 }
 
-// GroupValidationError ...
-type GroupValidationError struct {
-	ApplicationError
-	Message string
-}
-
-// Error ...
-func (e *GroupValidationError) Error() string {
-	return e.Message
-}
-
-// Code ...
-func (e *GroupValidationError) Code() codes.Code {
-	return codes.InvalidArgument
-}
-
 // ZeroOrMultipleGroupsError ...
 type ZeroOrMultipleGroupsError struct {
 	ApplicationError
@@ -70,7 +54,7 @@ func (e *ZeroOrMultipleGroupsError) Code() codes.Code {
 
 func (m *LDAPManager) getGroupGID(groupName string) (int, error) {
 	if groupName == "" {
-		return 0, &GroupValidationError{Message: "group name can not be empty"}
+		return 0, &ValidationError{Message: "group name can not be empty"}
 	}
 	result, err := m.findGroup(groupName, []string{"gidNumber"})
 	if err != nil {
@@ -97,7 +81,7 @@ func (m *LDAPManager) GroupNamed(name string) string {
 // NewGroup ...
 func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 	if req.GetName() == "" {
-		return &GroupValidationError{Message: "group name can not be empty"}
+		return &ValidationError{Message: "group name can not be empty"}
 	}
 	result, err := m.findGroup(req.GetName(), []string{"dn", m.GroupMembershipAttribute})
 	if err != nil {
@@ -112,6 +96,25 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 	}
 	newGID := highestGID + 1
 
+	var memberList []string
+	for _, username := range req.GetMembers() {
+		if strict {
+			memberStatus, err := m.IsGroupMember(&pb.IsGroupMemberRequest{Username: username, Group: m.DefaultUserGroup})
+			if err != nil {
+				return fmt.Errorf("failed to check if member %q exists: %v", username, err)
+			}
+			if !memberStatus.GetIsMember() {
+				log.Warnf("Skipping user %q to be added to group %q because it is not in the %q group", username, req.GetName(), m.DefaultUserGroup)
+				continue
+			}
+		}
+		member := escapeDN(username)
+		if !m.GroupMembershipUsesUID {
+			member = m.AccountNamed(username)
+		}
+		memberList = append(memberList, member)
+	}
+
 	var groupAttributes []ldap.Attribute
 	if !m.UseRFC2307BISSchema {
 		groupAttributes = []ldap.Attribute{
@@ -120,42 +123,26 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 			{Type: "gidNumber", Vals: []string{strconv.Itoa(newGID)}},
 		}
 	} else {
-		// Convert usernames into full account DN's
-		var memberList []string
-		for _, username := range req.GetMembers() {
-			if strict {
-				memberStatus, err := m.IsGroupMember(&pb.IsGroupMemberRequest{Username: username, Group: m.DefaultUserGroup})
-				if err != nil {
-					return fmt.Errorf("failed to check if member %q exists: %v", username, err)
-				}
-				if !memberStatus.GetIsMember() {
-					continue
-				}
-			}
-			member := escapeDN(username)
-			if !m.GroupMembershipUsesUID {
-				member = m.AccountNamed(username)
-			}
-			memberList = append(memberList, member)
-		}
-
 		if len(memberList) < 1 {
-			return &GroupValidationError{Message: "when using RFC2307BIS (not NIS), you must specify at least one existing group member"}
+			return &ValidationError{Message: "when using RFC2307BIS (not NIS), you must specify at least one existing group member"}
 		}
-
 		groupAttributes = []ldap.Attribute{
 			{Type: "objectClass", Vals: []string{"top", "groupOfUniqueNames", "posixGroup"}},
 			{Type: "cn", Vals: []string{escapeDN(req.GetName())}},
 			{Type: "gidNumber", Vals: []string{strconv.Itoa(newGID)}},
-			{Type: m.GroupMembershipAttribute, Vals: memberList},
 		}
 	}
+
+	groupAttributes = append(groupAttributes, ldap.Attribute{
+		Type: m.GroupMembershipAttribute, Vals: memberList,
+	})
+
 	addGroupRequest := &ldap.AddRequest{
 		DN:         m.GroupNamed(req.GetName()),
 		Attributes: groupAttributes,
 		Controls:   []ldap.Control{},
 	}
-	log.Debug(addGroupRequest)
+	log.Debugf("addGroupRequest=%v", addGroupRequest)
 	if err := m.ldap.Add(addGroupRequest); err != nil {
 		return err
 	}
@@ -169,10 +156,10 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 // DeleteGroup ...
 func (m *LDAPManager) DeleteGroup(req *pb.DeleteGroupRequest) error {
 	if req.GetName() == "" {
-		return &GroupValidationError{Message: "group name can not be empty"}
+		return &ValidationError{Message: "group name can not be empty"}
 	}
 	if m.IsProtectedGroup(req.GetName()) {
-		return &GroupValidationError{Message: "deleting the default user or admin group is not allowed"}
+		return &ValidationError{Message: "deleting the default user or admin group is not allowed"}
 	}
 	if err := m.ldap.Del(ldap.NewDelRequest(
 		m.GroupNamed(req.GetName()),
@@ -190,7 +177,7 @@ func (m *LDAPManager) DeleteGroup(req *pb.DeleteGroupRequest) error {
 // RenameGroup ...
 func (m *LDAPManager) RenameGroup(req *pb.RenameGroupRequest) error {
 	if req.GetName() == "" || req.GetNewName() == "" {
-		return &GroupValidationError{Message: "group name can not be empty"}
+		return &ValidationError{Message: "group name can not be empty"}
 	}
 	modifyRequest := &ldap.ModifyDNRequest{
 		DN:           m.GroupNamed(req.GetName()),
@@ -198,7 +185,7 @@ func (m *LDAPManager) RenameGroup(req *pb.RenameGroupRequest) error {
 		DeleteOldRDN: true,
 		NewSuperior:  "",
 	}
-	log.Debug(modifyRequest)
+	log.Debugf("RenameGroup modifyRequest=%v", modifyRequest)
 	if err := m.ldap.ModifyDN(modifyRequest); err != nil {
 		return err
 	}

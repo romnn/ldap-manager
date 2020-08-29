@@ -12,6 +12,10 @@ import (
 
 // IsGroupMember ...
 func (s *LDAPManagerServer) IsGroupMember(ctx context.Context, in *pb.IsGroupMemberRequest) (*pb.GroupMemberStatus, error) {
+	_, err := s.authenticate(ctx)
+	if err != nil {
+		return &pb.GroupMemberStatus{}, err
+	}
 	memberStatus, err := s.Manager.IsGroupMember(in)
 	if err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
@@ -25,6 +29,10 @@ func (s *LDAPManagerServer) IsGroupMember(ctx context.Context, in *pb.IsGroupMem
 
 // GetGroup ...
 func (s *LDAPManagerServer) GetGroup(ctx context.Context, in *pb.GetGroupRequest) (*pb.Group, error) {
+	_, err := s.authenticate(ctx)
+	if err != nil {
+		return &pb.Group{}, err
+	}
 	group, err := s.Manager.GetGroup(in)
 	if err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
@@ -38,6 +46,10 @@ func (s *LDAPManagerServer) GetGroup(ctx context.Context, in *pb.GetGroupRequest
 
 // GetUserGroups ...
 func (s *LDAPManagerServer) GetUserGroups(ctx context.Context, in *pb.GetUserGroupsRequest) (*pb.GroupList, error) {
+	_, err := s.authenticate(ctx)
+	if err != nil {
+		return &pb.GroupList{}, err
+	}
 	groups, err := s.Manager.GetUserGroups(in)
 	if err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
@@ -51,6 +63,10 @@ func (s *LDAPManagerServer) GetUserGroups(ctx context.Context, in *pb.GetUserGro
 
 // AddGroupMember ...
 func (s *LDAPManagerServer) AddGroupMember(ctx context.Context, in *pb.GroupMember) (*pb.Empty, error) {
+	_, err := s.authenticate(ctx)
+	if err != nil {
+		return &pb.Empty{}, err
+	}
 	if err := s.Manager.AddGroupMember(in, false); err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
 			return &pb.Empty{}, toStatus(appErr)
@@ -63,6 +79,10 @@ func (s *LDAPManagerServer) AddGroupMember(ctx context.Context, in *pb.GroupMemb
 
 // DeleteGroupMember ...
 func (s *LDAPManagerServer) DeleteGroupMember(ctx context.Context, in *pb.GroupMember) (*pb.Empty, error) {
+	_, err := s.authenticate(ctx)
+	if err != nil {
+		return &pb.Empty{}, err
+	}
 	if err := s.Manager.DeleteGroupMember(in, false); err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
 			return &pb.Empty{}, toStatus(appErr)

@@ -1,23 +1,12 @@
 import Vue from "vue";
 import VueRouter, { RouteConfig } from "vue-router";
 import { Route, RawLocation } from "vue-router";
+import { AuthModule } from "@/store/modules/auth";
 
 Vue.use(VueRouter);
 
 const checkAuthenticated = (): boolean => {
-  return true;
-  /*
-  let token = Vue.cookies?.get("user-token") as string;
-  let email = Vue.cookies?.get("user-email") as string;
-  let userID = Vue.cookies?.get("user-id") as string;
-  AuthModule.setAuthToken(token);
-  AuthModule.setUserID(userID);
-  UserManagementModule.setCurrentUserEmail(email);
-  return (
-    (token != undefined && token != null && token.length > 0) ||
-    !authenticationRequired
-  );
-  */
+  return AuthModule.isAuthenticated;
 };
 
 const checkNotAlreadyAuthenticated = (
@@ -30,18 +19,6 @@ const checkNotAlreadyAuthenticated = (
     return;
   }
   next({ name: "HomeRoute" });
-};
-
-const requireAdmin = (
-  to: Route,
-  from: Route,
-  next: (to?: RawLocation | false | void) => void
-) => {
-  if (checkAuthenticated()) {
-    next();
-    return;
-  }
-  next({ name: "LoginRoute" });
 };
 
 const requireAuth = (
@@ -78,21 +55,11 @@ const routes: Array<RouteConfig> = [
       import(/* webpackChunkName: "login" */ "../views/Login.vue")
   },
   {
-    path: "/logout",
-    name: "LogoutRoute",
-    meta: {
-      // showBreadcrumb: false,
-      base: []
-    },
-    component: () =>
-      import(/* webpackChunkName: "logout" */ "../views/Logout.vue")
-  },
-  {
     path: "/accounts",
     alias: "/account",
     name: "AccountsRoute",
     redirect: { name: "ListAccountsRoute" },
-    beforeEnter: requireAdmin,
+    beforeEnter: requireAuth,
     component: () =>
       import(/* webpackChunkName: "accounts" */ "../views/accounts/Base.vue"),
     children: [
@@ -112,7 +79,7 @@ const routes: Array<RouteConfig> = [
             }
           ]
         },
-        beforeEnter: requireAdmin,
+        beforeEnter: requireAuth,
         component: () =>
           import(
             /* webpackChunkName: "newAccount" */ "../views/accounts/New.vue"
@@ -134,7 +101,7 @@ const routes: Array<RouteConfig> = [
             }
           ]
         },
-        beforeEnter: requireAdmin,
+        beforeEnter: requireAuth,
         component: () =>
           import(
             /* webpackChunkName: "listAccounts" */ "../views/accounts/List.vue"
@@ -152,7 +119,7 @@ const routes: Array<RouteConfig> = [
             }
           ]
         },
-        beforeEnter: requireAdmin,
+        beforeEnter: requireAuth,
         component: () =>
           import(
             /* webpackChunkName: "editAccount" */ "../views/accounts/Edit.vue"
@@ -167,7 +134,7 @@ const routes: Array<RouteConfig> = [
     name: "GroupsRoute",
     component: () =>
       import(/* webpackChunkName: "groups" */ "../views/groups/Base.vue"),
-    beforeEnter: requireAdmin,
+    beforeEnter: requireAuth,
     children: [
       {
         path: "new",
@@ -185,7 +152,7 @@ const routes: Array<RouteConfig> = [
             }
           ]
         },
-        beforeEnter: requireAdmin,
+        beforeEnter: requireAuth,
         component: () =>
           import(/* webpackChunkName: "newGroup" */ "../views/groups/New.vue")
       },
@@ -205,7 +172,7 @@ const routes: Array<RouteConfig> = [
             }
           ]
         },
-        beforeEnter: requireAdmin,
+        beforeEnter: requireAuth,
         component: () =>
           import(
             /* webpackChunkName: "listGroups" */ "../views/groups/List.vue"
@@ -223,7 +190,7 @@ const routes: Array<RouteConfig> = [
             }
           ]
         },
-        beforeEnter: requireAdmin,
+        beforeEnter: requireAuth,
         component: () =>
           import(/* webpackChunkName: "editGroup" */ "../views/groups/Edit.vue")
       }

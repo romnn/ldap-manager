@@ -405,7 +405,11 @@ export default class AccountC extends Vue {
       if (!name.includes(this.groupFetchRequest.search)) {
         // set the search string for the group
         this.groupFetchRequest.search = name;
-        this.fetchAvailableGroups().then(() => this.groupValidator(name));
+        this.fetchAvailableGroups()
+          .then(() => this.groupValidator(name))
+          .catch(() => {
+            // Ignore
+          });
         return null; // cant tell
       } else if (
         (this.groupFetchRequest.page - 1) * this.groupFetchRequest.perPage <
@@ -413,7 +417,11 @@ export default class AccountC extends Vue {
       ) {
         // increase the page
         this.groupFetchRequest.page = this.groupFetchRequest.page + 1;
-        this.fetchAvailableGroups().then(() => this.groupValidator(name));
+        this.fetchAvailableGroups()
+          .then(() => this.groupValidator(name))
+          .catch(() => {
+            // Ignore
+          });
         return null; // cant tell
       }
 
@@ -550,10 +558,9 @@ export default class AccountC extends Vue {
     });
   }
 
-  mounted() {
-    this.error = null;
+  loadAccountData(account: string) {
     // Populate the form with the account data
-    AccountModule.getAccount(this.account)
+    AccountModule.getAccount(account)
       .then((acc: RemoteAccount) => {
         /* eslint-disable-next-line @typescript-eslint/camelcase */
         this.form.first_name = acc.data?.givenName ?? "";
@@ -575,11 +582,20 @@ export default class AccountC extends Vue {
           .then((groups: GroupList) => {
             this.groups = groups.groups;
           })
-          .catch((err: GatewayError) => (this.error = err.message))
-          .then(() => {
-            // Fetch all available groups used for validating groups to join
-            this.fetchAvailableGroups().then(() => (this.watchGroups = true));
-          });
+          .catch((err: GatewayError) => (this.error = err.message));
+      });
+  }
+
+  mounted() {
+    this.error = null;
+    // Fetch all available groups used for validating groups to join
+    this.fetchAvailableGroups()
+      .then(() => {
+        this.watchGroups = true;
+        if (!this.create) this.loadAccountData(this.account);
+      })
+      .catch(() => {
+        // Ignore
       });
   }
 }

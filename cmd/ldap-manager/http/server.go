@@ -31,8 +31,8 @@ func NewHTTPLDAPManagerServer(base *ldapbase.LDAPManagerServer, listener, grpcLi
 	mux := runtime.NewServeMux(
 		runtime.WithIncomingHeaderMatcher(func(key string) (string, bool) {
 			switch key {
-			case "X-Custom-Header2":
-				return "custom-header2", true
+			case "X-User-Token":
+				return "X-User-Token", true
 			default:
 				return key, false
 			}
@@ -60,7 +60,11 @@ func (s *LDAPManagerServer) Connect(ctx *cli.Context, listener net.Listener) {
 		log.Error(err)
 		s.Shutdown()
 	}
-	s.LDAPManagerServer.Connect(ctx, listener)
+
+	s.Service.Ready = true
+	s.Service.SetHealthy(true)
+	log.Infof("%s ready at %s", s.Service.Name, listener.Addr())
+	// s.LDAPManagerServer.Connect(ctx, listener)
 }
 
 func (s *LDAPManagerServer) bootstrapHTTP(ctx *cli.Context) *http.ServeMux {

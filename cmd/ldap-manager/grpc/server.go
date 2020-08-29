@@ -34,10 +34,6 @@ func (s *LDAPManagerServer) Shutdown() {
 	}
 }
 
-func toStatus(e ldapmanager.Error) error {
-	return status.Error(e.Code(), e.Error())
-}
-
 // Serve ...
 func (s *LDAPManagerServer) Serve(wg *sync.WaitGroup, ctx *cli.Context) error {
 	defer wg.Done()
@@ -52,4 +48,8 @@ func (s *LDAPManagerServer) Serve(wg *sync.WaitGroup, ctx *cli.Context) error {
 	log.Info("closing socket")
 	s.Listener.Close()
 	return nil
+}
+
+func toStatus(e ldapmanager.Error) error {
+	return status.Error(e.Code(), e.Error())
 }

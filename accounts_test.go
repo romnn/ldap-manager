@@ -102,7 +102,7 @@ func TestAuthenticateUser(t *testing.T) {
 				}
 
 				// now check if we can authenticate using the clear password
-				if err := test.Manager.AuthenticateUser(&pb.AuthenticateUserRequest{Username: newUserReq.Username, Password: pw}); err != nil {
+				if _, err := test.Manager.AuthenticateUser(&pb.LoginRequest{Username: newUserReq.Username, Password: pw}); err != nil {
 					if attemptsLeft <= 0 {
 						finalErr = fmt.Errorf("failed to authenticate user %q with password %q: %v", newUserReq.Username, pw, err)
 						break

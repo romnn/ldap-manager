@@ -72,6 +72,28 @@
               </div>
             </td>
           </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>
+              <div>
+                <router-link
+                  :to="{
+                    name: 'NewAccountRoute'
+                  }"
+                  ><b-button
+                    pill
+                    size="sm"
+                    class="mr-2 float-right"
+                    variant="outline-primary"
+                    >Create</b-button
+                  ></router-link
+                >
+              </div>
+            </td>
+          </tr>
         </table>
 
         <b-pagination

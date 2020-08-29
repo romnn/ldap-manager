@@ -59,7 +59,6 @@ func (m *LDAPManager) getGroup(groupName string) (*pb.Group, error) {
 	var members []string
 	group := result.Entries[0]
 	for _, member := range group.GetAttributeValues(m.GroupMembershipAttribute) {
-		log.Info(member)
 		members = append(members, member)
 	}
 	return &pb.Group{
@@ -150,7 +149,7 @@ func (m *LDAPManager) GetGroup(req *pb.GetGroupRequest) (*pb.Group, error) {
 // AddGroupMember ...
 func (m *LDAPManager) AddGroupMember(req *pb.GroupMember, allowNonExistent bool) error {
 	if req.GetGroup() == "" || req.GetUsername() == "" {
-		return &GroupValidationError{Message: "group and user name can not be empty"}
+		return &ValidationError{Message: "group and user name can not be empty"}
 	}
 	if !allowNonExistent && !m.IsProtectedGroup(req.GetGroup()) {
 		memberStatus, err := m.IsGroupMember(&pb.IsGroupMemberRequest{Username: req.GetUsername(), Group: m.DefaultUserGroup})
@@ -173,7 +172,7 @@ func (m *LDAPManager) AddGroupMember(req *pb.GroupMember, allowNonExistent bool)
 		[]ldap.Control{},
 	)
 	modifyRequest.Add(m.GroupMembershipAttribute, []string{username})
-	log.Debug(modifyRequest)
+	log.Debugf("AddGroupMember: modifyRequest=%v", modifyRequest)
 	if err := m.ldap.Modify(modifyRequest); err != nil {
 		return err
 	}
@@ -184,10 +183,10 @@ func (m *LDAPManager) AddGroupMember(req *pb.GroupMember, allowNonExistent bool)
 // DeleteGroupMember ...
 func (m *LDAPManager) DeleteGroupMember(req *pb.GroupMember, allowDeleteOfDefaultGroups bool) error {
 	if req.GetGroup() == "" || req.GetUsername() == "" {
-		return &GroupValidationError{Message: "group and user name can not be empty"}
+		return &ValidationError{Message: "group and user name can not be empty"}
 	}
 	if !allowDeleteOfDefaultGroups && m.IsProtectedGroup(req.GetGroup()) {
-		return &GroupValidationError{Message: "deleting members from the default user or admin group is not allowed"}
+		return &ValidationError{Message: "deleting members from the default user or admin group is not allowed"}
 	}
 	username := escapeDN(req.GetUsername())
 	if !m.GroupMembershipUsesUID {
@@ -198,7 +197,7 @@ func (m *LDAPManager) DeleteGroupMember(req *pb.GroupMember, allowDeleteOfDefaul
 		[]ldap.Control{},
 	)
 	modifyRequest.Delete(m.GroupMembershipAttribute, []string{username})
-	log.Debug(modifyRequest)
+	log.Debugf("DeleteGroupMember: modifyRequest=%v", modifyRequest)
 	if err := m.ldap.Modify(modifyRequest); err != nil {
 		if ldap.IsErrorWithCode(err, ldap.LDAPResultObjectClassViolation) {
 			return &RemoveLastGroupMemberError{Group: req.GetGroup()}

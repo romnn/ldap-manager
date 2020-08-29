@@ -6,12 +6,12 @@ import (
 
 var (
 	// Accounts
-	sampleValidationError             = &AccountValidationError{}
+	sampleAccountValidationError      = &AccountValidationError{}
 	sampleZeroOrMultipleAccountsError = &ZeroOrMultipleAccountsError{}
 	sampleAccountAlreadyExistsError   = &AccountAlreadyExistsError{}
 
 	// Groups
-	sampleGroupValidationError      = &GroupValidationError{}
+	sampleValidationError           = &ValidationError{}
 	sampleZeroOrMultipleGroupsError = &ZeroOrMultipleGroupsError{}
 	sampleGroupAlreadyExistsError   = &GroupAlreadyExistsError{}
 
@@ -27,7 +27,7 @@ func toInterface(in interface{}) interface{} {
 // Accounts
 
 func TestAccountValidationError(t *testing.T) {
-	_, ok := toInterface(sampleValidationError).(Error)
+	_, ok := toInterface(sampleAccountValidationError).(Error)
 	if !ok {
 		t.Errorf("expected AccountValidationError to implement Error interface")
 	}
@@ -49,10 +49,10 @@ func TestAccountAlreadyExistsError(t *testing.T) {
 
 // Groups
 
-func TestGroupValidationError(t *testing.T) {
-	_, ok := toInterface(sampleGroupValidationError).(Error)
+func TestValidationError(t *testing.T) {
+	_, ok := toInterface(sampleValidationError).(Error)
 	if !ok {
-		t.Errorf("expected GroupValidationError to implement Error interface")
+		t.Errorf("expected ValidationError to implement Error interface")
 	}
 }
 

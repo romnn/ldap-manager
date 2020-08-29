@@ -14,7 +14,10 @@ import (
 
 // GetUserList ...
 func (s *LDAPManagerServer) GetUserList(ctx context.Context, in *pb.GetUserListRequest) (*pb.UserList, error) {
-	log.Info(in)
+	_, err := s.authenticate(ctx)
+	if err != nil {
+		return &pb.UserList{}, err
+	}
 	result, err := s.Manager.GetUserList(in)
 	if err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
@@ -26,20 +29,12 @@ func (s *LDAPManagerServer) GetUserList(ctx context.Context, in *pb.GetUserListR
 	return result, nil
 }
 
-// AuthenticateUser ...
-func (s *LDAPManagerServer) AuthenticateUser(ctx context.Context, in *pb.AuthenticateUserRequest) (*pb.Empty, error) {
-	if err := s.Manager.AuthenticateUser(in); err != nil {
-		if appErr, safe := err.(ldapmanager.Error); safe {
-			return &pb.Empty{}, toStatus(appErr)
-		}
-		log.Error(err)
-		return &pb.Empty{}, status.Error(codes.Internal, "error while getting list of accounts")
-	}
-	return &pb.Empty{}, nil
-}
-
 // GetAccount ...
 func (s *LDAPManagerServer) GetAccount(ctx context.Context, in *pb.GetAccountRequest) (*pb.User, error) {
+	_, err := s.authenticate(ctx)
+	if err != nil {
+		return &pb.User{}, err
+	}
 	account, err := s.Manager.GetAccount(in)
 	if err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
@@ -53,6 +48,10 @@ func (s *LDAPManagerServer) GetAccount(ctx context.Context, in *pb.GetAccountReq
 
 // NewAccount ...
 func (s *LDAPManagerServer) NewAccount(ctx context.Context, in *pb.NewAccountRequest) (*pb.Empty, error) {
+	_, err := s.authenticate(ctx)
+	if err != nil {
+		return &pb.Empty{}, err
+	}
 	if err := s.Manager.NewAccount(in, pb.HashingAlgorithm_DEFAULT); err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
 			return &pb.Empty{}, toStatus(appErr)
@@ -65,6 +64,10 @@ func (s *LDAPManagerServer) NewAccount(ctx context.Context, in *pb.NewAccountReq
 
 // DeleteAccount ...
 func (s *LDAPManagerServer) DeleteAccount(ctx context.Context, in *pb.DeleteAccountRequest) (*pb.Empty, error) {
+	_, err := s.authenticate(ctx)
+	if err != nil {
+		return &pb.Empty{}, err
+	}
 	if err := s.Manager.DeleteAccount(in, false); err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
 			return &pb.Empty{}, toStatus(appErr)
@@ -77,6 +80,10 @@ func (s *LDAPManagerServer) DeleteAccount(ctx context.Context, in *pb.DeleteAcco
 
 // ChangePassword ...
 func (s *LDAPManagerServer) ChangePassword(ctx context.Context, in *pb.ChangePasswordRequest) (*pb.Empty, error) {
+	_, err := s.authenticate(ctx)
+	if err != nil {
+		return &pb.Empty{}, err
+	}
 	if err := s.Manager.ChangePassword(in); err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
 			return &pb.Empty{}, toStatus(appErr)

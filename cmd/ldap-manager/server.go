@@ -8,6 +8,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/romnnn/go-grpc-service/auth"
 	ldapbase "github.com/romnnn/ldap-manager/cmd/ldap-manager/base"
 	ldapgrpc "github.com/romnnn/ldap-manager/cmd/ldap-manager/grpc"
 	ldaphttp "github.com/romnnn/ldap-manager/cmd/ldap-manager/http"
@@ -69,6 +70,12 @@ func main() {
 			Usage:   "root source directory of the static files to be served",
 		},
 	}
+
+	jwtAuthFlags := auth.DefaultCLIFlags(&auth.DefaultCLIFlagsOptions{
+		Issuer:    "issuer@example.org",
+		Audience:  "example.org",
+		ExpireSec: 1 * 24 * 60 * 60,
+	})
 
 	ldapConfigFlags := []cli.Flag{
 		// Connection
@@ -139,10 +146,10 @@ func main() {
 			Usage:   "openldap tls",
 		},
 		&cli.BoolFlag{
-			Name:    "openldap-use-rfc230bis",
+			Name:    "openldap-use-rfc2307bis",
 			Value:   true,
-			EnvVars: []string{"OPENLDAP_USE_RFC230BIS"},
-			Usage:   "openldap use RFC230BIS schema",
+			EnvVars: []string{"OPENLDAP_USE_RFC2307BIS"},
+			Usage:   "openldap use RFC2307BIS schema",
 		},
 	}
 
@@ -216,6 +223,24 @@ func main() {
 			EnvVars: []string{"DEFAULT_LOGIN_SHELL"},
 			Usage:   "default login shell",
 		},
+		&cli.StringFlag{
+			Name:    "default-admin-username",
+			Value:   "admin",
+			EnvVars: []string{"DEFAULT_ADMIN_USERNAME"},
+			Usage:   "default admin username",
+		},
+		&cli.StringFlag{
+			Name:    "default-admin-password",
+			Value:   "admin",
+			EnvVars: []string{"DEFAULT_ADMIN_PASSWORD"},
+			Usage:   "default admin password",
+		},
+		&cli.BoolFlag{
+			Name:    "force-create-admin",
+			Value:   false,
+			EnvVars: []string{"FORCE_CREATE_ADMIN"},
+			Usage:   "force creation of the admin user even if there is a different user in the admin group",
+		},
 	}
 
 	name := "ldap manager service"
@@ -229,7 +254,7 @@ func main() {
 			{
 				Name:  "serve",
 				Usage: "serve ldap manager service",
-				Flags: serverFlags,
+				Flags: append(serverFlags, jwtAuthFlags...),
 				Action: func(ctx *cli.Context) error {
 					grpcListener, err := net.Listen("tcp", fmt.Sprintf(":%d", ctx.Int("grpc-port")))
 					if err != nil {

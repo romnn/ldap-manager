@@ -5,6 +5,7 @@ import (
 	"net"
 
 	gogrpcservice "github.com/romnnn/go-grpc-service"
+	"github.com/romnnn/go-grpc-service/auth"
 	ldapmanager "github.com/romnnn/ldap-manager"
 	ldapconfig "github.com/romnnn/ldap-manager/config"
 	log "github.com/sirupsen/logrus"
@@ -17,7 +18,8 @@ var Rev = ""
 // LDAPManagerServer ...
 type LDAPManagerServer struct {
 	gogrpcservice.Service
-	Manager *ldapmanager.LDAPManager
+	Manager       *ldapmanager.LDAPManager
+	Authenticator *auth.Authenticator
 }
 
 // Shutdown ...
@@ -71,6 +73,9 @@ func NewLDAPManagerServer(ctx *cli.Context) *LDAPManagerServer {
 		DefaultUserGroup:         ctx.String("default-user-group"),
 		DefaultAdminGroup:        ctx.String("default-admin-group"),
 		DefaultUserShell:         ctx.String("default-login-shell"),
+		DefaultAdminUsername:     ctx.String("default-admin-username"),
+		DefaultAdminPassword:     ctx.String("default-admin-password"),
+		ForceCreateAdmin:         ctx.Bool("force-create-admin"),
 	}
 
 	return &LDAPManagerServer{
@@ -80,13 +85,22 @@ func NewLDAPManagerServer(ctx *cli.Context) *LDAPManagerServer {
 			BuildTime:          Rev,
 			HTTPHealthCheckURL: "/healthz",
 		},
+		Authenticator: &auth.Authenticator{
+			ExpireSeconds: int64(ctx.Int("expire-sec")),
+			Issuer:        ctx.String("issuer"),
+			Audience:      ctx.String("audience"),
+		},
 		Manager: manager,
 	}
 }
 
 // Setup prepares the service
 func (s *LDAPManagerServer) Setup(ctx *cli.Context) error {
+	// TODO: This is called twice with no reason
 	if err := s.Manager.Setup(); err != nil {
+		return err
+	}
+	if err := s.Authenticator.SetupKeys(auth.AuthenticatorKeyConfig{}.Parse(ctx)); err != nil {
 		return err
 	}
 	return nil

@@ -9,11 +9,11 @@
         <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
         <b-collapse id="nav-collapse" is-nav>
-          <b-navbar-nav>
+          <b-navbar-nav v-if="activeUsername !== null">
             <b-nav-item
               :to="{
                 name: 'EditAccountRoute',
-                params: { username: activeUser }
+                params: { username: activeUsername }
               }"
               >My account</b-nav-item
             >
@@ -22,38 +22,22 @@
           </b-navbar-nav>
 
           <b-navbar-nav class="ml-auto">
-            <!--
-            <b-nav-form>
-              <b-form-input size="sm" class="mr-sm-2" placeholder="Search"></b-form-input>
-              <b-button size="sm" class="my-2 my-sm-0" type="submit">Search</b-button>
-            </b-nav-form>
-            -->
             <b-nav-item right href="https://github.com/romnnn/ldap-manager">{{
               version
             }}</b-nav-item>
-            <!-- TODO: Add internationalization
-            <b-nav-item-dropdown text="Lang" right>
-              <b-dropdown-item href="#">EN</b-dropdown-item>
-              <b-dropdown-item href="#">ES</b-dropdown-item>
-              <b-dropdown-item href="#">RU</b-dropdown-item>
-              <b-dropdown-item href="#">FA</b-dropdown-item>
-            </b-nav-item-dropdown>
-            -->
 
-            <b-nav-item-dropdown right>
+            <b-nav-item-dropdown right v-if="activeUsername !== null">
               <template v-slot:button-content>
-                <em>{{ activeUser }} </em>
+                <em>{{ activeDisplayName }} </em>
               </template>
               <b-dropdown-item
                 :to="{
                   name: 'EditAccountRoute',
-                  params: { username: activeUser }
+                  params: { username: activeUsername }
                 }"
                 >My account</b-dropdown-item
               >
-              <b-dropdown-item :to="{ name: 'LogoutRoute' }"
-                >Logout</b-dropdown-item
-              >
+              <b-dropdown-item @click="logout">Logout</b-dropdown-item>
             </b-nav-item-dropdown>
           </b-navbar-nav>
         </b-collapse>
@@ -68,8 +52,14 @@
           v-on:confirm="confirmConfirmation"
         ></confirmation-c>
       </div>
-      <b-breadcrumb v-if="items.length > 0" :items="items"></b-breadcrumb>
-      <router-view />
+      <div class="logout-container" v-if="isLoggingOut">
+        <p>You are being logged out...</p>
+        <p><b-spinner label="Logging out..."></b-spinner></p>
+      </div>
+      <div v-else>
+        <b-breadcrumb v-if="items.length > 0" :items="items"></b-breadcrumb>
+        <router-view />
+      </div>
     </div>
   </div>
 </template>
@@ -81,6 +71,7 @@ import "bootstrap-vue/dist/bootstrap-vue.css";
 import { Dictionary } from "vue-router/types/router";
 import { AppModule } from "./store/modules/app";
 import ConfirmationC from "./components/Confirmation.vue";
+import { AuthModule } from "./store/modules/auth";
 
 export interface BreadcrumbItem {
   text: string;
@@ -92,7 +83,25 @@ export interface BreadcrumbItem {
   components: { ConfirmationC }
 })
 export default class App extends Vue {
-  activeUser = "TODO";
+  protected isLoggingOut = false;
+
+  logout() {
+    this.isLoggingOut = true;
+    setTimeout(() => {
+      AuthModule.logout().then(() => {
+        this.isLoggingOut = false;
+        this.$router.push({ name: "LoginRoute" });
+      });
+    }, 1000);
+  }
+
+  get activeUsername() {
+    return AuthModule.activeUsername;
+  }
+
+  get activeDisplayName() {
+    return AuthModule.activeDisplayName;
+  }
 
   get pendingConfirmation() {
     return AppModule.pendingConfirmation;
@@ -125,6 +134,10 @@ export default class App extends Vue {
       return acc;
     }, [] as BreadcrumbItem[]);
     return base.concat(paramsItems);
+  }
+
+  mounted() {
+    Vue.axios.defaults.headers.common["x-user-token"] = AuthModule.authToken;
   }
 }
 </script>
