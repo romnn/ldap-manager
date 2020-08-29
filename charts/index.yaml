@@ -2,19 +2,19 @@ apiVersion: v1
 entries:
   ldap-manager:
   - apiVersion: v2
-    appVersion: 0.0.5
-    created: "2020-08-28T18:47:19.255430787Z"
+    appVersion: 0.0.9
+    created: "2020-08-29T16:30:18.470728151Z"
     dependencies:
     - condition: openldap.enabled
       name: openldap
       repository: '@stable'
       version: '>=1.2.4'
     description: cloud-native LDAP management service with a web interface
-    digest: 32149e923462a34957d845d1d3f577bd0c16a3a1ddd9e3de6cbf7f4de09d6dfd
+    digest: 584bb41cdd391e1c02ddf6a2aa1708426052a5f7d6ea6eb12a54561678f78a6c
     icon: https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Kubernetes_logo_without_workmark.svg/1280px-Kubernetes_logo_without_workmark.svg.png
     name: ldap-manager
     type: application
     urls:
-    - https://romnnn.github.io/ldap-manager/charts/ldap-manager-0.0.5.tgz
-    version: 0.0.5
-generated: "2020-08-28T18:47:19.252751645Z"
+    - https://romnnn.github.io/ldap-manager/charts/ldap-manager-0.0.9.tgz
+    version: 0.0.9
+generated: "2020-08-29T16:30:18.467980535Z"
