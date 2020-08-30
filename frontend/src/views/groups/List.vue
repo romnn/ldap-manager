@@ -66,6 +66,25 @@
               </div>
             </td>
           </tr>
+          <tr>
+            <td></td>
+            <td>
+              <div>
+                <router-link
+                  :to="{
+                    name: 'NewGroupRoute'
+                  }"
+                  ><b-button
+                    pill
+                    size="sm"
+                    class="mr-2 float-right"
+                    variant="outline-primary"
+                    >Create</b-button
+                  ></router-link
+                >
+              </div>
+            </td>
+          </tr>
         </table>
 
         <b-pagination
@@ -87,6 +106,8 @@ import { GroupModule, GroupList } from "../../store/modules/groups";
 import { AppModule } from "../../store/modules/app";
 import { GatewayError } from "../../types";
 import TableViewC from "../../components/TableView.vue";
+import { Codes } from "../../constants";
+import { AuthModule } from "../../store/modules/auth";
 
 @Component({
   components: { TableViewC }
@@ -140,6 +161,7 @@ export default class GroupListView extends Vue {
         this.groups = list;
       })
       .catch((err: GatewayError) => {
+        if (err.code == Codes.Unauthenticated) return AuthModule.logout();
         this.error = err.message;
       })
       .finally(() => (this.loading = false));
@@ -151,7 +173,10 @@ export default class GroupListView extends Vue {
         this.processing = true;
         GroupModule.deleteGroup(name)
           .then(() => this.deleted.push(name))
-          .catch((err: GatewayError) => alert(err.message))
+          .catch((err: GatewayError) => {
+            if (err.code == Codes.Unauthenticated) return AuthModule.logout();
+            alert(err.message);
+          })
           .finally(() => (this.processing = false));
       })
       .catch(() => {

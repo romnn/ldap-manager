@@ -94,6 +94,8 @@ import { GatewayError } from "../types";
 import { GroupModule } from "../store/modules/groups";
 import { AppModule } from "../store/modules/app";
 import MemberListC from "./MemberList.vue";
+import { Codes } from "../constants";
+import { AuthModule } from "../store/modules/auth";
 
 @Component({
   components: { MemberListC }
@@ -117,7 +119,10 @@ export default class GroupC extends Vue {
         this.processing = true;
         GroupModule.deleteGroup(name)
           .then(() => this.$router.push({ name: "GroupsRoute" }))
-          .catch((err: GatewayError) => alert(err.message))
+          .catch((err: GatewayError) => {
+            if (err.code == Codes.Unauthenticated) return AuthModule.logout();
+            alert(err.message);
+          })
           .finally(() => (this.processing = false));
       })
       .catch(() => {
@@ -128,7 +133,10 @@ export default class GroupC extends Vue {
   createGroup() {
     this.processing = true;
     GroupModule.newGroup(this.form)
-      .catch((err: GatewayError) => alert(err.message))
+      .catch((err: GatewayError) => {
+        if (err.code == Codes.Unauthenticated) return AuthModule.logout();
+        alert(err.message);
+      })
       .finally(() => (this.processing = false));
   }
 

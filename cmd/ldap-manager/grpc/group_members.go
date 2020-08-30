@@ -12,9 +12,12 @@ import (
 
 // IsGroupMember ...
 func (s *LDAPManagerServer) IsGroupMember(ctx context.Context, in *pb.IsGroupMemberRequest) (*pb.GroupMemberStatus, error) {
-	_, err := s.authenticate(ctx)
+	claims, err := s.authenticate(ctx)
 	if err != nil {
 		return &pb.GroupMemberStatus{}, err
+	}
+	if !claims.IsAdmin && claims.UID != in.GetUsername() {
+		return &pb.GroupMemberStatus{}, status.Error(codes.PermissionDenied, "required admin privileges")
 	}
 	memberStatus, err := s.Manager.IsGroupMember(in)
 	if err != nil {
@@ -46,9 +49,12 @@ func (s *LDAPManagerServer) GetGroup(ctx context.Context, in *pb.GetGroupRequest
 
 // GetUserGroups ...
 func (s *LDAPManagerServer) GetUserGroups(ctx context.Context, in *pb.GetUserGroupsRequest) (*pb.GroupList, error) {
-	_, err := s.authenticate(ctx)
+	claims, err := s.authenticate(ctx)
 	if err != nil {
 		return &pb.GroupList{}, err
+	}
+	if !claims.IsAdmin && claims.UID != in.GetUsername() {
+		return &pb.GroupList{}, status.Error(codes.PermissionDenied, "required admin privileges")
 	}
 	groups, err := s.Manager.GetUserGroups(in)
 	if err != nil {
@@ -79,9 +85,12 @@ func (s *LDAPManagerServer) AddGroupMember(ctx context.Context, in *pb.GroupMemb
 
 // DeleteGroupMember ...
 func (s *LDAPManagerServer) DeleteGroupMember(ctx context.Context, in *pb.GroupMember) (*pb.Empty, error) {
-	_, err := s.authenticate(ctx)
+	claims, err := s.authenticate(ctx)
 	if err != nil {
 		return &pb.Empty{}, err
+	}
+	if !claims.IsAdmin && claims.UID != in.GetUsername() {
+		return &pb.Empty{}, status.Error(codes.PermissionDenied, "required admin privileges")
 	}
 	if err := s.Manager.DeleteGroupMember(in, false); err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {

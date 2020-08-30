@@ -48,18 +48,22 @@ func TestAddNewUserAndGetUserList(t *testing.T) {
 	expected := []string{"romnn", "uwe12"}
 	users := []*pb.NewAccountRequest{
 		{
-			Username:  expected[0],
-			Password:  "Hallo Welt",
-			Email:     "a@b.de",
-			FirstName: "roman",
-			LastName:  "d",
+			Account: &pb.Account{
+				Username:  expected[0],
+				Password:  "Hallo Welt",
+				Email:     "a@b.de",
+				FirstName: "roman",
+				LastName:  "d",
+			},
 		},
 		{
-			Username:  expected[1],
-			Password:  "y&*T R&EGGSAdsnbdjhfb887gfdwe7fFWEFGDSSDEF",
-			Email:     "uwe-h@mobile.com",
-			FirstName: "uwe",
-			LastName:  "Heisenberg",
+			Account: &pb.Account{
+				Username:  expected[1],
+				Password:  "y&*T R&EGGSAdsnbdjhfb887gfdwe7fFWEFGDSSDEF",
+				Email:     "uwe-h@mobile.com",
+				FirstName: "uwe",
+				LastName:  "Heisenberg",
+			},
 		},
 	}
 	for _, newUserReq := range users {
@@ -97,24 +101,26 @@ func TestAuthenticateUser(t *testing.T) {
 				// FIXME: this tests is flaky :(
 				attemptsLeft--
 				newUserReq := &pb.NewAccountRequest{
-					Username:  name + pw + strconv.Itoa(attemptsLeft),
-					Password:  pw,
-					Email:     "a@b.de",
-					FirstName: "roman",
-					LastName:  "d",
+					Account: &pb.Account{
+						Username:  name + pw + strconv.Itoa(attemptsLeft),
+						Password:  pw,
+						Email:     "a@b.de",
+						FirstName: "roman",
+						LastName:  "d",
+					},
 				}
 				if err := test.Manager.NewAccount(newUserReq, algorithm); err != nil {
 					if attemptsLeft <= 0 {
-						finalErr = fmt.Errorf("failed to add user %q: %v", newUserReq.Username, err)
+						finalErr = fmt.Errorf("failed to add user %q: %v", newUserReq.GetAccount().GetUsername(), err)
 						break
 					}
 					continue
 				}
 
 				// now check if we can authenticate using the clear password
-				if _, err := test.Manager.AuthenticateUser(&pb.LoginRequest{Username: newUserReq.Username, Password: pw}); err != nil {
+				if _, err := test.Manager.AuthenticateUser(&pb.LoginRequest{Username: newUserReq.GetAccount().GetUsername(), Password: pw}); err != nil {
 					if attemptsLeft <= 0 {
-						finalErr = fmt.Errorf("failed to authenticate user %q with password %q: %v", newUserReq.Username, pw, err)
+						finalErr = fmt.Errorf("failed to authenticate user %q with password %q: %v", newUserReq.GetAccount().GetUsername(), pw, err)
 						break
 					}
 					continue
@@ -144,54 +150,68 @@ func TestNewAccountValidation(t *testing.T) {
 		{false, &pb.NewAccountRequest{}},
 		// invalid: missing username
 		{false, &pb.NewAccountRequest{
-			Password:  "Hallo Welt",
-			Email:     "a@b.de",
-			FirstName: "roman",
-			LastName:  "d",
+			Account: &pb.Account{
+				Password:  "Hallo Welt",
+				Email:     "a@b.de",
+				FirstName: "roman",
+				LastName:  "d",
+			},
 		}},
 		// invalid: missing password
 		{false, &pb.NewAccountRequest{
-			Username:  "peter1",
-			Email:     "a@b.de",
-			FirstName: "roman",
-			LastName:  "d",
+			Account: &pb.Account{
+				Username:  "peter1",
+				Email:     "a@b.de",
+				FirstName: "roman",
+				LastName:  "d",
+			},
 		}},
 		// invalid: missing email
 		{false, &pb.NewAccountRequest{
-			Username:  "peter2",
-			Password:  "Hallo Welt",
-			FirstName: "roman",
-			LastName:  "d",
+			Account: &pb.Account{
+				Username:  "peter2",
+				Password:  "Hallo Welt",
+				FirstName: "roman",
+				LastName:  "d",
+			},
 		}},
 		// invalid: missing first name
 		{false, &pb.NewAccountRequest{
-			Username: "peter3",
-			Password: "Hallo Welt",
-			Email:    "a@b.de",
-			LastName: "d",
+			Account: &pb.Account{
+				Username: "peter3",
+				Password: "Hallo Welt",
+				Email:    "a@b.de",
+				LastName: "d",
+			},
 		}},
 		// invalid: missing last name
 		{false, &pb.NewAccountRequest{
-			Username:  "peter4",
-			Password:  "Hallo Welt",
-			Email:     "a@b.de",
-			FirstName: "roman",
+			Account: &pb.Account{
+				Username:  "peter4",
+				Password:  "Hallo Welt",
+				Email:     "a@b.de",
+				FirstName: "roman",
+			},
 		}},
 		// valid: all required fields
 		{true, &pb.NewAccountRequest{
-			Username:  "peter5",
-			Password:  "Hallo Welt",
-			Email:     "a@b.de",
-			FirstName: "roman",
-			LastName:  "test",
+			Account: &pb.Account{
+				Username:  "peter5",
+				Password:  "Hallo Welt",
+				Email:     "a@b.de",
+				FirstName: "roman",
+				LastName:  "test",
+			},
 		}},
 		// invalid: email is not valid
 		{false, &pb.NewAccountRequest{
-			Username:  "peter5",
-			Password:  "Hallo Welt",
-			Email:     "test.de",
-			FirstName: "roman",
-			LastName:  "test",
+			Account: &pb.Account{
+				Username:  "peter5",
+				Password:  "Hallo Welt",
+				Email:     "test.de",
+				FirstName: "roman",
+				LastName:  "test",
+			},
 		}},
 	}
 	for _, c := range cases {
@@ -214,15 +234,18 @@ func TestGetAccount(t *testing.T) {
 	defer test.Teardown()
 
 	newUserReq := &pb.NewAccountRequest{
-		Username:  "felix",
-		Password:  "y&*T R&EGGSAdsnbdjhfb887gfdwe7fFWEFGDSSDEF",
-		Email:     "felix@web.de",
-		FirstName: "Felix",
-		LastName:  "Heisenberg",
+		Account: &pb.Account{
+			Username:  "felix",
+			Password:  "y&*T R&EGGSAdsnbdjhfb887gfdwe7fFWEFGDSSDEF",
+			Email:     "felix@web.de",
+			FirstName: "Felix",
+			LastName:  "Heisenberg",
+		},
 	}
 	if err := test.Manager.NewAccount(newUserReq, pb.HashingAlgorithm_DEFAULT); err != nil {
 		t.Fatalf("failed to add user: %v", err)
 	}
+	username := newUserReq.GetAccount().GetUsername()
 
 	// Make sure the users group was created
 	groups, err := test.Manager.GetGroupList(&pb.GetGroupListRequest{})
@@ -238,16 +261,16 @@ func TestGetAccount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to get members of the group %q: %v", test.Manager.DefaultUserGroup, err)
 	}
-	if !contains(group.Members, newUserReq.Username) {
-		t.Fatalf("expected the new user %q to be a member of the default user group %q", newUserReq.Username, test.Manager.DefaultUserGroup)
+	if !contains(group.Members, username) {
+		t.Fatalf("expected the new user %q to be a member of the default user group %q", username, test.Manager.DefaultUserGroup)
 	}
 
-	memberStatus, err := test.Manager.IsGroupMember(&pb.IsGroupMemberRequest{Username: newUserReq.Username, Group: test.Manager.DefaultUserGroup})
+	memberStatus, err := test.Manager.IsGroupMember(&pb.IsGroupMemberRequest{Username: username, Group: test.Manager.DefaultUserGroup})
 	if err != nil {
-		t.Fatalf("failed to check if user %q is in the group %q: %v", newUserReq.Username, test.Manager.DefaultUserGroup, err)
+		t.Fatalf("failed to check if user %q is in the group %q: %v", username, test.Manager.DefaultUserGroup, err)
 	}
 	if !memberStatus.GetIsMember() {
-		t.Fatalf("expected user %q to be a member of the group %q: %v", newUserReq.Username, test.Manager.DefaultUserGroup, err)
+		t.Fatalf("expected user %q to be a member of the group %q: %v", username, test.Manager.DefaultUserGroup, err)
 	}
 
 	account, err := test.Manager.GetAccount(&pb.GetAccountRequest{Username: "felix"})
@@ -282,11 +305,13 @@ func TestDeleteAccount(t *testing.T) {
 	users := []string{"user1", "user2"}
 	for _, user := range users {
 		if err := test.Manager.NewAccount(&pb.NewAccountRequest{
-			Username:  user,
-			Password:  "y&*T R&EGGSAdsnbdjhfb887gfdwe7fFWEFGDSSDEF",
-			Email:     "felix@web.de",
-			FirstName: "Felix",
-			LastName:  "Heisenberg",
+			Account: &pb.Account{
+				Username:  user,
+				Password:  "y&*T R&EGGSAdsnbdjhfb887gfdwe7fFWEFGDSSDEF",
+				Email:     "felix@web.de",
+				FirstName: "Felix",
+				LastName:  "Heisenberg",
+			},
 		}, pb.HashingAlgorithm_DEFAULT); err != nil {
 			t.Fatalf("failed to add user: %v", err)
 		}

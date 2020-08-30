@@ -22,9 +22,9 @@ type LDAPManagerClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*Token, error)
 	// Accounts
 	GetUserList(ctx context.Context, in *GetUserListRequest, opts ...grpc.CallOption) (*UserList, error)
-	AuthenticateUser(ctx context.Context, in *AuthenticateUserRequest, opts ...grpc.CallOption) (*Empty, error)
 	GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*User, error)
 	NewAccount(ctx context.Context, in *NewAccountRequest, opts ...grpc.CallOption) (*Empty, error)
+	UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*Token, error)
 	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*Empty, error)
 	ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*Empty, error)
 	// Groups
@@ -66,15 +66,6 @@ func (c *lDAPManagerClient) GetUserList(ctx context.Context, in *GetUserListRequ
 	return out, nil
 }
 
-func (c *lDAPManagerClient) AuthenticateUser(ctx context.Context, in *AuthenticateUserRequest, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/ldapmanager.LDAPManager/AuthenticateUser", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *lDAPManagerClient) GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*User, error) {
 	out := new(User)
 	err := c.cc.Invoke(ctx, "/ldapmanager.LDAPManager/GetAccount", in, out, opts...)
@@ -87,6 +78,15 @@ func (c *lDAPManagerClient) GetAccount(ctx context.Context, in *GetAccountReques
 func (c *lDAPManagerClient) NewAccount(ctx context.Context, in *NewAccountRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/ldapmanager.LDAPManager/NewAccount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *lDAPManagerClient) UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*Token, error) {
+	out := new(Token)
+	err := c.cc.Invoke(ctx, "/ldapmanager.LDAPManager/UpdateAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -200,9 +200,9 @@ type LDAPManagerServer interface {
 	Login(context.Context, *LoginRequest) (*Token, error)
 	// Accounts
 	GetUserList(context.Context, *GetUserListRequest) (*UserList, error)
-	AuthenticateUser(context.Context, *AuthenticateUserRequest) (*Empty, error)
 	GetAccount(context.Context, *GetAccountRequest) (*User, error)
 	NewAccount(context.Context, *NewAccountRequest) (*Empty, error)
+	UpdateAccount(context.Context, *UpdateAccountRequest) (*Token, error)
 	DeleteAccount(context.Context, *DeleteAccountRequest) (*Empty, error)
 	ChangePassword(context.Context, *ChangePasswordRequest) (*Empty, error)
 	// Groups
@@ -229,14 +229,14 @@ func (*UnimplementedLDAPManagerServer) Login(context.Context, *LoginRequest) (*T
 func (*UnimplementedLDAPManagerServer) GetUserList(context.Context, *GetUserListRequest) (*UserList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserList not implemented")
 }
-func (*UnimplementedLDAPManagerServer) AuthenticateUser(context.Context, *AuthenticateUserRequest) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateUser not implemented")
-}
 func (*UnimplementedLDAPManagerServer) GetAccount(context.Context, *GetAccountRequest) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccount not implemented")
 }
 func (*UnimplementedLDAPManagerServer) NewAccount(context.Context, *NewAccountRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NewAccount not implemented")
+}
+func (*UnimplementedLDAPManagerServer) UpdateAccount(context.Context, *UpdateAccountRequest) (*Token, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateAccount not implemented")
 }
 func (*UnimplementedLDAPManagerServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
@@ -313,24 +313,6 @@ func _LDAPManager_GetUserList_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LDAPManager_AuthenticateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthenticateUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LDAPManagerServer).AuthenticateUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ldapmanager.LDAPManager/AuthenticateUser",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LDAPManagerServer).AuthenticateUser(ctx, req.(*AuthenticateUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _LDAPManager_GetAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetAccountRequest)
 	if err := dec(in); err != nil {
@@ -363,6 +345,24 @@ func _LDAPManager_NewAccount_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LDAPManagerServer).NewAccount(ctx, req.(*NewAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LDAPManager_UpdateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LDAPManagerServer).UpdateAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ldapmanager.LDAPManager/UpdateAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LDAPManagerServer).UpdateAccount(ctx, req.(*UpdateAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -578,16 +578,16 @@ var _LDAPManager_serviceDesc = grpc.ServiceDesc{
 			Handler:    _LDAPManager_GetUserList_Handler,
 		},
 		{
-			MethodName: "AuthenticateUser",
-			Handler:    _LDAPManager_AuthenticateUser_Handler,
-		},
-		{
 			MethodName: "GetAccount",
 			Handler:    _LDAPManager_GetAccount_Handler,
 		},
 		{
 			MethodName: "NewAccount",
 			Handler:    _LDAPManager_NewAccount_Handler,
+		},
+		{
+			MethodName: "UpdateAccount",
+			Handler:    _LDAPManager_UpdateAccount_Handler,
 		},
 		{
 			MethodName: "DeleteAccount",

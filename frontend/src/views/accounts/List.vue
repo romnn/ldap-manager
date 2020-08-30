@@ -115,6 +115,8 @@ import { AccountModule, UserList } from "../../store/modules/accounts";
 import { AppModule } from "../../store/modules/app";
 import TableViewC from "../../components/TableView.vue";
 import { GatewayError } from "../../types";
+import { Codes } from "../../constants";
+import { AuthModule } from "../../store/modules/auth";
 
 @Component({
   components: { TableViewC }
@@ -172,6 +174,7 @@ export default class AccountList extends Vue {
         this.list = list;
       })
       .catch((err: GatewayError) => {
+        if (err.code == Codes.Unauthenticated) return AuthModule.logout();
         this.error = err.message;
       })
       .finally(() => (this.loading = false));
@@ -183,7 +186,10 @@ export default class AccountList extends Vue {
         this.processing = true;
         AccountModule.deleteAccount(username)
           .then(() => this.deleted.push(username))
-          .catch((err: GatewayError) => alert(err.message))
+          .catch((err: GatewayError) => {
+            if (err.code == Codes.Unauthenticated) return AuthModule.logout();
+            alert(err.message);
+          })
           .finally(() => (this.processing = false));
       })
       .catch(() => {

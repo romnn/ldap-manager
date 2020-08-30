@@ -14,11 +14,13 @@ func addSampleUsers(manager *LDAPManager, num int) ([]string, error) {
 	for n := 0; n < num; n++ {
 		username := fmt.Sprintf("user-%d", n)
 		if err := manager.NewAccount(&pb.NewAccountRequest{
-			Username:  username,
-			Password:  "Hallo Welt",
-			Email:     "a@b.de",
-			FirstName: "roman",
-			LastName:  "d",
+			Account: &pb.Account{
+				Username:  username,
+				Password:  "Hallo Welt",
+				Email:     "a@b.de",
+				FirstName: "roman",
+				LastName:  "d",
+			},
 		}, pb.HashingAlgorithm_DEFAULT); err != nil {
 			return added, err
 		}

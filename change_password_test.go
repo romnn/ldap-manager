@@ -18,11 +18,13 @@ func TestChangePassword(t *testing.T) {
 	username := "testuser"
 	initialPassword := "123"
 	if err := test.Manager.NewAccount(&pb.NewAccountRequest{
-		Username:  username,
-		Password:  initialPassword,
-		Email:     "a@b.de",
-		FirstName: "roman",
-		LastName:  "d",
+		Account: &pb.Account{
+			Username:  username,
+			Password:  initialPassword,
+			Email:     "a@b.de",
+			FirstName: "roman",
+			LastName:  "d",
+		},
 	}, pb.HashingAlgorithm_DEFAULT); err != nil {
 		t.Fatalf("failed to add user %q: %v", username, err)
 	}

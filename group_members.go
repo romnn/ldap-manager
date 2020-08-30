@@ -42,6 +42,22 @@ func (e *NoSuchMemberError) Code() codes.Code {
 	return codes.NotFound
 }
 
+// MemberAlreadyExistsError ...
+type MemberAlreadyExistsError struct {
+	ApplicationError
+	Group, Member string
+}
+
+// MemberAlreadyExistsError ...
+func (e *MemberAlreadyExistsError) Error() string {
+	return fmt.Sprintf("member %q is already a member of group %q", e.Member, e.Group)
+}
+
+// Code ...
+func (e *MemberAlreadyExistsError) Code() codes.Code {
+	return codes.AlreadyExists
+}
+
 func (m *LDAPManager) getGroup(groupName string) (*pb.Group, error) {
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
@@ -174,6 +190,9 @@ func (m *LDAPManager) AddGroupMember(req *pb.GroupMember, allowNonExistent bool)
 	modifyRequest.Add(m.GroupMembershipAttribute, []string{username})
 	log.Debugf("AddGroupMember: modifyRequest=%v", modifyRequest)
 	if err := m.ldap.Modify(modifyRequest); err != nil {
+		if ldap.IsErrorWithCode(err, ldap.LDAPResultAttributeOrValueExists) {
+			return &MemberAlreadyExistsError{Member: req.GetUsername(), Group: req.GetGroup()}
+		}
 		return err
 	}
 	log.Infof("added user %q to group %q", username, req.GetGroup())

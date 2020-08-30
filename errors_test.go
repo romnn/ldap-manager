@@ -18,6 +18,7 @@ var (
 	// Group members
 	sampleNoSuchMemberError          = &NoSuchMemberError{}
 	sampleRemoveLastGroupMemberError = &RemoveLastGroupMemberError{}
+	sampleMemberAlreadyExistsError   = &MemberAlreadyExistsError{}
 )
 
 func toInterface(in interface{}) interface{} {
@@ -83,5 +84,12 @@ func TestRemoveLastGroupMemberError(t *testing.T) {
 	_, ok := toInterface(sampleRemoveLastGroupMemberError).(Error)
 	if !ok {
 		t.Errorf("expected RemoveLastGroupMemberError to implement Error interface")
+	}
+}
+
+func TestMemberAlreadyExistsError(t *testing.T) {
+	_, ok := toInterface(sampleMemberAlreadyExistsError).(Error)
+	if !ok {
+		t.Errorf("expected MemberAlreadyExistsError to implement Error interface")
 	}
 }

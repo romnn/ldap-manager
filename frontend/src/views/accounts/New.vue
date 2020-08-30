@@ -1,6 +1,6 @@
 <template>
   <div class="new-account-container">
-    <account-c create="true" title="New account"></account-c>
+    <account-c :create="true" title="New account"></account-c>
   </div>
 </template>
 

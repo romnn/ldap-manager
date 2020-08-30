@@ -80,11 +80,13 @@ func (m *LDAPManager) setupDefaultGroup() error {
 
 func (m *LDAPManager) setupAdminsGroup() error {
 	initialAdmin := &pb.NewAccountRequest{
-		Username:  m.DefaultAdminUsername,
-		Password:  m.DefaultAdminPassword,
-		FirstName: "changeme",
-		LastName:  "changeme",
-		Email:     "changeme@changeme.com",
+		Account: &pb.Account{
+			Username:  m.DefaultAdminUsername,
+			Password:  m.DefaultAdminPassword,
+			FirstName: "changeme",
+			LastName:  "changeme",
+			Email:     "changeme@changeme.com",
+		},
 	}
 
 	// Check if the group already exists
@@ -99,7 +101,7 @@ func (m *LDAPManager) setupAdminsGroup() error {
 			}
 			// Create the group
 			strict := false
-			if err := m.NewGroup(&pb.NewGroupRequest{Name: m.DefaultAdminGroup, Members: []string{initialAdmin.GetUsername()}}, strict); err != nil {
+			if err := m.NewGroup(&pb.NewGroupRequest{Name: m.DefaultAdminGroup, Members: []string{initialAdmin.GetAccount().GetUsername()}}, strict); err != nil {
 				return fmt.Errorf("failed to create admins group: %v", err)
 			}
 			return nil
@@ -116,7 +118,7 @@ func (m *LDAPManager) setupAdminsGroup() error {
 			}
 		}
 		allowNonExistent := false
-		if err := m.AddGroupMember(&pb.GroupMember{Username: initialAdmin.GetUsername(), Group: m.DefaultAdminGroup}, allowNonExistent); err != nil {
+		if err := m.AddGroupMember(&pb.GroupMember{Username: initialAdmin.GetAccount().GetUsername(), Group: m.DefaultAdminGroup}, allowNonExistent); err != nil {
 			return fmt.Errorf("failed to add the default admin user to the admins group: %v", err)
 		}
 	}

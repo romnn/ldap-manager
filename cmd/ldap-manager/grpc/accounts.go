@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"strconv"
 
 	ldapmanager "github.com/romnnn/ldap-manager"
 	log "github.com/sirupsen/logrus"
@@ -31,9 +32,12 @@ func (s *LDAPManagerServer) GetUserList(ctx context.Context, in *pb.GetUserListR
 
 // GetAccount ...
 func (s *LDAPManagerServer) GetAccount(ctx context.Context, in *pb.GetAccountRequest) (*pb.User, error) {
-	_, err := s.authenticate(ctx)
+	claims, err := s.authenticate(ctx)
 	if err != nil {
 		return &pb.User{}, err
+	}
+	if !claims.IsAdmin && claims.UID != in.GetUsername() {
+		return &pb.User{}, status.Error(codes.PermissionDenied, "required admin privileges")
 	}
 	account, err := s.Manager.GetAccount(in)
 	if err != nil {
@@ -62,11 +66,50 @@ func (s *LDAPManagerServer) NewAccount(ctx context.Context, in *pb.NewAccountReq
 	return &pb.Empty{}, nil
 }
 
+// UpdateAccount ...
+func (s *LDAPManagerServer) UpdateAccount(ctx context.Context, in *pb.UpdateAccountRequest) (*pb.Token, error) {
+	claims, err := s.authenticate(ctx)
+	if err != nil {
+		return &pb.Token{}, err
+	}
+	if !claims.IsAdmin && claims.UID != in.GetUsername() {
+		return &pb.Token{}, status.Error(codes.PermissionDenied, "required admin privileges")
+	}
+	username, uidNumber, err := s.Manager.UpdateAccount(in, pb.HashingAlgorithm_DEFAULT, claims.IsAdmin)
+	if err != nil {
+		if appErr, safe := err.(ldapmanager.Error); safe {
+			return &pb.Token{}, toStatus(appErr)
+		}
+		log.Error(err)
+		return &pb.Token{}, status.Error(codes.Internal, "error while updating account")
+	}
+	token, expireSeconds, err := s.Authenticator.Login(&AuthClaims{
+		UID:         username,
+		UIDNumber:   strconv.Itoa(uidNumber),
+		IsAdmin:     claims.IsAdmin,
+		DisplayName: claims.DisplayName,
+	})
+	if err != nil {
+		log.Error(err)
+		return nil, status.Error(codes.Internal, "error while signing token")
+	}
+	return &pb.Token{
+		Token:       token,
+		Username:    username,
+		IsAdmin:     claims.IsAdmin,
+		DisplayName: claims.DisplayName,
+		Expiration:  expireSeconds,
+	}, nil
+}
+
 // DeleteAccount ...
 func (s *LDAPManagerServer) DeleteAccount(ctx context.Context, in *pb.DeleteAccountRequest) (*pb.Empty, error) {
-	_, err := s.authenticate(ctx)
+	claims, err := s.authenticate(ctx)
 	if err != nil {
 		return &pb.Empty{}, err
+	}
+	if !claims.IsAdmin && claims.UID != in.GetUsername() {
+		return &pb.Empty{}, status.Error(codes.PermissionDenied, "required admin privileges")
 	}
 	if err := s.Manager.DeleteAccount(in, false); err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
@@ -80,9 +123,12 @@ func (s *LDAPManagerServer) DeleteAccount(ctx context.Context, in *pb.DeleteAcco
 
 // ChangePassword ...
 func (s *LDAPManagerServer) ChangePassword(ctx context.Context, in *pb.ChangePasswordRequest) (*pb.Empty, error) {
-	_, err := s.authenticate(ctx)
+	claims, err := s.authenticate(ctx)
 	if err != nil {
 		return &pb.Empty{}, err
+	}
+	if !claims.IsAdmin && claims.UID != in.GetUsername() {
+		return &pb.Empty{}, status.Error(codes.PermissionDenied, "required admin privileges")
 	}
 	if err := s.Manager.ChangePassword(in); err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {

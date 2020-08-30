@@ -6,6 +6,7 @@ import {
   getModule
 } from "vuex-module-decorators";
 import store from "@/store";
+import router from "@/router";
 import Vue from "vue";
 import { API_ENDPOINT } from "../../constants";
 import { GatewayError } from "../../types";
@@ -15,12 +16,14 @@ export interface TokenResponse {
   display_name: string;
   expiration: string;
   username: string;
+  is_admin: boolean;
 }
 
 export interface AuthState {
   token: string | null;
   displayName: string | null;
   username: string | null;
+  isAdmin: boolean | null;
 }
 
 @Module({ dynamic: true, store, name: "auth" })
@@ -28,9 +31,14 @@ class AuthMod extends VuexModule implements AuthState {
   token: string | null = null;
   displayName: string | null = null;
   username: string | null = null;
+  isAdmin: boolean | null = null;
 
   get authToken(): string | null {
     return this.token ?? localStorage.getItem("x-user-token");
+  }
+
+  get activeIsAdmin(): boolean {
+    return this.isAdmin ?? localStorage.getItem("x-user-admin") !== null;
   }
 
   get activeUsername(): string | null {
@@ -47,6 +55,11 @@ class AuthMod extends VuexModule implements AuthState {
       this.authToken != null &&
       this.authToken.length > 0
     );
+  }
+
+  @Mutation
+  public setIsAdmin(isAdmin: boolean) {
+    this.isAdmin = isAdmin;
   }
 
   @Mutation
@@ -79,19 +92,11 @@ class AuthMod extends VuexModule implements AuthState {
         })
         .then(
           response => {
-            const authResponse = response.data as TokenResponse;
-            if (req.remember ?? false) {
-              localStorage.setItem("x-user-token", authResponse.token);
-              localStorage.setItem("x-user-name", authResponse.username);
-              localStorage.setItem(
-                "x-user-display-name",
-                authResponse.display_name
-              );
-            }
-            this.setToken(authResponse.token);
-            this.setActiveDisplayName(authResponse.display_name);
-            this.setActiveUsername(authResponse.username);
-            resolve(authResponse);
+            this.handleTokenResponse({
+              auth: response.data,
+              remember: req.remember ?? false
+            });
+            resolve(response.data);
           },
           err => {
             reject(err.response?.data as GatewayError);
@@ -101,16 +106,30 @@ class AuthMod extends VuexModule implements AuthState {
   }
 
   @Action({ rawError: true })
-  public async logout(): Promise<void> {
-    return new Promise<void>(resolve => {
-      this.setToken(null);
-      this.setActiveUsername(null);
-      this.setActiveDisplayName(null);
-      localStorage.removeItem("x-user-token");
-      localStorage.removeItem("x-user-name");
-      localStorage.removeItem("x-user-display-name");
-      resolve();
-    });
+  public handleTokenResponse(req: { auth: TokenResponse; remember: boolean }) {
+    if (req.remember ?? false) {
+      localStorage.setItem("x-user-token", req.auth.token);
+      localStorage.setItem("x-user-name", req.auth.username);
+      if (req.auth.is_admin) localStorage.setItem("x-user-admin", "true");
+      localStorage.setItem("x-user-display-name", req.auth.display_name);
+    }
+    this.setToken(req.auth.token);
+    this.setIsAdmin(req.auth.is_admin);
+    this.setActiveDisplayName(req.auth.display_name);
+    this.setActiveUsername(req.auth.username);
+  }
+
+  @Action({ rawError: true })
+  public logout() {
+    this.setToken(null);
+    this.setIsAdmin(false);
+    this.setActiveUsername(null);
+    this.setActiveDisplayName(null);
+    localStorage.removeItem("x-user-admin");
+    localStorage.removeItem("x-user-token");
+    localStorage.removeItem("x-user-name");
+    localStorage.removeItem("x-user-display-name");
+    router.push({ name: "LoginRoute" });
   }
 }
 

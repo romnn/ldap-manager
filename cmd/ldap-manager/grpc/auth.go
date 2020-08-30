@@ -18,9 +18,10 @@ import (
 
 // AuthClaims ...
 type AuthClaims struct {
-	UID       string `json:"uid"`
-	UIDNumber string `json:"uid_num"`
-	IsAdmin   bool   `json:"is_admin"`
+	UID         string `json:"uid"`
+	UIDNumber   string `json:"uid_num"`
+	IsAdmin     bool   `json:"is_admin"`
+	DisplayName string `json:"display_name"`
 	jwt.StandardClaims
 }
 
@@ -56,8 +57,7 @@ func (s *LDAPManagerServer) authenticate(ctx context.Context) (*AuthClaims, erro
 	}
 	valid, token, err := s.Authenticator.Validate(tokens[0], &AuthClaims{})
 	if err != nil {
-		log.Error(err)
-		return nil, status.Error(codes.Internal, "failed to validate token")
+		return nil, status.Error(codes.Unauthenticated, "invalid token")
 	}
 	if claims, ok := token.Claims.(*AuthClaims); ok && valid {
 		if requireAdmin && !claims.IsAdmin {
@@ -66,7 +66,7 @@ func (s *LDAPManagerServer) authenticate(ctx context.Context) (*AuthClaims, erro
 		// authenticated
 		return claims, nil
 	}
-	return nil, status.Error(codes.Unauthenticated, "unauthenticated")
+	return nil, status.Error(codes.Unauthenticated, "invalid token")
 }
 
 // Login logs in a user
@@ -93,11 +93,13 @@ func (s *LDAPManagerServer) Login(ctx context.Context, in *pb.LoginRequest) (*pb
 		log.Error(err)
 		return nil, status.Error(codes.Internal, "error while checking user member status")
 	}
-	log.Infof("user %q is admin? %t", uid, adminMemberStaus.GetIsMember())
+	isAdmin := adminMemberStaus.GetIsMember()
+	displayName := user.GetAttributeValue("displayName")
 	token, expireSeconds, err := s.Authenticator.Login(&AuthClaims{
-		UID:       uid,
-		UIDNumber: uidNumber,
-		IsAdmin:   adminMemberStaus.GetIsMember(),
+		UID:         uid,
+		UIDNumber:   uidNumber,
+		IsAdmin:     isAdmin,
+		DisplayName: displayName,
 	})
 	if err != nil {
 		log.Error(err)
@@ -106,7 +108,8 @@ func (s *LDAPManagerServer) Login(ctx context.Context, in *pb.LoginRequest) (*pb
 	return &pb.Token{
 		Token:       token,
 		Username:    uid,
-		DisplayName: user.GetAttributeValue("displayName"),
+		IsAdmin:     isAdmin,
+		DisplayName: displayName,
 		Expiration:  expireSeconds,
 	}, nil
 }

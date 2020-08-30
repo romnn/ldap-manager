@@ -2,7 +2,7 @@
   <div class="account-container">
     <div v-if="error !== null">
       <b-alert show variant="danger">
-        <h4 class="alert-heading">Error loading account</h4>
+        <h4 class="alert-heading">Error</h4>
         <hr />
         <p class="mb-0">
           {{ error }}
@@ -76,7 +76,7 @@
               </b-form-group>
 
               <b-form-group
-                v-if="all"
+                v-if="all && activeIsAdmin"
                 label-size="sm"
                 label-cols-sm="3"
                 label="UID:"
@@ -98,7 +98,7 @@
               </b-form-group>
 
               <b-form-group
-                v-if="all"
+                v-if="all && activeIsAdmin"
                 label-size="sm"
                 label-cols-sm="3"
                 label="GID:"
@@ -165,6 +165,7 @@
               </b-form-group>
 
               <b-form-group
+                v-if="activeIsAdmin"
                 label-size="sm"
                 label-cols-sm="3"
                 label="Username:"
@@ -221,7 +222,7 @@
                     size="sm"
                     v-model="form.password"
                     type="password"
-                    required
+                    :required="create"
                     placeholder=""
                     aria-describedby="login-input-password-help-block"
                   ></b-form-input>
@@ -246,7 +247,7 @@
                     v-model="form.password_confirm"
                     :state="passwordsMatch"
                     type="password"
-                    required
+                    :required="create"
                     placeholder="Confirm password"
                   ></b-form-input>
                   <b-form-invalid-feedback :state="passwordsMatch">
@@ -270,6 +271,7 @@
               </b-form-group>
 
               <b-form-group
+                v-if="activeIsAdmin"
                 label-size="sm"
                 label-cols-sm="3"
                 label="Groups:"
@@ -318,6 +320,15 @@
                   >{{ create ? "Create account" : "Update" }}
                 </b-button>
               </b-form-group>
+
+              <b-alert
+                class="text-left"
+                dismissible
+                :show="submissionError !== null"
+                variant="danger"
+              >
+                {{ submissionError }}
+              </b-alert>
             </b-form>
           </b-card-body>
         </b-card>
@@ -337,6 +348,8 @@ import { GroupModule, GroupList } from "../store/modules/groups";
 import { AppModule } from "../store/modules/app";
 import { GatewayError } from "../types";
 import { GroupMemberModule } from "../store/modules/members";
+import { Codes } from "../constants";
+import { AuthModule } from "../store/modules/auth";
 
 @Component
 export default class AccountC extends Vue {
@@ -348,6 +361,7 @@ export default class AccountC extends Vue {
   protected invalidGroupText = "no such group";
   protected error: string | null = null;
   protected groupMemberError: string | null = null;
+  protected submissionError: string | null = null;
 
   protected watchGroups = false;
   protected totalAvailableGroups?: number;
@@ -380,6 +394,10 @@ export default class AccountC extends Vue {
     /* eslint-disable-next-line @typescript-eslint/camelcase */
     password_confirm: ""
   };
+
+  get activeIsAdmin() {
+    return AuthModule.activeIsAdmin;
+  }
 
   get groupsState() {
     return null;
@@ -489,7 +507,10 @@ export default class AccountC extends Vue {
         this.processing = true;
         AccountModule.deleteAccount(username)
           .then(() => this.$router.push({ name: "AccountsRoute" }))
-          .catch((err: GatewayError) => alert(err.message))
+          .catch((err: GatewayError) => {
+            if (err.code == Codes.Unauthenticated) return AuthModule.logout();
+            alert(err.message);
+          })
           .finally(() => (this.processing = false));
       })
       .catch(() => {
@@ -499,9 +520,13 @@ export default class AccountC extends Vue {
 
   createAccount() {
     if (this.form.password !== this.form.password_confirm) return;
+    this.submissionError = null;
     this.processing = true;
     AccountModule.newAccount(this.form)
-      .catch((err: GatewayError) => alert(err.message))
+      .catch((err: GatewayError) => {
+        if (err.code == Codes.Unauthenticated) return AuthModule.logout();
+        this.submissionError = err.message;
+      })
       .finally(() => (this.processing = false));
   }
 
@@ -513,6 +538,7 @@ export default class AccountC extends Vue {
       group: group
     })
       .catch((err: GatewayError) => {
+        if (err.code == Codes.Unauthenticated) return AuthModule.logout();
         this.groupMemberError = err.message;
         this.groups.push(group);
       })
@@ -527,6 +553,7 @@ export default class AccountC extends Vue {
       group: group
     })
       .catch((err: GatewayError) => {
+        if (err.code == Codes.Unauthenticated) return AuthModule.logout();
         this.groupMemberError = err.message;
         this.groups = this.groups.filter(g => g !== group);
       })
@@ -534,7 +561,15 @@ export default class AccountC extends Vue {
   }
 
   updateAccount() {
+    if (this.form.password !== this.form.password_confirm) return;
+    this.submissionError = null;
     this.processing = true;
+    AccountModule.updateAccount({ update: this.form, username: this.account })
+      .catch((err: GatewayError) => {
+        if (err.code == Codes.Unauthenticated) return AuthModule.logout();
+        this.submissionError = err.message;
+      })
+      .finally(() => (this.processing = false));
   }
 
   onSubmit() {
@@ -551,6 +586,7 @@ export default class AccountC extends Vue {
           resolve();
         })
         .catch((err: GatewayError) => {
+          if (err.code == Codes.Unauthenticated) return AuthModule.logout();
           this.error = err.message;
           reject();
         })
@@ -559,6 +595,7 @@ export default class AccountC extends Vue {
   }
 
   loadAccountData(account: string) {
+    this.watchGroups = false;
     // Populate the form with the account data
     AccountModule.getAccount(account)
       .then((acc: RemoteAccount) => {
@@ -575,23 +612,38 @@ export default class AccountC extends Vue {
         this.form.home_directory = acc.data?.homeDirectory ?? "";
         this.form.username = acc.data?.uid ?? "";
       })
-      .catch((err: GatewayError) => (this.error = err.message))
+      .catch((err: GatewayError) => {
+        if (err.code == Codes.Unauthenticated) return AuthModule.logout();
+        this.error = err.message;
+      })
       .then(() => {
         // Get the accounts groups
         GroupModule.getUserGroups(this.account)
           .then((groups: GroupList) => {
             this.groups = groups.groups;
+            this.$nextTick(function() {
+              this.watchGroups = true;
+            });
           })
-          .catch((err: GatewayError) => (this.error = err.message));
+          .catch((err: GatewayError) => {
+            if (err.code == Codes.Unauthenticated) return AuthModule.logout();
+            this.error = err.message;
+          });
       });
   }
 
   mounted() {
     this.error = null;
+
+    if (!this.activeIsAdmin && this.create) {
+      this.error =
+        "Only admin users can create accounts. Please login as an admin user.";
+      return;
+    }
+
     // Fetch all available groups used for validating groups to join
     this.fetchAvailableGroups()
       .then(() => {
-        this.watchGroups = true;
         if (!this.create) this.loadAccountData(this.account);
       })
       .catch(() => {

@@ -1,6 +1,6 @@
 <template>
   <div class="new-group-container">
-    <group-c create="true" title="New group"></group-c>
+    <group-c :create="true" title="New group"></group-c>
   </div>
 </template>
 

@@ -59,7 +59,7 @@ enum HashingAlgorithm {
 	CLEAR = 11;
 }
 
-message NewAccountRequest {
+message Account {
   string first_name = 1;
   string last_name = 2;
   
@@ -71,8 +71,15 @@ message NewAccountRequest {
   string username = 20;
   string email = 21;
 	string password = 22;
-  // exclude hashing_algorithm because we will use this interface publicly
-  // HashingAlgorithm hashing_algorithm = 100;
+}
+
+message NewAccountRequest {
+  Account account = 1;
+}
+
+message UpdateAccountRequest {
+  string username = 1;
+  Account update = 10;
 }
 
 message DeleteAccountRequest {
@@ -153,6 +160,7 @@ message Token {
   string token = 1;
   string username = 2;
   string display_name = 3;
+  bool is_admin = 4;
   int64 expiration = 10;
 }
 
@@ -173,7 +181,7 @@ service LDAPManager {
     };
   }
   rpc GetAccount(GetAccountRequest) returns (User) {
-    option (require_admin) = true;
+    // option (require_admin) = true;
     option (google.api.http) = {
       get: "/v1/account/{username}"
     };
@@ -185,14 +193,21 @@ service LDAPManager {
       body: "*"
     };
   }
+  rpc UpdateAccount(UpdateAccountRequest) returns (Token) {
+    // option (require_admin) = true;
+    option (google.api.http) = {
+      post: "/v1/account/{username}/update"
+      body: "*"
+    };
+  }
   rpc DeleteAccount(DeleteAccountRequest) returns (Empty) {
-    option (require_admin) = true;
+    // option (require_admin) = true;
     option (google.api.http) = {
       delete: "/v1/account/{username}"
     };
   }
   rpc ChangePassword(ChangePasswordRequest) returns (Empty) {
-    option (require_admin) = true;
+    // option (require_admin) = true;
     option (google.api.http) = {
       post: "/v1/account/password"
       body: "*"
@@ -221,7 +236,7 @@ service LDAPManager {
     };
   }
   rpc GetGroupList(GetGroupListRequest) returns (GroupList) {
-    option (require_admin) = true;
+    // option (require_admin) = true;
     option (google.api.http) = {
       get: "/v1/groups"
     };

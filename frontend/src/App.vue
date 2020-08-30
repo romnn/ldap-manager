@@ -88,10 +88,8 @@ export default class App extends Vue {
   logout() {
     this.isLoggingOut = true;
     setTimeout(() => {
-      AuthModule.logout().then(() => {
-        this.isLoggingOut = false;
-        this.$router.push({ name: "LoginRoute" });
-      });
+      AuthModule.logout();
+      this.isLoggingOut = false;
     }, 1000);
   }
 

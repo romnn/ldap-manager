@@ -197,7 +197,7 @@ func (m *LDAPManager) countGroups() (int, error) {
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		"(objectClass=*)",
+		"(objectClass=posixGroup)",
 		[]string{"cn"},
 		[]ldap.Control{},
 	))
@@ -213,7 +213,7 @@ func (m *LDAPManager) GetGroupList(req *pb.GetGroupListRequest) (*pb.GroupList, 
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(&(objectClass=*)%s)", filter),
+		fmt.Sprintf("(&(objectClass=posixGroup)%s)", filter),
 		[]string{},
 		[]ldap.Control{},
 	))

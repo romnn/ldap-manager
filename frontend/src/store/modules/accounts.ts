@@ -3,6 +3,7 @@ import store from "@/store";
 import Vue from "vue";
 import { API_ENDPOINT } from "../../constants";
 import { GatewayError } from "../../types";
+import { TokenResponse, AuthModule } from "./auth";
 
 export interface UserList {
   users?: {
@@ -94,7 +95,7 @@ class AccountMod extends VuexModule {
   @Action({ rawError: true })
   public async newAccount(account: Account): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      Vue.axios.put(API_ENDPOINT + "/account", account).then(
+      Vue.axios.put(API_ENDPOINT + "/account", { account }).then(
         () => {
           resolve();
         },
@@ -102,6 +103,32 @@ class AccountMod extends VuexModule {
           reject(err.response?.data as GatewayError);
         }
       );
+    });
+  }
+
+  @Action({ rawError: true })
+  public async updateAccount(req: {
+    update: Account;
+    username: string;
+  }): Promise<TokenResponse> {
+    return new Promise<TokenResponse>((resolve, reject) => {
+      Vue.axios
+        .post(API_ENDPOINT + "/account/" + req.username + "/update", {
+          update: req.update
+        })
+        .then(
+          response => {
+            // refreshed token for potentially updated account
+            AuthModule.handleTokenResponse({
+              auth: response.data,
+              remember: localStorage.getItem("x-user-token") !== null
+            });
+            resolve();
+          },
+          err => {
+            reject(err.response?.data as GatewayError);
+          }
+        );
     });
   }
 
