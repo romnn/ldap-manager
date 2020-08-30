@@ -501,15 +501,15 @@ export default class AccountC extends Vue {
     return "good";
   }
 
-  deleteAccount(username: string) {
+  deleteAccount() {
     AppModule.newConfirmation({ message: "Are you sure?", ack: "Yes, delete" })
       .then(() => {
         this.processing = true;
-        AccountModule.deleteAccount(username)
-          .then(() => this.$router.push({ name: "AccountsRoute" }))
+        AccountModule.deleteAccount(this.account)
+          .then(() => this.$router.push({ name: "LoginRoute" }))
           .catch((err: GatewayError) => {
             if (err.code == Codes.Unauthenticated) return AuthModule.logout();
-            alert(err.message);
+            this.submissionError = err.message;
           })
           .finally(() => (this.processing = false));
       })
@@ -534,7 +534,7 @@ export default class AccountC extends Vue {
     this.groupMemberError = null;
     this.watchGroups = false;
     GroupMemberModule.deleteGroupMember({
-      member: this.account,
+      username: this.account,
       group: group
     })
       .catch((err: GatewayError) => {
@@ -549,7 +549,7 @@ export default class AccountC extends Vue {
     this.groupMemberError = null;
     this.watchGroups = false;
     GroupMemberModule.addGroupMember({
-      member: this.account,
+      username: this.account,
       group: group
     })
       .catch((err: GatewayError) => {
@@ -565,6 +565,17 @@ export default class AccountC extends Vue {
     this.submissionError = null;
     this.processing = true;
     AccountModule.updateAccount({ update: this.form, username: this.account })
+      .then(() => {
+        AccountModule.getAccount(this.account)
+          .then((acc: RemoteAccount) => {
+            AuthModule.setActiveDisplayName(
+              (acc.data?.givenName ?? "") + " " + (acc.data?.sn ?? "")
+            );
+          })
+          .catch(() => {
+            // Ignore
+          });
+      })
       .catch((err: GatewayError) => {
         if (err.code == Codes.Unauthenticated) return AuthModule.logout();
         this.submissionError = err.message;

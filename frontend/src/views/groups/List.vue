@@ -25,7 +25,7 @@
         </div>
       </div>
       <div v-else>
-        <table class="group-table">
+        <table class="striped-table">
           <thead>
             <td>Name</td>
             <td></td>
@@ -210,25 +210,6 @@ export default class GroupListView extends Vue {
 
   .setup-account
     padding: 30px
-
-.group-table
-  width: 100%
-  thead
-    font-weight: bolder
-  tr
-    border-width: 1px 0
-    border-color: #e9ecef
-    border-style: solid
-    &.even
-      background-color: #e9ecef
-    &.deleted
-      background-color: white !important
-      color: #cccccc
-    &:hover
-      border-color: #aaaaaa
-  td
-    padding: 12px
-    text-align: left
 
 .group-pagination
   margin: 20px

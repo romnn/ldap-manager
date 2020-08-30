@@ -6,6 +6,9 @@ import { GatewayError } from "../../types";
 
 export interface Group {
   name: string;
+  members: string[];
+  total?: number;
+  gid: number;
 }
 
 export interface GroupList {
@@ -44,16 +47,26 @@ class GroupMod extends VuexModule {
   }
 
   @Action({ rawError: true })
-  public async renameGroup(name: string): Promise<void> {
+  public async updateGroup(req: {
+    name: string;
+    new_name?: string;
+    gid?: number;
+  }): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      Vue.axios.post(API_ENDPOINT + "/group/rename/" + name, {}).then(
-        () => {
-          resolve();
-        },
-        err => {
-          reject(err.response?.data as GatewayError);
-        }
-      );
+      Vue.axios
+        .post(API_ENDPOINT + "/group/" + req.name + "/update", {
+          /* eslint-disable-next-line @typescript-eslint/camelcase */
+          new_name: req.new_name,
+          gid: req.gid
+        })
+        .then(
+          () => {
+            resolve();
+          },
+          err => {
+            reject(err.response?.data as GatewayError);
+          }
+        );
     });
   }
 

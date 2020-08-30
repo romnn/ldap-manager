@@ -232,8 +232,8 @@ func request_LDAPManager_DeleteGroup_0(ctx context.Context, marshaler runtime.Ma
 
 }
 
-func request_LDAPManager_RenameGroup_0(ctx context.Context, marshaler runtime.Marshaler, client LDAPManagerClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq RenameGroupRequest
+func request_LDAPManager_UpdateGroup_0(ctx context.Context, marshaler runtime.Marshaler, client LDAPManagerClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq UpdateGroupRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -244,7 +244,25 @@ func request_LDAPManager_RenameGroup_0(ctx context.Context, marshaler runtime.Ma
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.RenameGroup(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
+	}
+
+	protoReq.Name, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "name", err)
+	}
+
+	msg, err := client.UpdateGroup(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
@@ -625,7 +643,7 @@ func RegisterLDAPManagerHandlerClient(ctx context.Context, mux *runtime.ServeMux
 
 	})
 
-	mux.Handle("POST", pattern_LDAPManager_RenameGroup_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_LDAPManager_UpdateGroup_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -634,14 +652,14 @@ func RegisterLDAPManagerHandlerClient(ctx context.Context, mux *runtime.ServeMux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_LDAPManager_RenameGroup_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_LDAPManager_UpdateGroup_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_LDAPManager_RenameGroup_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_LDAPManager_UpdateGroup_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -767,7 +785,7 @@ var (
 
 	pattern_LDAPManager_DeleteGroup_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "group", "name"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_LDAPManager_RenameGroup_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "group", "rename"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_LDAPManager_UpdateGroup_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "group", "name", "update"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_LDAPManager_GetGroupList_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "groups"}, "", runtime.AssumeColonVerbOpt(true)))
 
@@ -799,7 +817,7 @@ var (
 
 	forward_LDAPManager_DeleteGroup_0 = runtime.ForwardResponseMessage
 
-	forward_LDAPManager_RenameGroup_0 = runtime.ForwardResponseMessage
+	forward_LDAPManager_UpdateGroup_0 = runtime.ForwardResponseMessage
 
 	forward_LDAPManager_GetGroupList_0 = runtime.ForwardResponseMessage
 

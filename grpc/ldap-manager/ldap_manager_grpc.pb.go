@@ -30,7 +30,7 @@ type LDAPManagerClient interface {
 	// Groups
 	NewGroup(ctx context.Context, in *NewGroupRequest, opts ...grpc.CallOption) (*Empty, error)
 	DeleteGroup(ctx context.Context, in *DeleteGroupRequest, opts ...grpc.CallOption) (*Empty, error)
-	RenameGroup(ctx context.Context, in *RenameGroupRequest, opts ...grpc.CallOption) (*Empty, error)
+	UpdateGroup(ctx context.Context, in *UpdateGroupRequest, opts ...grpc.CallOption) (*Empty, error)
 	GetGroupList(ctx context.Context, in *GetGroupListRequest, opts ...grpc.CallOption) (*GroupList, error)
 	GetUserGroups(ctx context.Context, in *GetUserGroupsRequest, opts ...grpc.CallOption) (*GroupList, error)
 	// Group members
@@ -129,9 +129,9 @@ func (c *lDAPManagerClient) DeleteGroup(ctx context.Context, in *DeleteGroupRequ
 	return out, nil
 }
 
-func (c *lDAPManagerClient) RenameGroup(ctx context.Context, in *RenameGroupRequest, opts ...grpc.CallOption) (*Empty, error) {
+func (c *lDAPManagerClient) UpdateGroup(ctx context.Context, in *UpdateGroupRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/ldapmanager.LDAPManager/RenameGroup", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ldapmanager.LDAPManager/UpdateGroup", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +208,7 @@ type LDAPManagerServer interface {
 	// Groups
 	NewGroup(context.Context, *NewGroupRequest) (*Empty, error)
 	DeleteGroup(context.Context, *DeleteGroupRequest) (*Empty, error)
-	RenameGroup(context.Context, *RenameGroupRequest) (*Empty, error)
+	UpdateGroup(context.Context, *UpdateGroupRequest) (*Empty, error)
 	GetGroupList(context.Context, *GetGroupListRequest) (*GroupList, error)
 	GetUserGroups(context.Context, *GetUserGroupsRequest) (*GroupList, error)
 	// Group members
@@ -250,8 +250,8 @@ func (*UnimplementedLDAPManagerServer) NewGroup(context.Context, *NewGroupReques
 func (*UnimplementedLDAPManagerServer) DeleteGroup(context.Context, *DeleteGroupRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteGroup not implemented")
 }
-func (*UnimplementedLDAPManagerServer) RenameGroup(context.Context, *RenameGroupRequest) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RenameGroup not implemented")
+func (*UnimplementedLDAPManagerServer) UpdateGroup(context.Context, *UpdateGroupRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateGroup not implemented")
 }
 func (*UnimplementedLDAPManagerServer) GetGroupList(context.Context, *GetGroupListRequest) (*GroupList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetGroupList not implemented")
@@ -439,20 +439,20 @@ func _LDAPManager_DeleteGroup_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LDAPManager_RenameGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RenameGroupRequest)
+func _LDAPManager_UpdateGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateGroupRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LDAPManagerServer).RenameGroup(ctx, in)
+		return srv.(LDAPManagerServer).UpdateGroup(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ldapmanager.LDAPManager/RenameGroup",
+		FullMethod: "/ldapmanager.LDAPManager/UpdateGroup",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LDAPManagerServer).RenameGroup(ctx, req.(*RenameGroupRequest))
+		return srv.(LDAPManagerServer).UpdateGroup(ctx, req.(*UpdateGroupRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -606,8 +606,8 @@ var _LDAPManager_serviceDesc = grpc.ServiceDesc{
 			Handler:    _LDAPManager_DeleteGroup_Handler,
 		},
 		{
-			MethodName: "RenameGroup",
-			Handler:    _LDAPManager_RenameGroup_Handler,
+			MethodName: "UpdateGroup",
+			Handler:    _LDAPManager_UpdateGroup_Handler,
 		},
 		{
 			MethodName: "GetGroupList",

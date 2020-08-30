@@ -24,12 +24,12 @@ class GroupMemberMod extends VuexModule {
   @Action({ rawError: true })
   public async addGroupMember(req: {
     group: string;
-    member: string;
+    username: string;
   }): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       Vue.axios
         .put(API_ENDPOINT + "/group/" + req.group + "/members", {
-          member: req.member
+          username: req.username
         })
         .then(
           () => {
@@ -45,12 +45,12 @@ class GroupMemberMod extends VuexModule {
   @Action({ rawError: true })
   public async deleteGroupMember(req: {
     group: string;
-    member: string;
+    username: string;
   }): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       Vue.axios
         .delete(
-          API_ENDPOINT + "/group/" + req.group + "/member/" + req.member,
+          API_ENDPOINT + "/group/" + req.group + "/member/" + req.username,
           {}
         )
         .then(

@@ -149,7 +149,7 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 	if err := m.updateLastID("lastGID", newGID); err != nil {
 		return err
 	}
-	log.Infof("added new group %q (gid=%d)", req.GetName(), newGID)
+	log.Infof("added new group %q with %d members (gid=%d)", req.GetName(), len(memberList), newGID)
 	return nil
 }
 
@@ -174,22 +174,39 @@ func (m *LDAPManager) DeleteGroup(req *pb.DeleteGroupRequest) error {
 	return nil
 }
 
-// RenameGroup ...
-func (m *LDAPManager) RenameGroup(req *pb.RenameGroupRequest) error {
-	if req.GetName() == "" || req.GetNewName() == "" {
+// UpdateGroup ...
+func (m *LDAPManager) UpdateGroup(req *pb.UpdateGroupRequest) error {
+	if req.GetName() == "" {
 		return &ValidationError{Message: "group name can not be empty"}
 	}
-	modifyRequest := &ldap.ModifyDNRequest{
-		DN:           m.GroupNamed(req.GetName()),
-		NewRDN:       fmt.Sprintf("cn=%s", req.GetNewName()),
-		DeleteOldRDN: true,
-		NewSuperior:  "",
+
+	groupName := req.GetName()
+	if req.GetNewName() != "" && req.GetNewName() != groupName {
+		modifyRequest := &ldap.ModifyDNRequest{
+			DN:           m.GroupNamed(groupName),
+			NewRDN:       fmt.Sprintf("cn=%s", req.GetNewName()),
+			DeleteOldRDN: true,
+			NewSuperior:  "",
+		}
+		log.Debugf("UpdateGroup modifyRequest=%v", modifyRequest)
+		if err := m.ldap.ModifyDN(modifyRequest); err != nil {
+			return err
+		}
+		log.Infof("renamed group from %q to %q", req.GetName(), req.GetNewName())
+		groupName = req.GetNewName()
 	}
-	log.Debugf("RenameGroup modifyRequest=%v", modifyRequest)
-	if err := m.ldap.ModifyDN(modifyRequest); err != nil {
-		return err
+
+	modifyGroupRequest := ldap.NewModifyRequest(
+		m.GroupNamed(groupName),
+		[]ldap.Control{},
+	)
+	if req.GetGid() >= MinGID {
+		modifyGroupRequest.Replace("gidNumber", []string{strconv.Itoa(int(req.GetGid()))})
 	}
-	log.Infof("renames group from %q to %q", req.GetName(), req.GetNewName())
+	if err := m.ldap.Modify(modifyGroupRequest); err != nil {
+		return fmt.Errorf("failed to modify group %q: %v", groupName, err)
+	}
+	log.Infof("updated %d attributes of group %q", len(modifyGroupRequest.Changes), groupName)
 	return nil
 }
 

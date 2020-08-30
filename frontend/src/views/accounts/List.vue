@@ -25,7 +25,7 @@
         </div>
       </div>
       <div v-else>
-        <table class="account-table">
+        <table class="striped-table">
           <thead>
             <td>Username</td>
             <td>First Name</td>
@@ -211,25 +211,6 @@ export default class AccountList extends Vue {
 
   .setup-account
     padding: 30px
-
-.account-table
-  width: 100%
-  thead
-    font-weight: bolder
-  tr
-    border-width: 1px 0
-    border-color: #e9ecef
-    border-style: solid
-    &.even
-      background-color: #e9ecef
-    &.deleted
-      background-color: white !important
-      color: #cccccc
-    &:hover
-      border-color: #aaaaaa
-  td
-    padding: 12px
-    text-align: left
 
 .account-pagination
   margin: 20px

@@ -411,7 +411,7 @@ func (m *LDAPManager) UpdateAccount(req *pb.UpdateAccountRequest, algorithm pb.H
 	update := req.GetUpdate()
 
 	// Check if the username was changed which requires a DN change
-	if update.GetUsername() != "" {
+	if update.GetUsername() != "" && update.GetUsername() != username {
 		username = update.GetUsername()
 		// Make sure the new username is not taken
 		result, err := m.ldap.Search(ldap.NewSearchRequest(
@@ -468,11 +468,20 @@ func (m *LDAPManager) UpdateAccount(req *pb.UpdateAccountRequest, algorithm pb.H
 		userDN,
 		[]ldap.Control{},
 	)
-	if firstName := update.GetFirstName(); firstName != "" {
+	firstName := user.GetAttributeValue("givenName")
+	lastName := user.GetAttributeValue("sn")
+	if update.GetFirstName() != "" {
+		firstName = update.GetFirstName()
 		modifyAccountRequest.Replace("givenName", []string{firstName})
 	}
-	if lastName := update.GetLastName(); lastName != "" {
+	if update.GetLastName() != "" {
+		lastName = update.GetLastName()
 		modifyAccountRequest.Replace("sn", []string{lastName})
+	}
+	if update.GetFirstName() != "" || update.GetLastName() != "" {
+		fullName := fmt.Sprintf("%s %s", firstName, lastName)
+		modifyAccountRequest.Replace("displayName", []string{fullName})
+		modifyAccountRequest.Replace("cn", []string{fullName})
 	}
 	if loginShell := update.GetLoginShell(); loginShell != "" {
 		modifyAccountRequest.Replace("loginShell", []string{loginShell})
@@ -515,12 +524,6 @@ func (m *LDAPManager) DeleteAccount(req *pb.DeleteAccountRequest, keepGroups boo
 	if req.GetUsername() == "" {
 		return errors.New("username must not be empty")
 	}
-	if err := m.ldap.Del(ldap.NewDelRequest(
-		fmt.Sprintf("%s=%s,%s", m.AccountAttribute, escapeDN(req.GetUsername()), m.UserGroupDN),
-		[]ldap.Control{},
-	)); err != nil {
-		return err
-	}
 	if !keepGroups {
 		// delete the account from all its groups
 		groups, err := m.GetUserGroups(&pb.GetUserGroupsRequest{Username: req.GetUsername()})
@@ -530,11 +533,20 @@ func (m *LDAPManager) DeleteAccount(req *pb.DeleteAccountRequest, keepGroups boo
 		for _, group := range groups.GetGroups() {
 			allowDeleteOfDefaultGroups := true
 			if err := m.DeleteGroupMember(&pb.GroupMember{Group: group, Username: req.GetUsername()}, allowDeleteOfDefaultGroups); err != nil {
+				if _, ok := err.(*RemoveLastGroupMemberError); ok {
+					return err
+				}
 				if _, ok := err.(*NoSuchMemberError); !ok {
 					return fmt.Errorf("failed to remove deleted user %q from group %q: %v", req.GetUsername(), group, err)
 				}
 			}
 		}
+	}
+	if err := m.ldap.Del(ldap.NewDelRequest(
+		fmt.Sprintf("%s=%s,%s", m.AccountAttribute, escapeDN(req.GetUsername()), m.UserGroupDN),
+		[]ldap.Control{},
+	)); err != nil {
+		return err
 	}
 	log.Infof("removed account %q", req.GetUsername())
 	return nil

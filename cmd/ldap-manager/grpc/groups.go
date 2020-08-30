@@ -42,18 +42,18 @@ func (s *LDAPManagerServer) DeleteGroup(ctx context.Context, in *pb.DeleteGroupR
 	return &pb.Empty{}, nil
 }
 
-// RenameGroup ...
-func (s *LDAPManagerServer) RenameGroup(ctx context.Context, in *pb.RenameGroupRequest) (*pb.Empty, error) {
+// UpdateGroup ...
+func (s *LDAPManagerServer) UpdateGroup(ctx context.Context, in *pb.UpdateGroupRequest) (*pb.Empty, error) {
 	_, err := s.authenticate(ctx)
 	if err != nil {
 		return &pb.Empty{}, err
 	}
-	if err := s.Manager.RenameGroup(in); err != nil {
+	if err := s.Manager.UpdateGroup(in); err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
 			return &pb.Empty{}, toStatus(appErr)
 		}
 		log.Error(err)
-		return &pb.Empty{}, status.Error(codes.Internal, "error while renaming group")
+		return &pb.Empty{}, status.Error(codes.Internal, "error while updating group")
 	}
 	return &pb.Empty{}, nil
 }

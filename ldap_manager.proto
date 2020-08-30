@@ -95,9 +95,10 @@ message DeleteGroupRequest {
   string name = 1;
 }
 
-message RenameGroupRequest {
+message UpdateGroupRequest {
   string name = 1;
   string new_name = 2;
+  int32 gid = 3;
 }
 
 message GetGroupListRequest {
@@ -137,6 +138,7 @@ message GetUserGroupsRequest {
 message Group {
   string name = 1;
   repeated string members = 2;
+  int32 gid = 3;
   int64 total = 10;
 }
 
@@ -228,10 +230,10 @@ service LDAPManager {
       delete: "/v1/group/{name}"
     };
   }
-  rpc RenameGroup(RenameGroupRequest) returns (Empty) {
+  rpc UpdateGroup(UpdateGroupRequest) returns (Empty) {
     option (require_admin) = true;
     option (google.api.http) = {
-      post: "/v1/group/rename"
+      post: "/v1/group/{name}/update"
       body: "*"
     };
   }

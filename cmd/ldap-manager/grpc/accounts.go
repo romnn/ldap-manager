@@ -37,7 +37,7 @@ func (s *LDAPManagerServer) GetAccount(ctx context.Context, in *pb.GetAccountReq
 		return &pb.User{}, err
 	}
 	if !claims.IsAdmin && claims.UID != in.GetUsername() {
-		return &pb.User{}, status.Error(codes.PermissionDenied, "required admin privileges")
+		return &pb.User{}, status.Error(codes.PermissionDenied, "requires admin privileges")
 	}
 	account, err := s.Manager.GetAccount(in)
 	if err != nil {
@@ -73,7 +73,7 @@ func (s *LDAPManagerServer) UpdateAccount(ctx context.Context, in *pb.UpdateAcco
 		return &pb.Token{}, err
 	}
 	if !claims.IsAdmin && claims.UID != in.GetUsername() {
-		return &pb.Token{}, status.Error(codes.PermissionDenied, "required admin privileges")
+		return &pb.Token{}, status.Error(codes.PermissionDenied, "requires admin privileges")
 	}
 	username, uidNumber, err := s.Manager.UpdateAccount(in, pb.HashingAlgorithm_DEFAULT, claims.IsAdmin)
 	if err != nil {
@@ -108,10 +108,12 @@ func (s *LDAPManagerServer) DeleteAccount(ctx context.Context, in *pb.DeleteAcco
 	if err != nil {
 		return &pb.Empty{}, err
 	}
+	log.Info(claims.UID, in.GetUsername())
 	if !claims.IsAdmin && claims.UID != in.GetUsername() {
-		return &pb.Empty{}, status.Error(codes.PermissionDenied, "required admin privileges")
+		return &pb.Empty{}, status.Error(codes.PermissionDenied, "requires admin privileges")
 	}
-	if err := s.Manager.DeleteAccount(in, false); err != nil {
+	allowDeleteOfDefaultGroups := false
+	if err := s.Manager.DeleteAccount(in, allowDeleteOfDefaultGroups); err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {
 			return &pb.Empty{}, toStatus(appErr)
 		}
@@ -128,7 +130,7 @@ func (s *LDAPManagerServer) ChangePassword(ctx context.Context, in *pb.ChangePas
 		return &pb.Empty{}, err
 	}
 	if !claims.IsAdmin && claims.UID != in.GetUsername() {
-		return &pb.Empty{}, status.Error(codes.PermissionDenied, "required admin privileges")
+		return &pb.Empty{}, status.Error(codes.PermissionDenied, "requires admin privileges")
 	}
 	if err := s.Manager.ChangePassword(in); err != nil {
 		if appErr, safe := err.(ldapmanager.Error); safe {

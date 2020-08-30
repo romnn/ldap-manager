@@ -151,8 +151,8 @@ func TestDeleteGroup(t *testing.T) {
 	}
 }
 
-// TestRenameGroup ...
-func TestRenameGroup(t *testing.T) {
+// TestUpdateGroup ...
+func TestUpdateGroup(t *testing.T) {
 	if skipGroupTests {
 		t.Skip()
 	}
@@ -171,7 +171,7 @@ func TestRenameGroup(t *testing.T) {
 
 	// Rename
 	renamedGroupName := "my-renamed-group"
-	if err := test.Manager.RenameGroup(&pb.RenameGroupRequest{Name: groupName, NewName: renamedGroupName}); err != nil {
+	if err := test.Manager.UpdateGroup(&pb.UpdateGroupRequest{Name: groupName, NewName: renamedGroupName}); err != nil {
 		t.Fatalf("failed to rename group from %q to %q: %v", groupName, renamedGroupName, err)
 	}
 	assertHasGroups(t, test.Manager, []string{renamedGroupName})

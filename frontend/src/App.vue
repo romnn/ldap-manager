@@ -17,8 +17,12 @@
               }"
               >My account</b-nav-item
             >
-            <b-nav-item :to="{ name: 'AccountsRoute' }">Accounts</b-nav-item>
-            <b-nav-item :to="{ name: 'GroupsRoute' }">Groups</b-nav-item>
+            <b-nav-item v-if="activeIsAdmin" :to="{ name: 'AccountsRoute' }"
+              >Accounts</b-nav-item
+            >
+            <b-nav-item v-if="activeIsAdmin" :to="{ name: 'GroupsRoute' }"
+              >Groups</b-nav-item
+            >
           </b-navbar-nav>
 
           <b-navbar-nav class="ml-auto">
@@ -93,6 +97,10 @@ export default class App extends Vue {
     }, 1000);
   }
 
+  get activeIsAdmin() {
+    return AuthModule.activeIsAdmin;
+  }
+
   get activeUsername() {
     return AuthModule.activeUsername;
   }
@@ -155,4 +163,25 @@ export default class App extends Vue {
   min-width: 600px
   width: 70%
   margin: 0 auto
+</style>
+
+<style lang="sass">
+.striped-table
+  width: 100%
+  thead
+    font-weight: bolder
+  tr
+    border-width: 1px 0
+    border-color: #e9ecef
+    border-style: solid
+    &.even
+      background-color: #e9ecef
+    &.deleted
+      background-color: white !important
+      color: #cccccc
+    &:hover
+      border-color: #aaaaaa
+  td
+    padding: 12px
+    text-align: left
 </style>

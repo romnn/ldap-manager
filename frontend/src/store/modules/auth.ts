@@ -129,7 +129,9 @@ class AuthMod extends VuexModule implements AuthState {
     localStorage.removeItem("x-user-token");
     localStorage.removeItem("x-user-name");
     localStorage.removeItem("x-user-display-name");
-    router.push({ name: "LoginRoute" });
+    Vue.nextTick(function() {
+      router.push({ name: "LoginRoute" });
+    });
   }
 }
 

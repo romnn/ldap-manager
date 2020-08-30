@@ -3,6 +3,7 @@ package ldapmanager
 import (
 	"fmt"
 	"sort"
+	"strconv"
 
 	"github.com/go-ldap/ldap"
 	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
@@ -63,7 +64,7 @@ func (m *LDAPManager) getGroup(groupName string) (*pb.Group, error) {
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		fmt.Sprintf("(cn=%s)", escapeFilter(groupName)),
-		[]string{m.GroupMembershipAttribute},
+		[]string{m.GroupMembershipAttribute, "gidNumber"},
 		[]ldap.Control{},
 	))
 	if err != nil {
@@ -77,9 +78,11 @@ func (m *LDAPManager) getGroup(groupName string) (*pb.Group, error) {
 	for _, member := range group.GetAttributeValues(m.GroupMembershipAttribute) {
 		members = append(members, member)
 	}
+	gid, _ := strconv.Atoi(group.GetAttributeValue("gidNumber"))
 	return &pb.Group{
 		Members: members,
 		Name:    groupName,
+		Gid:     int32(gid),
 	}, nil
 }
 
@@ -137,7 +140,7 @@ func (m *LDAPManager) GetGroup(req *pb.GetGroupRequest) (*pb.Group, error) {
 	if err != nil {
 		return nil, err
 	}
-	normGroup := &pb.Group{Name: group.GetName(), Total: int64(len(group.GetMembers()))}
+	normGroup := &pb.Group{Name: group.GetName(), Gid: group.GetGid(), Total: int64(len(group.GetMembers()))}
 
 	// Convert member DN's to usernames
 	for _, memberDN := range group.GetMembers() {
@@ -164,8 +167,11 @@ func (m *LDAPManager) GetGroup(req *pb.GetGroupRequest) (*pb.Group, error) {
 
 // AddGroupMember ...
 func (m *LDAPManager) AddGroupMember(req *pb.GroupMember, allowNonExistent bool) error {
-	if req.GetGroup() == "" || req.GetUsername() == "" {
-		return &ValidationError{Message: "group and user name can not be empty"}
+	if req.GetGroup() == "" {
+		return &ValidationError{Message: "group name must not be empty"}
+	}
+	if req.GetUsername() == "" {
+		return &ValidationError{Message: "username must not be empty"}
 	}
 	if !allowNonExistent && !m.IsProtectedGroup(req.GetGroup()) {
 		memberStatus, err := m.IsGroupMember(&pb.IsGroupMemberRequest{Username: req.GetUsername(), Group: m.DefaultUserGroup})
