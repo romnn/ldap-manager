@@ -58,7 +58,7 @@ class AuthMod extends VuexModule implements AuthState {
   }
 
   @Mutation
-  public setIsAdmin(isAdmin: boolean) {
+  public setIsAdmin(isAdmin: boolean | null) {
     this.isAdmin = isAdmin;
   }
 
@@ -122,7 +122,7 @@ class AuthMod extends VuexModule implements AuthState {
   @Action({ rawError: true })
   public logout() {
     this.setToken(null);
-    this.setIsAdmin(false);
+    this.setIsAdmin(null);
     this.setActiveUsername(null);
     this.setActiveDisplayName(null);
     localStorage.removeItem("x-user-admin");
@@ -130,7 +130,9 @@ class AuthMod extends VuexModule implements AuthState {
     localStorage.removeItem("x-user-name");
     localStorage.removeItem("x-user-display-name");
     Vue.nextTick(function() {
-      router.push({ name: "LoginRoute" });
+      router.push({ name: "LoginRoute" }).catch(() => {
+        // Ignore
+      });
     });
   }
 }

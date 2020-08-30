@@ -24,7 +24,7 @@
           </b-row>
         </template>
         <b-card-body>
-          <b-form @submit.prevent="onSubmit">
+          <b-form>
             <b-form-group
               label-size="sm"
               label-cols-sm="3"
@@ -82,7 +82,7 @@
                         <td></td>
                       </thead>
                       <tr
-                        v-for="(member, idx) in form.members"
+                        v-for="(member, idx) in filteredMembers"
                         v-bind:key="member"
                         :class="{
                           even: idx % 2 == 0
@@ -178,8 +178,8 @@
               <b-button
                 class="float-right"
                 size="sm"
-                type="submit"
                 variant="primary"
+                @click="create ? createGroup() : updateGroup()"
                 >{{ create ? "Create account" : "Update" }}
               </b-button>
             </b-form-group>
@@ -228,7 +228,7 @@ export default class GroupC extends Vue {
   protected groupMemberOperationError: string | null = null;
   protected submissionError: string | null = null;
 
-  protected available: UserList = { users: [] };
+  protected available: UserList = { users: [], total: "0" };
 
   protected membersSearch = "";
   protected availableSearch = "";
@@ -243,9 +243,14 @@ export default class GroupC extends Vue {
     gid: 0
   };
 
+  get filteredMembers() {
+    return this.form.members.filter(member => {
+      return member.includes(this.membersSearch);
+    });
+  }
+
   updateMemberSearch(search: string) {
     this.membersSearch = search;
-    this.loadGroupData();
   }
 
   updateAvailableSearch(search: string) {
@@ -257,12 +262,28 @@ export default class GroupC extends Vue {
     return this.form.members.includes(username);
   }
 
+  successAlert(message: string, append = true) {
+    this.$bvToast.toast(message, {
+      title: "Success",
+      autoHideDelay: 5000,
+      appendToast: append,
+      variant: "success",
+      solid: true
+    });
+  }
+
   deleteGroup() {
     AppModule.newConfirmation({ message: "Are you sure?", ack: "Yes, delete" })
       .then(() => {
         this.processing = true;
         GroupModule.deleteGroup(this.name)
-          .then(() => this.$router.push({ name: "GroupsRoute" }))
+          .then(() => {
+            this.$router.push({ name: "GroupsRoute" });
+            this.successAlert(`${this.name} was deleted`);
+          })
+          .catch(() => {
+            // Ignore
+          })
           .catch((err: GatewayError) => {
             if (err.code == Codes.Unauthenticated) return AuthModule.logout();
             this.submissionError = err.message;
@@ -278,10 +299,15 @@ export default class GroupC extends Vue {
     this.processing = true;
     GroupModule.newGroup(this.form)
       .then(() => {
-        this.$router.push({
-          name: "EditGroupRoute",
-          params: { name: this.form.name }
-        });
+        this.successAlert(`${this.form.name} was created`);
+        this.$router
+          .push({
+            name: "EditGroupRoute",
+            params: { name: this.form.name }
+          })
+          .catch(() => {
+            // Ignore
+          });
       })
       .catch((err: GatewayError) => {
         if (err.code == Codes.Unauthenticated) return AuthModule.logout();
@@ -304,6 +330,7 @@ export default class GroupC extends Vue {
       group: this.name
     })
       .then(() => {
+        this.successAlert(`${username} was removed from ${this.name}`);
         this.form.members = this.form.members.filter(
           member => member !== username
         );
@@ -327,6 +354,7 @@ export default class GroupC extends Vue {
       group: this.name
     })
       .then(() => {
+        this.successAlert(`${username} was added to ${this.name}`);
         this.form.members.push(username);
       })
       .catch((err: GatewayError) => {
@@ -345,30 +373,32 @@ export default class GroupC extends Vue {
       gid: this.form.gid
     })
       .then(() => {
-        this.$router.push({
-          name: "EditGroupRoute",
-          params: { name: this.form.name }
-        });
+        this.successAlert(`${this.name} was updated`);
+        this.$router
+          .push({
+            name: "EditGroupRoute",
+            params: { name: this.form.name }
+          })
+          .catch(() => {
+            // Ignore
+          });
       })
       .catch((err: GatewayError) => (this.submissionError = err.message))
       .finally(() => (this.processing = false));
   }
 
-  onSubmit() {
-    this.create ? this.createGroup() : this.updateGroup();
-  }
-
   loadAvailableAccounts() {
     this.loadingAvailableAccounts = true;
     this.loadingAvailableError = null;
-    this.available = { users: [] };
+    this.available = { users: [], total: "0" };
     AccountModule.listAccounts({
       search: this.availableSearch,
       page: 1,
       perPage: 50
     })
       .then((list: UserList) => {
-        this.available = list;
+        this.available.users = list?.users ?? [];
+        this.available.total = list?.total ?? "0";
       })
       .catch((err: GatewayError) => {
         if (err.code == Codes.Unauthenticated) return AuthModule.logout();

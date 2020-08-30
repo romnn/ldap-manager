@@ -92,10 +92,14 @@ export default class Login extends Vue {
   onSubmit() {
     AuthModule.login(this.form)
       .then(() => {
-        this.$router.push({
-          name: "EditAccountRoute",
-          params: { username: this.form.username }
-        });
+        this.$router
+          .push({
+            name: "EditAccountRoute",
+            params: { username: this.form.username }
+          })
+          .catch(() => {
+            // Ignore
+          });
       })
       .catch((err: GatewayError) => {
         this.error = err.message;

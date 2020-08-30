@@ -315,8 +315,8 @@
                 <b-button
                   class="float-right"
                   size="sm"
-                  type="submit"
                   variant="primary"
+                  @click="create ? createAccount() : updateAccount()"
                   >{{ create ? "Create account" : "Update" }}
                 </b-button>
               </b-form-group>
@@ -410,6 +410,7 @@ export default class AccountC extends Vue {
     const added = new Set([...a].filter(x => !b.has(x)));
     const removed = new Set([...b].filter(x => !a.has(x)));
     if (this.watchGroups) {
+      // .then(() => this.successAlert(`${this.account} was added to ${group}`)).catch((err: GatewayError) => this.errorAlert(err.message))
       added.forEach(group => this.addToGroup(group));
       removed.forEach(group => this.removeFromGroup(group));
     }
@@ -501,12 +502,38 @@ export default class AccountC extends Vue {
     return "good";
   }
 
+  successAlert(message: string, append = true) {
+    this.$bvToast.toast(message, {
+      title: "Success",
+      autoHideDelay: 5000,
+      appendToast: append,
+      variant: "success",
+      solid: true
+    });
+  }
+
+  errorAlert(message: string, append = true) {
+    this.$bvToast.toast(message, {
+      title: "Error",
+      autoHideDelay: 5000,
+      appendToast: append,
+      variant: "danger",
+      solid: true
+    });
+  }
+
   deleteAccount() {
     AppModule.newConfirmation({ message: "Are you sure?", ack: "Yes, delete" })
       .then(() => {
         this.processing = true;
         AccountModule.deleteAccount(this.account)
-          .then(() => this.$router.push({ name: "LoginRoute" }))
+          .then(() => {
+            this.$router.push({ name: "LoginRoute" });
+            this.successAlert(`${this.account} was successfully deleted`);
+          })
+          .catch(() => {
+            // Ignore
+          })
           .catch((err: GatewayError) => {
             if (err.code == Codes.Unauthenticated) return AuthModule.logout();
             this.submissionError = err.message;
@@ -523,6 +550,9 @@ export default class AccountC extends Vue {
     this.submissionError = null;
     this.processing = true;
     AccountModule.newAccount(this.form)
+      .then(() => {
+        this.successAlert(`${this.form.username} was created`);
+      })
       .catch((err: GatewayError) => {
         if (err.code == Codes.Unauthenticated) return AuthModule.logout();
         this.submissionError = err.message;
@@ -537,6 +567,9 @@ export default class AccountC extends Vue {
       username: this.account,
       group: group
     })
+      .then(() => {
+        this.successAlert(`${this.account} was removed from ${group}`);
+      })
       .catch((err: GatewayError) => {
         if (err.code == Codes.Unauthenticated) return AuthModule.logout();
         this.groupMemberError = err.message;
@@ -552,6 +585,9 @@ export default class AccountC extends Vue {
       username: this.account,
       group: group
     })
+      .then(() => {
+        this.successAlert(`${this.account} was added to ${group}`);
+      })
       .catch((err: GatewayError) => {
         if (err.code == Codes.Unauthenticated) return AuthModule.logout();
         this.groupMemberError = err.message;
@@ -566,6 +602,7 @@ export default class AccountC extends Vue {
     this.processing = true;
     AccountModule.updateAccount({ update: this.form, username: this.account })
       .then(() => {
+        this.successAlert(`${this.account} was updated`);
         AccountModule.getAccount(this.account)
           .then((acc: RemoteAccount) => {
             AuthModule.setActiveDisplayName(

@@ -30,6 +30,7 @@ const requireAuth = (
     next();
     return;
   }
+  AuthModule.logout();
   next({ name: "LoginRoute" });
 };
 

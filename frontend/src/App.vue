@@ -91,8 +91,8 @@ export default class App extends Vue {
 
   logout() {
     this.isLoggingOut = true;
+    AuthModule.logout();
     setTimeout(() => {
-      AuthModule.logout();
       this.isLoggingOut = false;
     }, 1000);
   }

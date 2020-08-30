@@ -167,6 +167,16 @@ export default class GroupListView extends Vue {
       .finally(() => (this.loading = false));
   }
 
+  errorAlert(message: string, append = true) {
+    this.$bvToast.toast(message, {
+      title: "Error",
+      autoHideDelay: 5000,
+      appendToast: append,
+      variant: "danger",
+      solid: true
+    });
+  }
+
   deleteGroup(name: string) {
     AppModule.newConfirmation({ message: "Are you sure?", ack: "Yes, delete" })
       .then(() => {
@@ -175,7 +185,7 @@ export default class GroupListView extends Vue {
           .then(() => this.deleted.push(name))
           .catch((err: GatewayError) => {
             if (err.code == Codes.Unauthenticated) return AuthModule.logout();
-            alert(err.message);
+            this.errorAlert(err.message);
           })
           .finally(() => (this.processing = false));
       })
