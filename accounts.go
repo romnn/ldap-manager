@@ -296,7 +296,7 @@ func (m *LDAPManager) NewAccount(req *pb.NewAccountRequest, algorithm pb.Hashing
 		return fmt.Errorf("failed to check for existing user %q: %v", account.GetUsername(), err)
 	}
 	if len(result.Entries) > 0 {
-		return fmt.Errorf("account with username %q already exists", account.GetUsername())
+		return &AccountAlreadyExistsError{Username: account.GetUsername()}
 	}
 
 	loginShell := account.GetLoginShell()
@@ -401,7 +401,7 @@ func (m *LDAPManager) UpdateAccount(req *pb.UpdateAccountRequest, algorithm pb.H
 		return "", 0, fmt.Errorf("failed to check for existing user %q: %v", req.GetUsername(), err)
 	}
 	if len(result.Entries) != 1 {
-		return "", 0, fmt.Errorf("account with username %q does not exist", req.GetUsername())
+		return "", 0, &ZeroOrMultipleAccountsError{Username: req.GetUsername(), Count: len(result.Entries)}
 	}
 
 	user := result.Entries[0]
