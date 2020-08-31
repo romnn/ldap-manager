@@ -119,7 +119,9 @@ func (m *LDAPManager) setupAdminsGroup() error {
 		}
 		allowNonExistent := false
 		if err := m.AddGroupMember(&pb.GroupMember{Username: initialAdmin.GetAccount().GetUsername(), Group: m.DefaultAdminGroup}, allowNonExistent); err != nil {
-			return fmt.Errorf("failed to add the default admin user to the admins group: %v", err)
+			if _, ok := err.(*MemberAlreadyExistsError); !ok {
+				return fmt.Errorf("failed to add the default admin user to the admins group: %v", err)
+			}
 		}
 	}
 	return nil
