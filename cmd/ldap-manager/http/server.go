@@ -4,6 +4,8 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sync"
 
 	// "io"
@@ -64,14 +66,28 @@ func (s *LDAPManagerServer) Connect(ctx *cli.Context, listener net.Listener) {
 	s.Service.Ready = true
 	s.Service.SetHealthy(true)
 	log.Infof("%s ready at %s", s.Service.Name, listener.Addr())
-	// s.LDAPManagerServer.Connect(ctx, listener)
 }
 
 func (s *LDAPManagerServer) bootstrapHTTP(ctx *cli.Context) *http.ServeMux {
 	rootMux := http.NewServeMux()
 	if ctx.Bool("static") {
 		// static frontend
-		rootMux.Handle("/", http.FileServer(http.Dir(ctx.String("static-root"))))
+		staticRoot := ctx.String("static-root")
+		fileServer := http.FileServer(http.Dir(staticRoot))
+		rootMux.HandleFunc("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			path := filepath.Join(staticRoot, r.URL.Path)
+			_, err := os.Stat(path)
+			if os.IsNotExist(err) {
+				// file does not exist, serve index.html
+				http.ServeFile(w, r, filepath.Join(staticRoot, "index.html"))
+				return
+			} else if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			fileServer.ServeHTTP(w, r)
+		}))
 	}
 	// health check
 	rootMux.HandleFunc(s.LDAPManagerServer.Service.HTTPHealthCheckURL, func(w http.ResponseWriter, r *http.Request) {
