@@ -85,7 +85,7 @@ image:
   repository: romnn/ldap-manager
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v0.0.15"
+  tag: "v0.0.16"
 
 imagePullSecrets: []
 nameOverride: ""
