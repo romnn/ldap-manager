@@ -176,6 +176,5 @@ func (m *LDAPManager) SetupLDAP() error {
 	if err := m.setupAdminsGroup(); err != nil {
 		return err
 	}
-	// Unfortunately, we cannot setup the user group here without initial members
 	return nil
 }

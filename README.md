@@ -15,7 +15,7 @@ Your description goes here...
 ```bash
 go get github.com/romnnn/ldap-manager
 
-go run github.com/romnnn/ldap-manager/cmd/ldap-manager serve --http-port 8090 --grpc-port 9090
+go run github.com/romnnn/ldap-manager/cmd/ldap-manager serve --http-port 8090 --grpc-port 9090 --generate
 ```
 
 You can also download pre built binaries from the [releases page](https://github.com/romnnn/ldap-manager/releases), or use the `docker` image:

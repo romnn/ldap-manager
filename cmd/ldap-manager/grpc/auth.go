@@ -85,7 +85,7 @@ func (s *LDAPManagerServer) Login(ctx context.Context, in *pb.LoginRequest) (*pb
 		return &pb.Token{}, status.Error(codes.NotFound, "user is invalid")
 	}
 
-	adminMemberStaus, err := s.Manager.IsGroupMember(&pb.IsGroupMemberRequest{
+	adminMemberStatus, err := s.Manager.IsGroupMember(&pb.IsGroupMemberRequest{
 		Username: uid,
 		Group:    s.Manager.DefaultAdminGroup,
 	})
@@ -93,7 +93,7 @@ func (s *LDAPManagerServer) Login(ctx context.Context, in *pb.LoginRequest) (*pb
 		log.Error(err)
 		return nil, status.Error(codes.Internal, "error while checking user member status")
 	}
-	isAdmin := adminMemberStaus.GetIsMember()
+	isAdmin := adminMemberStatus.GetIsMember()
 	displayName := user.GetAttributeValue("displayName")
 	token, expireSeconds, err := s.Authenticator.Login(&AuthClaims{
 		UID:         uid,

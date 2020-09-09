@@ -20,6 +20,7 @@ const (
 	skipChangePasswordTests = false
 	skipGroupTests          = false
 	skipGroupMemberTests    = false
+	skipSetupTests          = false
 )
 
 // Test ...
@@ -29,8 +30,7 @@ type Test struct {
 	Manager         *LDAPManager
 }
 
-// Setup ...
-func (test *Test) Setup(t *testing.T) *Test {
+func (test *Test) setup(t *testing.T, skipSetupLDAP bool) *Test {
 	var err error
 	if parallel {
 		t.Parallel()
@@ -62,11 +62,20 @@ func (test *Test) Setup(t *testing.T) *Test {
 
 	// create and setup the LDAP Manager service
 	test.Manager = NewLDAPManager(test.OpenLDAPCConfig)
-	if err := test.Manager.Setup(); err != nil {
+	if err := test.Manager.Setup(skipSetupLDAP); err != nil {
 		t.Fatal(err)
 	}
-
 	return test
+}
+
+// Setup ...
+func (test *Test) Setup(t *testing.T) *Test {
+	return test.setup(t, false)
+}
+
+// SkipSetup ...
+func (test *Test) SkipSetup(t *testing.T) *Test {
+	return test.setup(t, true)
 }
 
 // Teardown ...

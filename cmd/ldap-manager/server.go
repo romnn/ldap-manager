@@ -244,6 +244,7 @@ func main() {
 	}
 
 	name := "ldap manager service"
+	log.Infof("%s v%s", name, versioning.BinaryVersion(ldapmanager.Version, ldapbase.Rev))
 
 	app := &cli.App{
 		Name:    name,

@@ -96,8 +96,7 @@ func NewLDAPManagerServer(ctx *cli.Context) *LDAPManagerServer {
 
 // Setup prepares the service
 func (s *LDAPManagerServer) Setup(ctx *cli.Context) error {
-	// TODO: This is called twice with no reason
-	if err := s.Manager.Setup(); err != nil {
+	if err := s.Manager.Setup(false); err != nil {
 		return err
 	}
 	if err := s.Authenticator.SetupKeys(auth.AuthenticatorKeyConfig{}.Parse(ctx)); err != nil {

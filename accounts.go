@@ -293,10 +293,22 @@ func (m *LDAPManager) NewAccount(req *pb.NewAccountRequest, algorithm pb.Hashing
 		[]ldap.Control{},
 	))
 	if err != nil {
-		return fmt.Errorf("failed to check for existing user %q: %v", account.GetUsername(), err)
-	}
-	if len(result.Entries) > 0 {
-		return &AccountAlreadyExistsError{Username: account.GetUsername()}
+		if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
+			// there might be no users group, in which case this is fine
+			strict := false
+			noUserGroupErr := m.NewGroup(&pb.NewGroupRequest{Name: m.DefaultUserGroup, Members: []string{req.GetAccount().GetUsername()}}, strict)
+			if !ldap.IsErrorWithCode(noUserGroupErr, ldap.LDAPResultNoSuchObject) {
+				err = nil
+			}
+			// if there is also no users group, there must have been a problem with the setup
+		}
+		if err != nil {
+			return fmt.Errorf("failed to check for existing user %q: %v", account.GetUsername(), err)
+		}
+	} else {
+		if len(result.Entries) > 0 {
+			return &AccountAlreadyExistsError{Username: account.GetUsername()}
+		}
 	}
 
 	loginShell := account.GetLoginShell()

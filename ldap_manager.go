@@ -70,7 +70,7 @@ func (m *LDAPManager) Close() {
 }
 
 // Setup ...
-func (m *LDAPManager) Setup() error {
+func (m *LDAPManager) Setup(skipSetupLDAP bool) error {
 	var err error
 	URI := m.OpenLDAPConfig.URI()
 	log.Debugf("connecting to OpenLDAP at %s", URI)
@@ -93,8 +93,10 @@ func (m *LDAPManager) Setup() error {
 	if err := m.BindAdmin(); err != nil {
 		return err
 	}
-	if err := m.SetupLDAP(); err != nil {
-		return err
+	if !skipSetupLDAP {
+		if err := m.SetupLDAP(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
