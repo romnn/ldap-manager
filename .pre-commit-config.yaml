@@ -9,6 +9,7 @@
     # - id: go-cyclo
     #   args: [-over=15]
     - id: go-build
+      args: [-race]
 - repo: local
   hooks:
   - id: lint-chart

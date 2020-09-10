@@ -9,42 +9,45 @@
   <img width="200" src="public/icon/icon_lg.jpg">
 </p>
 
-Your description goes here...
+LDAP Manager is the cloud-native LDAP web management interface. LDAP has been around for a long time and has become a popular choice for user and group management - however, this should not mean that it's management interface should be hard to deploy and look and feel like it was made in the last century.
 
+LDAP Manager is written in Go and comes with a Vue/Typescript frontend in a single, self-contained docker container. It also exposes it's API over both REST and gRPC!
 
-```bash
-go get github.com/romnnn/ldap-manager
-
-go run github.com/romnnn/ldap-manager/cmd/ldap-manager serve --http-port 8090 --grpc-port 9090 --generate
-```
-
-You can also download pre built binaries from the [releases page](https://github.com/romnnn/ldap-manager/releases), or use the `docker` image:
+Before you get started, make sure you have an OpenLDAP server like [osixia/openldap](https://hub.docker.com/r/osixia/openldap/) running. For more information on deployment and a full example, see the [deployment guide](#Deployment).
 
 ```bash
-docker pull romnn/ldap-manager
+go run github.com/romnnn/ldap-manager/cmd/ldap-manager serve \
+    --http-port 8080 \
+    --grpc-port 9090 \
+    --generate
 ```
 
-For a list of options, run with `--help`.
+You can also download pre-built binaries from the [releases page](https://github.com/romnnn/ldap-manager/releases), or use the `docker` image:
 
-TODO: Notes on static content and GRPC and CLI with references
+```bash
+docker run -p 8080:80 -p 9090:9090 romnn/ldap-manager --generate
+```
 
-#### Deployment (docker-compose)
+For a list of options, run with `--help`. If you want to deploy OpenLDAP with LDAP Manager, read along.
+
+### Deployment
+
+##### docker-compose
 
 TODO
 
-#### Deployment (k8s via helm)
+##### k8s via helm
 
 TODO
 
-#### Serving the frontend externally
+##### Considerations
 
-If you have a cluster environment and want to scale the `ldap-manager` container individually and use a more performant static servicer like `nginx`, you can disable serving static content using the `--no-static` (`NO_STATIC`) flag.
+- Serving the frontend externally
+    If you have a cluster environment and want to scale the `ldap-manager` container individually or use a more performant static content server like `nginx`, you can disable serving static content using the `--no-static` (`NO_STATIC`) flag.
 
-TODO: nginx example
+### Development
 
-#### Development
-
-######  Prerequisites
+#####  Prerequisites
 
 Before you get started, make sure you have installed the following tools::
 
@@ -77,7 +80,7 @@ bump2version (major | minor | patch)
 git push --follow-tags
 ```
 
-If you want to (re-)generate the sample grpc service, make sure to install `protoc`, `protoc-gen-go` and `protoc-gen-go-grpc`.
+If you want to (re-)generate the grpc service and gateway source files, make sure to install `protoc`, `protoc-gen-go` and `protoc-gen-go-grpc`.
 You can then use the provided script:
 ```bash
 apt install -y protobuf-compiler
@@ -88,48 +91,20 @@ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
 invoke compile-proto
 ```
 
-#### CORS
-
-To quickly work around CORS during development, you can use `proxybootstrap`:
-```bash
-pip install proxybootstrap
-proxybootstrap --port 5000 /api@http://127.0.0.1:8090 /@http://127.0.0.1:8081
-```
-
-Note that 8090 is the HTTP service and 8081 is the frontend served via npm.
-You can then access the website at [localhost:5000](http://localhost:5000).
-
-
-#### Debug user config
-
-To manually add a user via an LDIF file, use the `ldapadd` command
-```bash
-sudo apt install ldap-utils
-# For debugging, it is a good idea to add the entries manually one after the other
-ldapmodify -h localhost -p 389 -D cn=admin,dc=example,dc=org -w "admin" -f dev/pre-configured-users/1_add_ous.ldif
-ldapmodify -h localhost -p 389 -D cn=admin,dc=example,dc=org -w "admin" -f dev/pre-configured-users/2_add_admin_group.ldif
-
-ldapsearch -LLL -o ldif-wrap=no -h localhost -p 389 \
-    -b "ou=groups,dc=example,dc=org" \
-    -D "cn=admin,dc=example,dc=org" \
-    -w "admin" \
-    '(cn=admins)' dn
-```
-
-#### Generate LDAP passwords
-
-```bash
-# This will use the default SSHA (Salted SHA1)
-docker run --entrypoint slappasswd  mlan/openldap -s <my-password>
-# You can generate SHA512 or others, see UNIX crypt(3) or PHP $crypt() for reference
-docker run --entrypoint slappasswd  mlan/openldap -s 123456 -c '$6$%.16s'
-```
-
-#### Development deployment
+##### Deployment for development
 
 ```bash
 docker-compose -f dev/docker-compose.yml up --build --force-recreate
 ```
+
+To quickly work around CORS during development, you could use [proxybootstrap](https://github.com/romnnn/proxybootstrap):
+```bash
+pip install proxybootstrap
+proxybootstrap --port 5000 /api@http://127.0.0.1:8090 /@http://127.0.0.1:8080
+```
+
+In this example, 8090 is the HTTP service and 8080 is the frontend served via npm.
+You can then access the website at [localhost:5000](http://localhost:5000).
 
 #### Note
 
