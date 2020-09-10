@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	parallel = false
+	parallel        = false
+	enableDebugLogs = false
 
 	skipAccountTests        = false
 	skipChangePasswordTests = false
@@ -35,21 +36,19 @@ func (test *Test) setup(t *testing.T, skipSetupLDAP bool) *Test {
 	if parallel {
 		t.Parallel()
 	}
-
-	// This will disable the native `log.Printf` calls by testcontainers-go
-	tclog.SetFlags(0)
-	tclog.SetOutput(ioutil.Discard)
-
-	// This wil disable the application logger
-	log.SetOutput(ioutil.Discard)
-
-	// Note: if you want to log in tests, use `t.Log`
+	if !enableDebugLogs {
+		// disable the native `log.Printf` calls by testcontainers-go
+		tclog.SetFlags(0)
+		tclog.SetOutput(ioutil.Discard)
+		// disable the application logger
+		log.SetOutput(ioutil.Discard)
+	}
 
 	containerOptions := tc.ContainerOptions{
 		ContainerRequest: testcontainers.ContainerRequest{},
 	}
 
-	// Start mongodb container
+	// Start OpenLDAP container
 	options := ldaptest.ContainerOptions{
 		ContainerOptions: containerOptions,
 		OpenLDAPConfig:   ldapconfig.OpenLDAPConfig{},
@@ -62,6 +61,8 @@ func (test *Test) setup(t *testing.T, skipSetupLDAP bool) *Test {
 
 	// create and setup the LDAP Manager service
 	test.Manager = NewLDAPManager(test.OpenLDAPCConfig)
+	test.Manager.DefaultAdminUsername = "ldapadmin"
+	test.Manager.DefaultAdminPassword = "123456"
 	if err := test.Manager.Setup(skipSetupLDAP); err != nil {
 		t.Fatal(err)
 	}

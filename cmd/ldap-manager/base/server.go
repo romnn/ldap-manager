@@ -1,6 +1,7 @@
 package base
 
 import (
+	"context"
 	"fmt"
 	"net"
 
@@ -20,6 +21,9 @@ type LDAPManagerServer struct {
 	gogrpcservice.Service
 	Manager       *ldapmanager.LDAPManager
 	Authenticator *auth.Authenticator
+	AuthKeyConfig *auth.AuthenticatorKeyConfig
+	Static        bool
+	StaticRoot    string
 }
 
 // Shutdown ...
@@ -90,23 +94,26 @@ func NewLDAPManagerServer(ctx *cli.Context) *LDAPManagerServer {
 			Issuer:        ctx.String("issuer"),
 			Audience:      ctx.String("audience"),
 		},
-		Manager: manager,
+		AuthKeyConfig: auth.AuthenticatorKeyConfig{}.Parse(ctx),
+		Static:        ctx.Bool("no-static"),
+		StaticRoot:    ctx.String("static-root"),
+		Manager:       manager,
 	}
 }
 
 // Setup prepares the service
-func (s *LDAPManagerServer) Setup(ctx *cli.Context) error {
+func (s *LDAPManagerServer) Setup(ctx context.Context) error {
 	if err := s.Manager.Setup(false); err != nil {
 		return err
 	}
-	if err := s.Authenticator.SetupKeys(auth.AuthenticatorKeyConfig{}.Parse(ctx)); err != nil {
+	if err := s.Authenticator.SetupKeys(s.AuthKeyConfig); err != nil {
 		return err
 	}
 	return nil
 }
 
 // Connect starts the service
-func (s *LDAPManagerServer) Connect(ctx *cli.Context, listener net.Listener) {
+func (s *LDAPManagerServer) Connect(ctx context.Context, listener net.Listener) {
 	log.Info("connecting...")
 	if err := s.Setup(ctx); err != nil {
 		log.Error(err)

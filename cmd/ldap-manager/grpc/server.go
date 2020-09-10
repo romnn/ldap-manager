@@ -1,14 +1,16 @@
 package grpc
 
 import (
+	"context"
 	"net"
 	"sync"
 
+	gogrpcservice "github.com/romnnn/go-grpc-service"
 	ldapmanager "github.com/romnnn/ldap-manager"
 	ldapbase "github.com/romnnn/ldap-manager/cmd/ldap-manager/base"
 	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 	log "github.com/sirupsen/logrus"
-	"github.com/urfave/cli/v2"
+
 	"google.golang.org/grpc/status"
 )
 
@@ -17,6 +19,7 @@ type LDAPManagerServer struct {
 	pb.UnimplementedLDAPManagerServer
 	*ldapbase.LDAPManagerServer
 	Listener net.Listener
+	SetupMux sync.Mutex
 }
 
 // NewGRPCLDAPManagerServer ...
@@ -29,19 +32,22 @@ func NewGRPCLDAPManagerServer(base *ldapbase.LDAPManagerServer, listener net.Lis
 
 // Shutdown ...
 func (s *LDAPManagerServer) Shutdown() {
+	s.SetupMux.Lock()
+	defer s.SetupMux.Unlock()
 	if s.LDAPManagerServer != nil {
 		s.LDAPManagerServer.Shutdown()
 	}
 }
 
 // Serve ...
-func (s *LDAPManagerServer) Serve(wg *sync.WaitGroup, ctx *cli.Context) error {
+func (s *LDAPManagerServer) Serve(ctx context.Context, wg *sync.WaitGroup) error {
 	defer wg.Done()
-	if err := s.Service.BootstrapGrpc(ctx, nil); err != nil {
+	s.SetupMux.Lock()
+	if err := s.Service.BootstrapGrpc(ctx, nil, &gogrpcservice.BootstrapGrpcOptions{}); err != nil {
 		return err
 	}
-	go s.Connect(ctx, s.Listener)
 	pb.RegisterLDAPManagerServer(s.Service.GrpcServer, s)
+	s.SetupMux.Unlock()
 	if err := s.Service.ServeGrpc(s.Listener); err != nil {
 		return err
 	}

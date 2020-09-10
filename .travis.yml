@@ -73,7 +73,7 @@ before_script:
 - go get github.com/mitchellh/gox
 - curl -L https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 script:
-- env GO111MODULE=on go build ${MOD}
+- env GO111MODULE=on go build -race ${MOD}
 - invoke pre-commit
 - if [ "$TRAVIS_OS_NAME" = "linux" ]; then env GO111MODULE=on go test -v -race -coverprofile=coverage.txt -coverpkg=all -covermode=atomic ./... ; fi
 after_success:

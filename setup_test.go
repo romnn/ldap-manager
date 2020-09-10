@@ -24,7 +24,7 @@ func TestSetup(t *testing.T) {
 
 	// Check if the default admin user was created
 	if _, err := test.Manager.AuthenticateUser(&pb.LoginRequest{Username: test.Manager.DefaultAdminUsername, Password: test.Manager.DefaultAdminPassword}); err != nil {
-		t.Errorf("setup failed: failed to get default admin group %q: %v", test.Manager.DefaultAdminGroup, err)
+		t.Errorf("setup failed: failed to authenticate as admin %q: %v", test.Manager.DefaultAdminGroup, err)
 	}
 
 	// check if the default admin user is in the admins group

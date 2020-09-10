@@ -9,7 +9,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	// "google.golang.org/grpc/metadata"
 	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
 )
 

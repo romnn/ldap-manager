@@ -57,7 +57,7 @@ func (s *LDAPManagerServer) authenticate(ctx context.Context) (*AuthClaims, erro
 	}
 	valid, token, err := s.Authenticator.Validate(tokens[0], &AuthClaims{})
 	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, "invalid token")
+		return nil, status.Error(codes.Unauthenticated, "token validation failed")
 	}
 	if claims, ok := token.Claims.(*AuthClaims); ok && valid {
 		if requireAdmin && !claims.IsAdmin {

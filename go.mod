@@ -11,15 +11,13 @@ require (
 	github.com/golang/protobuf v1.4.2
 	github.com/google/go-cmp v0.5.0
 	github.com/grpc-ecosystem/grpc-gateway v1.14.7
-	github.com/labstack/echo/v4 v4.1.16
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/prometheus/common v0.13.0 // indirect
 	github.com/romnnn/flags4urfavecli v0.1.2
-	github.com/romnnn/go-grpc-service v0.0.7
+	github.com/romnnn/go-grpc-service v0.0.9
 	github.com/romnnn/testcontainers v0.1.11
 	github.com/romnnn/testcontainers-go v0.5.3-0.20200811133001-6599cc836290
 	github.com/sirupsen/logrus v1.6.0
-	github.com/stretchr/testify v1.5.1 // indirect
 	github.com/urfave/cli/v2 v2.2.0
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a

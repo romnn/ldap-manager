@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -19,6 +20,7 @@ import (
 	ldapmanager "github.com/romnnn/ldap-manager"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -28,7 +30,7 @@ var (
 
 // LDAPManagerServer ...
 type LDAPManagerServer interface {
-	Serve(*sync.WaitGroup, *cli.Context) error
+	Serve(context.Context, *sync.WaitGroup) error
 	Shutdown()
 }
 
@@ -57,11 +59,11 @@ func main() {
 			Usage:   "http service port",
 		},
 		&cli.BoolFlag{
-			Name:    "static",
-			Value:   true,
-			Aliases: []string{"serve-static"},
-			EnvVars: []string{"STATIC", "SERVE_STATIC"},
-			Usage:   "serve static frontend",
+			Name:    "no-static",
+			Value:   false,
+			Aliases: []string{"disable-serve-static"},
+			EnvVars: []string{"NO_STATIC", "DISABLE_SERVE_STATIC"},
+			Usage:   "disable serving of the static frontend",
 		},
 		&cli.StringFlag{
 			Name:    "static-root",
@@ -256,23 +258,32 @@ func main() {
 				Name:  "serve",
 				Usage: "serve ldap manager service",
 				Flags: append(serverFlags, jwtAuthFlags...),
-				Action: func(ctx *cli.Context) error {
-					grpcListener, err := net.Listen("tcp", fmt.Sprintf(":%d", ctx.Int("grpc-port")))
+				Action: func(cliCtx *cli.Context) error {
+					grpcListener, err := net.Listen("tcp", fmt.Sprintf(":%d", cliCtx.Int("grpc-port")))
 					if err != nil {
 						return fmt.Errorf("failed to listen: %v", err)
 					}
-					httpListener, err := net.Listen("tcp", fmt.Sprintf(":%d", ctx.Int("http-port")))
+					httpListener, err := net.Listen("tcp", fmt.Sprintf(":%d", cliCtx.Int("http-port")))
 					if err != nil {
 						return fmt.Errorf("failed to listen: %v", err)
 					}
 
-					base := ldapbase.NewLDAPManagerServer(ctx)
-					grpcServer = ldapgrpc.NewGRPCLDAPManagerServer(base, grpcListener)
-					httpServer = ldaphttp.NewHTTPLDAPManagerServer(base, httpListener, grpcListener)
+					base := ldapbase.NewLDAPManagerServer(cliCtx)
 					var wg sync.WaitGroup
 					wg.Add(2)
-					go grpcServer.Serve(&wg, ctx)
-					go httpServer.Serve(&wg, ctx)
+					ctx := context.Background()
+
+					grpcServer = ldapgrpc.NewGRPCLDAPManagerServer(base, grpcListener)
+					go grpcServer.Serve(ctx, &wg)
+
+					upstream, err := grpc.DialContext(ctx, grpcListener.Addr().String(), grpc.WithInsecure(), grpc.WithBlock())
+					if err != nil {
+						grpcServer.Shutdown()
+						return err
+					}
+
+					httpServer = ldaphttp.NewHTTPLDAPManagerServer(base, httpListener, upstream)
+					go httpServer.Serve(ctx, &wg)
 					wg.Wait()
 					return nil
 				},
