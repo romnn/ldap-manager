@@ -11,7 +11,7 @@ import (
 )
 
 // Version is incremented using bump2version
-const Version = "0.0.19"
+const Version = "0.0.20"
 
 // LDAPManager ...
 type LDAPManager struct {
