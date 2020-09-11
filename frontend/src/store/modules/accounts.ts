@@ -2,7 +2,6 @@ import { VuexModule, Module, Action, getModule } from "vuex-module-decorators";
 import store from "@/store";
 import Vue from "vue";
 import { API_ENDPOINT } from "../../constants";
-import { GatewayError } from "../../types";
 import { TokenResponse, AuthModule } from "./auth";
 
 export interface UserList {
@@ -70,7 +69,7 @@ class AccountMod extends VuexModule {
           resolve(response.data);
         },
         err => {
-          reject(err.response?.data as GatewayError);
+          reject(err.response);
         }
       );
     });
@@ -86,7 +85,7 @@ class AccountMod extends VuexModule {
           resolve(response.data);
         },
         err => {
-          reject(err.response?.data as GatewayError);
+          reject(err.response);
         }
       );
     });
@@ -100,7 +99,7 @@ class AccountMod extends VuexModule {
           resolve();
         },
         err => {
-          reject(err.response?.data as GatewayError);
+          reject(err.response);
         }
       );
     });
@@ -126,7 +125,7 @@ class AccountMod extends VuexModule {
             resolve();
           },
           err => {
-            reject(err.response?.data as GatewayError);
+            reject(err.response);
           }
         );
     });
@@ -140,7 +139,7 @@ class AccountMod extends VuexModule {
           resolve();
         },
         err => {
-          reject(err.response?.data as GatewayError);
+          reject(err.response);
         }
       );
     });
@@ -159,7 +158,7 @@ class AccountMod extends VuexModule {
             resolve();
           },
           err => {
-            reject(err.response?.data as GatewayError);
+            reject(err.response);
           }
         );
     });

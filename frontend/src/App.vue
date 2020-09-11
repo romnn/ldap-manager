@@ -8,7 +8,7 @@
 
         <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
-        <b-collapse id="nav-collapse" is-nav>
+        <b-collapse class="navbar" id="nav-collapse" is-nav>
           <b-navbar-nav v-if="activeUsername !== null">
             <b-nav-item
               :to="{
@@ -25,7 +25,7 @@
             >
           </b-navbar-nav>
 
-          <b-navbar-nav class="ml-auto">
+          <b-navbar-nav>
             <b-nav-item right href="https://github.com/romnnn/ldap-manager">{{
               version
             }}</b-nav-item>
@@ -65,6 +65,7 @@
         <router-view />
       </div>
     </div>
+    <div class="footer">LDAP manager</div>
   </div>
 </template>
 
@@ -155,14 +156,24 @@ export default class App extends Vue {
   -moz-osx-font-smoothing: grayscale
   text-align: center
   color: #2c3e50
+  overflow: hidden
 
 .app-content
+  display: block
   position: relative
   top: 70px
-  padding-bottom: 70px
-  min-width: 600px
-  width: 70%
+  max-width: 1000px
+  width: 90%
   margin: 0 auto
+
+.footer
+  padding: 100px 0 50px 0
+  position: relative
+  font-size: 10pt
+  color: gray
+
+.navbar
+  overflow-x: hidden
 </style>
 
 <style lang="sass">

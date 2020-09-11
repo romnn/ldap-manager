@@ -25,7 +25,7 @@
         </div>
       </div>
       <div v-else>
-        <table class="striped-table">
+        <table class="groups-table striped-table">
           <thead>
             <td>Name</td>
             <td></td>
@@ -108,6 +108,7 @@ import { GatewayError } from "../../types";
 import TableViewC from "../../components/TableView.vue";
 import { Codes } from "../../constants";
 import { AuthModule } from "../../store/modules/auth";
+import { AxiosError } from "axios";
 
 @Component({
   components: { TableViewC }
@@ -160,9 +161,10 @@ export default class GroupListView extends Vue {
       .then((list: GroupList) => {
         this.groups = list;
       })
-      .catch((err: GatewayError) => {
-        if (err.code == Codes.Unauthenticated) return AuthModule.logout();
-        this.error = err.message;
+      .catch((err: AxiosError<GatewayError>) => {
+        if (err.response?.data?.code == Codes.Unauthenticated)
+          return AuthModule.logout();
+        this.error = `${err.response?.data?.message ?? err}`;
       })
       .finally(() => (this.loading = false));
   }
@@ -201,6 +203,11 @@ export default class GroupListView extends Vue {
 </script>
 
 <style lang="sass" scoped>
+.groups-table
+  table-layout: fixed
+  width: 100%
+  td
+    word-wrap: break-word
 
 .confirmation
   border: 2px #e9ecef solid

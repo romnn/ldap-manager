@@ -3,6 +3,7 @@ import store from "@/store";
 import Vue from "vue";
 import { API_ENDPOINT } from "../../constants";
 import { GatewayError } from "../../types";
+import { AxiosError } from "axios";
 
 export interface Group {
   name: string;
@@ -26,7 +27,7 @@ class GroupMod extends VuexModule {
           resolve();
         },
         err => {
-          reject(err.response?.data as GatewayError);
+          reject(err.response);
         }
       );
     });
@@ -40,7 +41,7 @@ class GroupMod extends VuexModule {
           resolve();
         },
         err => {
-          reject(err.response?.data as GatewayError);
+          reject(err.response);
         }
       );
     });
@@ -64,7 +65,7 @@ class GroupMod extends VuexModule {
             resolve();
           },
           err => {
-            reject(err.response?.data as GatewayError);
+            reject(err.response);
           }
         );
     });
@@ -89,8 +90,8 @@ class GroupMod extends VuexModule {
         response => {
           resolve(response.data);
         },
-        err => {
-          reject(err.response?.data as GatewayError);
+        (err: AxiosError<GatewayError>) => {
+          reject(err.response);
         }
       );
     });
@@ -104,7 +105,7 @@ class GroupMod extends VuexModule {
           resolve(response.data);
         },
         err => {
-          reject(err.response?.data as GatewayError);
+          reject(err.response);
         }
       );
     });

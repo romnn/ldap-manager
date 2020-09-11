@@ -180,7 +180,7 @@
                 size="sm"
                 variant="primary"
                 @click="create ? createGroup() : updateGroup()"
-                >{{ create ? "Create account" : "Update" }}
+                >{{ create ? "Create group" : "Update" }}
               </b-button>
             </b-form-group>
 

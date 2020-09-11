@@ -3,7 +3,6 @@ import store from "@/store";
 import Vue from "vue";
 import { API_ENDPOINT } from "../../constants";
 import { Group } from "./groups";
-import { GatewayError } from "../../types";
 
 @Module({ dynamic: true, store, name: "members" })
 class GroupMemberMod extends VuexModule {
@@ -15,7 +14,7 @@ class GroupMemberMod extends VuexModule {
           resolve(response.data);
         },
         err => {
-          reject(err.response?.data as GatewayError);
+          reject(err.response);
         }
       );
     });
@@ -36,7 +35,7 @@ class GroupMemberMod extends VuexModule {
             resolve();
           },
           err => {
-            reject(err.response?.data as GatewayError);
+            reject(err.response);
           }
         );
     });
@@ -58,7 +57,7 @@ class GroupMemberMod extends VuexModule {
             resolve();
           },
           err => {
-            reject(err.response?.data as GatewayError);
+            reject(err.response);
           }
         );
     });

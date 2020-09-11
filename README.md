@@ -34,7 +34,9 @@ For a list of options, run with `--help`. If you want to deploy OpenLDAP with LD
 
 ##### docker-compose
 
-TODO
+```bash
+docker-compose -f deployment/docker-compose.yml up
+```
 
 ##### k8s via helm
 

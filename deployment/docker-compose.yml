@@ -1,16 +1,11 @@
 version: "3.6"
 
 services:
-  
   openldap:
     image: osixia/openldap
-    # build:
-    #   context: .
     ports:
       - 389:389
       - 636:636
-    # volumes:
-    #   - ./pre-configured-users/add_group.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/add_group.ldif:ro
     environment:
       LDAP_ORGANISATION: Example Inc.
       LDAP_DOMAIN: example.org
@@ -25,25 +20,50 @@ services:
 
       LDAP_TLS: "false"
       LDAP_RFC2307BIS_SCHEMA: "true"
+    logging:
+      # disable logging
+      driver: none
 
-  ldap-user-manager:
-    image: wheelybird/ldap-user-manager:v1.2
-    # build:
-    #   context: ../../ldap-user-manager
+  ldapmanager:
+    image: romnn/ldap-manager:latest
     ports:
-      - 8888:80
+      - 80:80
+      # uncomment if you want to expose the GRPC endpoint
+      # - 9090:9090
+    depends_on:
+      - openldap
     environment:
-      SERVER_HOSTNAME: localhost
-      LDAP_URI: ldap://openldap:389
-      LDAP_BASE_DN: dc=example,dc=org
-      LDAP_REQUIRE_STARTTLS: "FALSE"
-      LDAP_ADMINS_GROUP: admins
-      LDAP_ADMIN_BIND_DN: cn=admin,dc=example,dc=org
-      LDAP_ADMIN_BIND_PWD: admin
-      LDAP_GROUP_MEMBERSHIP_USES_UID: "true"
-      LDAP_GROUP_MEMBERSHIP_ATTRIBUTE: uniquemember
-      DEFAULT_USER_GROUP: users
-      LDAP_USER_OU: users
-      LDAP_USES_NIS_SCHEMA: "false"
-      NO_HTTPS: "true"
-      EMAIL_DOMAIN: example.com
+      OPENLDAP_HOST: "openldap"
+      OPENLDAP_PORT: 389
+
+      OPENLDAP_ADMIN_PASSWORD: admin
+      OPENLDAP_CONFIG_PASSWORD: config
+
+      OPENLDAP_ORGANIZATION: Example Inc.
+      OPENLDAP_DOMAIN: example.org
+      OPENLDAP_BASE_DN: dc=example,dc=org
+
+      DEFAULT_ADMIN_USERNAME: ldapadmin
+      DEFAULT_ADMIN_PASSWORD: changeme
+      FORCE_CREATE_ADMIN: "true"
+
+      OPENLDAP_TLS: "false"
+      OPENLDAP_USE_RFC2307BIS: "true"
+      
+      ISSUER: issuer@example.org
+      AUDIENCE: example.org
+      GENERATE: "true"
+
+  screenshot:
+    image: zenika/alpine-chrome:with-puppeteer
+    command: ["sh", "-c", "npm install && node src/screenshot.js"]
+    depends_on:
+      - ldapmanager
+    volumes:
+      - ./screenshot/screenshot.js:/usr/src/app/src/screenshot.js:ro
+      - ./screenshot/package.json:/usr/src/app/package.json:ro
+      - ./screenshot/package-lock.json:/usr/src/app/package-lock.json:ro
+      - ../screenshots:/usr/src/app/output
+    cap_add:
+      - SYS_ADMIN
+    

@@ -50,7 +50,7 @@
                 >
               </b-col>
               <b-col>
-                <b-button size="sm" type="submit" variant="primary"
+                <b-button size="sm" @click="onSubmit" type="submit" variant="primary"
                   >Log in</b-button
                 >
               </b-col>
@@ -74,6 +74,7 @@
 </template>
 
 <script lang="ts">
+import { AxiosError } from "axios";
 import { Component, Vue } from "vue-property-decorator";
 import { AuthModule } from "../store/modules/auth";
 import { GatewayError } from "../types";
@@ -101,8 +102,8 @@ export default class Login extends Vue {
             // Ignore
           });
       })
-      .catch((err: GatewayError) => {
-        this.error = err.message;
+      .catch((err: AxiosError<GatewayError>) => {
+        this.error = `${err.response?.data?.message ?? err}`;
       });
   }
 }

@@ -9,7 +9,6 @@ import store from "@/store";
 import router from "@/router";
 import Vue from "vue";
 import { API_ENDPOINT } from "../../constants";
-import { GatewayError } from "../../types";
 
 export interface TokenResponse {
   token: string;
@@ -99,7 +98,7 @@ class AuthMod extends VuexModule implements AuthState {
             resolve(response.data);
           },
           err => {
-            reject(err.response?.data as GatewayError);
+            reject(err);
           }
         );
     });

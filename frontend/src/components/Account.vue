@@ -18,10 +18,10 @@
           :aria-hidden="processing ? 'true' : null"
         >
           <template v-slot:header>
-            <b-row class="text-center">
-              <b-col></b-col>
-              <b-col cols="8">{{ title }}</b-col>
-              <b-col
+            <b-row fluid class="text-center">
+              <b-col sm="2"></b-col>
+              <b-col>{{ title }}</b-col>
+              <b-col sm="2"
                 ><b-button
                   v-if="!create"
                   @click="deleteAccount"
@@ -260,7 +260,7 @@
 
                 <b-row align-h="end">
                   <b-col cols="9"
-                    ><b-progress max="6">
+                    ><b-progress max="6" v-if="enteredPassword">
                       <b-progress-bar
                         :value="passwordStrength"
                         :label="passwordStrengthLabel"
@@ -311,7 +311,7 @@
                 </b-alert>
               </b-form-group>
 
-              <b-form-group>
+              <b-form-group class="mb-0">
                 <b-button
                   class="float-right"
                   size="sm"
@@ -350,6 +350,7 @@ import { GatewayError } from "../types";
 import { GroupMemberModule } from "../store/modules/members";
 import { Codes } from "../constants";
 import { AuthModule } from "../store/modules/auth";
+import { AxiosError } from "axios";
 
 @Component
 export default class AccountC extends Vue {
@@ -633,9 +634,10 @@ export default class AccountC extends Vue {
           this.totalAvailableGroups = Number(list.total);
           resolve();
         })
-        .catch((err: GatewayError) => {
-          if (err.code == Codes.Unauthenticated) return AuthModule.logout();
-          this.error = err.message;
+        .catch((err: AxiosError<GatewayError>) => {
+          if (err.response?.data?.code == Codes.Unauthenticated)
+            return AuthModule.logout();
+          this.error = `${err.response?.data?.message ?? err}`;
           reject();
         })
         .finally(() => (this.checkingGroup = false));
@@ -660,9 +662,10 @@ export default class AccountC extends Vue {
         this.form.home_directory = acc.data?.homeDirectory ?? "";
         this.form.username = acc.data?.uid ?? "";
       })
-      .catch((err: GatewayError) => {
-        if (err.code == Codes.Unauthenticated) return AuthModule.logout();
-        this.error = err.message;
+      .catch((err: AxiosError<GatewayError>) => {
+        if (err.response?.data?.code == Codes.Unauthenticated)
+          return AuthModule.logout();
+        this.error = `${err.response?.data?.message ?? err}`;
       })
       .then(() => {
         // Get the accounts groups
@@ -673,9 +676,10 @@ export default class AccountC extends Vue {
               this.watchGroups = true;
             });
           })
-          .catch((err: GatewayError) => {
-            if (err.code == Codes.Unauthenticated) return AuthModule.logout();
-            this.error = err.message;
+          .catch((err: AxiosError<GatewayError>) => {
+            if (err.response?.data?.code == Codes.Unauthenticated)
+              return AuthModule.logout();
+            this.error = `${err.response?.data?.message ?? err}`;
           });
       });
   }

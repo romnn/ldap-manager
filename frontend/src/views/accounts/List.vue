@@ -25,7 +25,7 @@
         </div>
       </div>
       <div v-else>
-        <table class="striped-table">
+        <table class="accounts-table striped-table">
           <thead>
             <td>Username</td>
             <td>First Name</td>
@@ -117,6 +117,7 @@ import TableViewC from "../../components/TableView.vue";
 import { GatewayError } from "../../types";
 import { Codes } from "../../constants";
 import { AuthModule } from "../../store/modules/auth";
+import { AxiosError } from "axios";
 
 @Component({
   components: { TableViewC }
@@ -173,9 +174,10 @@ export default class AccountList extends Vue {
       .then((list: UserList) => {
         this.list = list;
       })
-      .catch((err: GatewayError) => {
-        if (err.code == Codes.Unauthenticated) return AuthModule.logout();
-        this.error = err.message;
+      .catch((err: AxiosError<GatewayError>) => {
+        if (err.response?.data?.code == Codes.Unauthenticated)
+          return AuthModule.logout();
+        this.error = `${err.response?.data?.message ?? err}`;
       })
       .finally(() => (this.loading = false));
   }
@@ -214,6 +216,12 @@ export default class AccountList extends Vue {
 </script>
 
 <style lang="sass" scoped>
+.accounts-table
+  table-layout: fixed
+  width: 100%
+  td
+    word-wrap: break-word
+
 .account-list
   z-index: 100
   &.inactive
