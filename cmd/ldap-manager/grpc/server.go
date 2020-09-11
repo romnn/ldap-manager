@@ -46,6 +46,7 @@ func (s *LDAPManagerServer) Serve(ctx context.Context, wg *sync.WaitGroup) error
 	if err := s.Service.BootstrapGrpc(ctx, nil, &gogrpcservice.BootstrapGrpcOptions{}); err != nil {
 		return err
 	}
+	s.LDAPManagerServer.Connect(ctx, s.Listener)
 	pb.RegisterLDAPManagerServer(s.Service.GrpcServer, s)
 	s.SetupMux.Unlock()
 	if err := s.Service.ServeGrpc(s.Listener); err != nil {

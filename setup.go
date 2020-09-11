@@ -10,11 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// BindReadOnly ...
-func (m *LDAPManager) BindReadOnly() error {
-	return m.ldap.Bind(fmt.Sprintf("cn=%s,%s", m.OpenLDAPConfig.ReadonlyUserUsername, m.OpenLDAPConfig.BaseDN), m.OpenLDAPConfig.ReadonlyUserPassword)
-}
-
 // BindAdmin ...
 func (m *LDAPManager) BindAdmin() error {
 	return m.ldap.Bind(fmt.Sprintf("cn=%s,%s", "admin", m.OpenLDAPConfig.BaseDN), m.OpenLDAPConfig.AdminPassword)

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	ldapconfig "github.com/romnnn/ldap-manager/config"
-	ldaptest "github.com/romnnn/ldap-manager/test"
+	ldaptest "github.com/romnnn/ldap-manager/testing"
 	tc "github.com/romnnn/testcontainers"
 	"github.com/romnnn/testcontainers-go"
 	log "github.com/sirupsen/logrus"

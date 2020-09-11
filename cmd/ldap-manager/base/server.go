@@ -95,7 +95,7 @@ func NewLDAPManagerServer(ctx *cli.Context) *LDAPManagerServer {
 			Audience:      ctx.String("audience"),
 		},
 		AuthKeyConfig: auth.AuthenticatorKeyConfig{}.Parse(ctx),
-		Static:        ctx.Bool("no-static"),
+		Static:        !ctx.Bool("no-static"),
 		StaticRoot:    ctx.String("static-root"),
 		Manager:       manager,
 	}
