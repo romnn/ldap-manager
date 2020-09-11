@@ -13,6 +13,18 @@ LDAP Manager is the cloud-native LDAP web management interface. LDAP has been ar
 
 LDAP Manager is written in Go and comes with a Vue/Typescript frontend in a single, self-contained docker container. It also exposes it's API over both REST and gRPC!
 
+<p align="center">
+  <img width="500" src="screenshots/home-user.png">
+</p>
+
+<p align="center">
+  <img width="500" src="screenshots/accounts-edit-admin.png">
+</p>
+
+<p align="center">
+  <img width="500" src="screenshots/accounts-list-admin.png">
+</p>
+
 Before you get started, make sure you have an OpenLDAP server like [osixia/openldap](https://hub.docker.com/r/osixia/openldap/) running. For more information on deployment and a full example, see the [deployment guide](#Deployment).
 
 ```bash
