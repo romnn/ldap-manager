@@ -142,9 +142,9 @@ spec:
           - name: OPENLDAP_TLS
             value: {{ .Values.ldap.tls | quote }}
           {{- end }}
-          {{- if .Values.ldap.useRFC230BIS }}
-          - name: OPENLDAP_USE_RFC230BIS
-            value: {{ .Values.ldap.useRFC230BIS | quote }}
+          {{- if .Values.ldap.useRFC2307BIS }}
+          - name: OPENLDAP_USE_RFC2307BIS
+            value: {{ .Values.ldap.useRFC2307BIS | quote }}
           {{- end }}
 
           # LDAP manager flags

@@ -41,7 +41,7 @@ ldap:
   domain: example.org
   baseDN: dc=example,dc=org
   tls: "false"
-  useRFC230BIS: "true"
+  useRFC2307BIS: "true"
 
 # log: "info"
 static: {}
