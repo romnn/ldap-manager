@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Lint helm chart
-        run: helm lint charts/ldapmanager/
+        run: helm lint deployment/helm/charts/ldapmanager/
 
       - run: |
           echo "repo_user=$(echo ${GITHUB_REPOSITORY} | awk -F / '{print $1}' )" >> $GITHUB_ENV
@@ -47,6 +47,7 @@ jobs:
       - name: Compile binaries
         run: |
           pip install invoke
+          go get -u github.com/mitchellh/gox
           invoke cc
 
       - name: Upload release binaries
