@@ -1,6 +1,6 @@
 {
   "name": "ldap-manager",
-  "version": "0.0.24",
+  "version": "0.0.25",
   "private": true,
   "scripts": {
     "serve": "./gen-protos.sh vue-cli-service serve",
