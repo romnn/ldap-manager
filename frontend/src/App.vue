@@ -26,7 +26,7 @@
           </b-navbar-nav>
 
           <b-navbar-nav>
-            <b-nav-item right href="https://github.com/romnnn/ldap-manager">{{
+            <b-nav-item right href="https://github.com/romnn/ldap-manager">{{
               version
             }}</b-nav-item>
 

@@ -4,12 +4,12 @@ import (
 	"context"
 	"strconv"
 
-	ldapmanager "github.com/romnnn/ldap-manager"
+	ldapmanager "github.com/romnn/ldap-manager"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
+	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
 )
 
 // GetUserList ...

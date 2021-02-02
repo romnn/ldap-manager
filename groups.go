@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"github.com/go-ldap/ldap"
-	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
+	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
 	log "github.com/sirupsen/logrus"
 )
 

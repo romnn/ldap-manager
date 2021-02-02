@@ -15,7 +15,7 @@ import (
 	_ "github.com/GehirnInc/crypt/md5_crypt"
 	_ "github.com/GehirnInc/crypt/sha256_crypt"
 	_ "github.com/GehirnInc/crypt/sha512_crypt"
-	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
+	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
 )
 
 // LDAPPasswordHashingAlgorithms ...

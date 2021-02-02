@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"sync"
 
-	ldapbase "github.com/romnnn/ldap-manager/cmd/ldap-manager/base"
+	ldapbase "github.com/romnn/ldap-manager/cmd/ldap-manager/base"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	gw "github.com/romnnn/ldap-manager/grpc/ldap-manager"
+	gw "github.com/romnn/ldap-manager/grpc/ldap-manager"
 	"google.golang.org/grpc"
 )
 

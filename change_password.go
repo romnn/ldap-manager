@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/go-ldap/ldap"
-	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
-	ldaphash "github.com/romnnn/ldap-manager/hash"
+	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
+	ldaphash "github.com/romnn/ldap-manager/hash"
 	log "github.com/sirupsen/logrus"
 )
 

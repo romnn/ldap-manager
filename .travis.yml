@@ -7,7 +7,7 @@ go:
 os:
 - linux
 - osx
-env: MOD=github.com/romnnn/ldap-manager BINARY=ldap-manager
+env: MOD=github.com/romnn/ldap-manager BINARY=ldap-manager
 jobs:
   allow_failures:
   - go: tip
@@ -34,7 +34,7 @@ jobs:
       file: build/*
       skip_cleanup: true
       on:
-        repo: romnnn/ldap-manager
+        repo: romnn/ldap-manager
         tags: true
 
   - stage: deploy
@@ -58,7 +58,7 @@ jobs:
       token: "$GH_TOKEN"
       keep_history: true
       on:
-        repo: romnnn/ldap-manager
+        repo: romnn/ldap-manager
         tags: false
         branches:
           only:

@@ -5,10 +5,10 @@ import (
 	"net"
 	"sync"
 
-	gogrpcservice "github.com/romnnn/go-grpc-service"
-	ldapmanager "github.com/romnnn/ldap-manager"
-	ldapbase "github.com/romnnn/ldap-manager/cmd/ldap-manager/base"
-	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
+	gogrpcservice "github.com/romnn/go-grpc-service"
+	ldapmanager "github.com/romnn/ldap-manager"
+	ldapbase "github.com/romnn/ldap-manager/cmd/ldap-manager/base"
+	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
 	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/status"

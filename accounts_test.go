@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
-	ldaphash "github.com/romnnn/ldap-manager/hash"
+	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
+	ldaphash "github.com/romnn/ldap-manager/hash"
 )
 
 func contains(list []string, a string) bool {

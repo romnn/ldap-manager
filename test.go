@@ -6,11 +6,11 @@ import (
 	tclog "log"
 	"testing"
 
-	ldapconfig "github.com/romnnn/ldap-manager/config"
-	ldaptest "github.com/romnnn/ldap-manager/testing"
-	tc "github.com/romnnn/testcontainers"
-	"github.com/romnnn/testcontainers-go"
+	ldapconfig "github.com/romnn/ldap-manager/config"
+	ldaptest "github.com/romnn/ldap-manager/testing"
+	tc "github.com/romnn/testcontainers"
 	log "github.com/sirupsen/logrus"
+	"github.com/testcontainers/testcontainers-go"
 )
 
 const (

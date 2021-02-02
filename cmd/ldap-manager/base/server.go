@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net"
 
-	gogrpcservice "github.com/romnnn/go-grpc-service"
-	"github.com/romnnn/go-grpc-service/auth"
-	ldapmanager "github.com/romnnn/ldap-manager"
-	ldapconfig "github.com/romnnn/ldap-manager/config"
+	gogrpcservice "github.com/romnn/go-grpc-service"
+	"github.com/romnn/go-grpc-service/auth"
+	ldapmanager "github.com/romnn/ldap-manager"
+	ldapconfig "github.com/romnn/ldap-manager/config"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )

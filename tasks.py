@@ -10,8 +10,8 @@ import os
 from invoke import task
 import webbrowser
 
-PKG = "github.com/romnnn/ldap-manager"
-CMD_PKG = "github.com/romnnn/ldap-manager/cmd/ldap-manager"
+PKG = "github.com/romnn/ldap-manager"
+CMD_PKG = "github.com/romnn/ldap-manager/cmd/ldap-manager"
 
 
 

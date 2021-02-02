@@ -3,8 +3,8 @@ package grpc
 import (
 	"context"
 
-	ldapmanager "github.com/romnnn/ldap-manager"
-	pb "github.com/romnnn/ldap-manager/grpc/ldap-manager"
+	ldapmanager "github.com/romnn/ldap-manager"
+	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

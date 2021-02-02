@@ -24,7 +24,7 @@ COPY ./ /app
 
 # This removes debug information from the binary
 # Assumes go 1.10+
-RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -a -ldflags="-w -s" -o app "github.com/romnnn/ldap-manager/cmd/ldap-manager"
+RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -a -ldflags="-w -s" -o app "github.com/romnn/ldap-manager/cmd/ldap-manager"
 
 FROM node:latest AS NODE_BUILD
 

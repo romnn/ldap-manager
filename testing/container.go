@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/docker/go-connections/nat"
-	ldapconfig "github.com/romnnn/ldap-manager/config"
-	tc "github.com/romnnn/testcontainers"
-	"github.com/romnnn/testcontainers-go"
-	"github.com/romnnn/testcontainers-go/wait"
+	ldapconfig "github.com/romnn/ldap-manager/config"
+	tc "github.com/romnn/testcontainers"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 // ContainerOptions ...

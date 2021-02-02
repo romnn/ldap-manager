@@ -1,9 +1,9 @@
 ## ldap-manager
 
-[![Build Status](https://travis-ci.com/romnnn/ldap-manager.svg?branch=master)](https://travis-ci.com/romnnn/ldap-manager)
-[![GitHub](https://img.shields.io/github/license/romnnn/ldap-manager)](https://github.com/romnnn/ldap-manager)
- [![Docker Pulls](https://img.shields.io/docker/pulls/romnn/ldap-manager)](https://hub.docker.com/r/romnn/ldap-manager) [![Test Coverage](https://codecov.io/gh/romnnn/ldap-manager/branch/master/graph/badge.svg)](https://codecov.io/gh/romnnn/ldap-manager)
-[![Release](https://img.shields.io/github/release/romnnn/ldap-manager)](https://github.com/romnnn/ldap-manager/releases/latest)
+[![Build Status](https://travis-ci.com/romnn/ldap-manager.svg?branch=master)](https://travis-ci.com/romnn/ldap-manager)
+[![GitHub](https://img.shields.io/github/license/romnn/ldap-manager)](https://github.com/romnn/ldap-manager)
+ [![Docker Pulls](https://img.shields.io/docker/pulls/romnn/ldap-manager)](https://hub.docker.com/r/romnn/ldap-manager) [![Test Coverage](https://codecov.io/gh/romnn/ldap-manager/branch/master/graph/badge.svg)](https://codecov.io/gh/romnn/ldap-manager)
+[![Release](https://img.shields.io/github/release/romnn/ldap-manager)](https://github.com/romnn/ldap-manager/releases/latest)
 
 <p align="center">
   <img width="200" src="public/icon/icon_lg.jpg">
@@ -21,13 +21,13 @@ LDAP Manager is written in Go and comes with a Vue/Typescript frontend in a sing
 Before you get started, make sure you have an OpenLDAP server like [osixia/openldap](https://hub.docker.com/r/osixia/openldap/) running. For more information on deployment and a full example, see the [deployment guide](#Deployment).
 
 ```bash
-go run github.com/romnnn/ldap-manager/cmd/ldap-manager serve \
+go run github.com/romnn/ldap-manager/cmd/ldap-manager serve \
     --http-port 8080 \
     --grpc-port 9090 \
     --generate
 ```
 
-You can also download pre-built binaries from the [releases page](https://github.com/romnnn/ldap-manager/releases), or use the `docker` image:
+You can also download pre-built binaries from the [releases page](https://github.com/romnn/ldap-manager/releases), or use the `docker` image:
 
 ```bash
 docker run -p 8080:80 -p 9090:9090 romnn/ldap-manager --generate
@@ -104,7 +104,7 @@ invoke compile-proto
 docker-compose -f dev/docker-compose.yml up --build --force-recreate
 ```
 
-To quickly work around CORS during development, you could use [proxybootstrap](https://github.com/romnnn/proxybootstrap):
+To quickly work around CORS during development, you could use [proxybootstrap](https://github.com/romnn/proxybootstrap):
 ```bash
 pip install proxybootstrap
 proxybootstrap --port 5000 /api@http://127.0.0.1:8090 /@http://127.0.0.1:8080

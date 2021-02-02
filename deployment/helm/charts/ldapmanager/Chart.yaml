@@ -22,7 +22,7 @@ version: 0.0.23
 # follow Semantic Versioning. They should reflect the version the application is using.
 appVersion: 0.0.23
 
-icon: https://romnnn.github.io/ldap-manager/icon/icon_lg.jpg
+icon: https://romnn.github.io/ldap-manager/icon/icon_lg.jpg
 
 dependencies:
   - name: openldap
