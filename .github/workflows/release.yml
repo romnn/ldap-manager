@@ -56,6 +56,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/*
           tag: ${{ steps.query.outputs.stable_semver_version }}
-          release_name: Version ${{ steps.query.outputs.stable_semver_version }}
+          release_name: ${{ steps.query.outputs.stable_semver_version }}
           overwrite: true
           file_glob: true
