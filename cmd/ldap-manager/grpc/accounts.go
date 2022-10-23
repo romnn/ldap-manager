@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
+	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
 
 // GetUserList ...

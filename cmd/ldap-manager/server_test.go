@@ -14,9 +14,9 @@ import (
 	ldapbase "github.com/romnn/ldap-manager/cmd/ldap-manager/base"
 	ldapgrpc "github.com/romnn/ldap-manager/cmd/ldap-manager/grpc"
 	ldaphttp "github.com/romnn/ldap-manager/cmd/ldap-manager/http"
-	ldapconfig "github.com/romnn/ldap-manager/config"
-	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
-	ldaptest "github.com/romnn/ldap-manager/testing"
+	"github.com/romnn/ldap-manager/pkg/config"
+	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
+	ldaptest "github.com/romnn/ldap-manager/test"
 	tc "github.com/romnn/testcontainers"
 	log "github.com/sirupsen/logrus"
 	"github.com/testcontainers/testcontainers-go"
@@ -35,7 +35,7 @@ const (
 // Test ...
 type Test struct {
 	OpenLDAPC         testcontainers.Container
-	OpenLDAPCConfig   ldapconfig.OpenLDAPConfig
+	OpenLDAPCConfig   ldap.OpenLDAPConfig
 	ManagerEndpoint   *grpc.ClientConn
 	ManagerClient     pb.LDAPManagerClient
 	ManagerServer     *ldapbase.LDAPManagerServer
@@ -63,9 +63,9 @@ func (test *Test) setup(t *testing.T, skipSetupLDAP bool) *Test {
 	// Start OpenLDAP container
 	options := ldaptest.ContainerOptions{
 		ContainerOptions: containerOptions,
-		OpenLDAPConfig:   ldapconfig.OpenLDAPConfig{},
+		OpenLDAPConfig:   config.OpenLDAPConfig{},
 	}
-	test.OpenLDAPC, test.OpenLDAPCConfig, err = ldaptest.StartOpenLDAPContainer(context.Background(), options)
+	container, err := ldaptest.StartOpenLDAP(context.Background(), options)
 	if err != nil {
 		t.Fatalf("failed to start the OpenLDAP container: %v", err)
 		return test

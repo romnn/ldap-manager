@@ -4,18 +4,19 @@ import (
 	"crypto/tls"
 	"strings"
 
-	"github.com/go-ldap/ldap"
-	ldapconfig "github.com/romnn/ldap-manager/config"
-	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
+	"github.com/go-ldap/ldap/v3"
+	"github.com/romnn/ldap-manager/pkg/config"
+	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
 )
 
 // Version is incremented using bump2version
-const Version = "0.0.26"
+// const Version = "0.0.26"
 
 // LDAPManager ...
 type LDAPManager struct {
 	ldapconfig.OpenLDAPConfig
+  // this is the only thing to guard with a mutex?
 	ldap *ldap.Conn // Client
 
 	GroupsDN    string
@@ -41,11 +42,11 @@ type LDAPManager struct {
 }
 
 // NewLDAPManager ...
-func NewLDAPManager(cfg ldapconfig.OpenLDAPConfig) *LDAPManager {
+func NewLDAPManager(config ldapconfig.OpenLDAPConfig) *LDAPManager {
 	return &LDAPManager{
-		OpenLDAPConfig:           cfg,
-		GroupsDN:                 "ou=groups," + cfg.BaseDN,
-		UserGroupDN:              "ou=users," + cfg.BaseDN,
+		OpenLDAPConfig:           config,
+		GroupsDN:                 "ou=groups," + config.BaseDN,
+		UserGroupDN:              "ou=users," + config.BaseDN,
 		GroupsOU:                 "groups",
 		UsersOU:                  "users",
 		DefaultUserGroup:         "users",

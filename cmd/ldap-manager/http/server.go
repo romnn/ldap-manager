@@ -11,8 +11,8 @@ import (
 	ldapbase "github.com/romnn/ldap-manager/cmd/ldap-manager/base"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	gw "github.com/romnn/ldap-manager/grpc/ldap-manager"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	gw "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	"google.golang.org/grpc"
 )
 

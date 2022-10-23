@@ -6,9 +6,10 @@ import (
 	"sync"
 
 	// gogrpcservice "github.com/romnn/go-grpc-service"
-	ldapmanager "github.com/romnn/ldap-manager"
+	// ldapmanager "github.com/romnn/ldap-manager"
+	ldaperror "github.com/romnn/ldap-manager/pkg/error"
 	ldapbase "github.com/romnn/ldap-manager/cmd/ldap-manager/base"
-	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
+	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/status"
@@ -57,6 +58,6 @@ func (s *LDAPManagerServer) Serve(ctx context.Context, wg *sync.WaitGroup) error
 	return nil
 }
 
-func toStatus(e ldapmanager.Error) error {
+func toStatus(e ldaperror.Error) error {
 	return status.Error(e.Code(), e.Error())
 }

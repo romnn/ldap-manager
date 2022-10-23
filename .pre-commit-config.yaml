@@ -1,21 +1,33 @@
 repos:
-- repo: git://github.com/dnephin/pre-commit-golang
-  rev: master
-  hooks:
-    - id: go-fmt
-    - id: go-vet
-    - id: go-lint
-    - id: go-imports
-    # go-cyclo will attempt to scan the generated grpc sources and fail
-    # - id: go-cyclo
-    #   args: [-over=15]
-    - id: go-build
-      args: [-race]
-- repo: local
-  hooks:
-  - id: lint-chart
-    name: lint helm chart
-    stages: [commit]
-    language: system
-    entry: helm lint deployment/helm/charts/ldapmanager/
-    pass_filenames: false
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.1
+    hooks:
+      - id: go-build
+        args: [-race]
+        exclude: ^.*/gen/.*\.pb(\.gw)?\.go$
+      - id: go-fmt
+        exclude: ^.*/gen/.*\.pb(\.gw)?\.go$
+      - id: go-vet
+        exclude: ^.*/gen/.*\.pb(\.gw)?\.go$
+      - id: go-lint
+        exclude: ^.*/gen/.*\.pb(\.gw)?\.go$
+      - id: go-imports
+        exclude: ^.*/gen/.*\.pb(\.gw)?\.go$
+      - id: go-cyclo
+        args: [-over=15]
+        exclude: ^.*/gen/.*\.pb(\.gw)?\.go$
+
+  - repo: local
+    hooks:
+      - id: lint-chart
+        name: lint helm chart
+        stages: [commit]
+        language: system
+        entry: helm lint deployment/helm/charts/ldapmanager/
+        pass_filenames: false
+
+      - id: embed-examples
+        name: embed-examples
+        entry: npx embedme --verify README.md
+        language: system
+        pass_filenames: false
