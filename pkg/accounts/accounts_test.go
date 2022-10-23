@@ -1,4 +1,4 @@
-package ldapmanager
+package accounts
 
 import (
 	"fmt"

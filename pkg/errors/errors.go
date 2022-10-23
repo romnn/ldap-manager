@@ -1,4 +1,4 @@
-package ldapmanager
+package errors
 
 import (
 	"google.golang.org/grpc/codes"

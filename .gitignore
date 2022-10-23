@@ -4,7 +4,7 @@
 coverage*
 *.exe
 build/
-public/charts
+website/charts
 **/dist
 **/node_modules
 **/debug.yaml

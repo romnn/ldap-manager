@@ -1,4 +1,4 @@
-package ldapmanager
+package test
 
 import (
 	"context"
@@ -6,8 +6,7 @@ import (
 	tclog "log"
 	"testing"
 
-	ldapconfig "github.com/romnn/ldap-manager/config"
-	ldaptest "github.com/romnn/ldap-manager/testing"
+	"github.com/romnn/ldap-manager/pkg/config"
 	tc "github.com/romnn/testcontainers"
 	log "github.com/sirupsen/logrus"
 	"github.com/testcontainers/testcontainers-go"
@@ -26,7 +25,7 @@ const (
 
 // Test ...
 type Test struct {
-	Container *ldaptest.Container
+	Container *Container
 	Manager   *LDAPManager
 }
 
@@ -48,11 +47,11 @@ func (test *Test) setup(t *testing.T, skipSetupLDAP bool) *Test {
 	}
 
 	// Start OpenLDAP container
-	options := ldaptest.ContainerOptions{
+	options := ContainerOptions{
 		ContainerOptions: containerOptions,
 		OpenLDAPConfig:   ldapconfig.OpenLDAPConfig{},
 	}
-	container, err := ldaptest.StartOpenLDAP(context.Background(), options)
+	container, err := StartOpenLDAP(context.Background(), options)
 	if err != nil {
 		t.Fatalf("failed to start OpenLDAP container: %v", err)
 	}

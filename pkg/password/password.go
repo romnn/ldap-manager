@@ -1,11 +1,11 @@
-package ldapmanager
+package password
 
 import (
 	"errors"
 	"fmt"
 
-	"github.com/go-ldap/ldap"
-	ldaphash "github.com/romnn/ldap-manager/hash"
+	"github.com/go-ldap/ldap/v3"
+	"github.com/romnn/ldap-manager/pkg/hash"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
 )
@@ -34,7 +34,7 @@ func (m *LDAPManager) ChangePassword(req *pb.ChangePasswordRequest) error {
 		return &ZeroOrMultipleAccountsError{Username: req.GetUsername(), Count: len(result.Entries)}
 	}
 	userDN := result.Entries[0].DN
-	hashedPassword, err := ldaphash.Password(req.GetPassword(), req.GetHashingAlgorithm())
+	hashedPassword, err := hash.Password(req.GetPassword(), req.GetHashingAlgorithm())
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %v", err)
 	}

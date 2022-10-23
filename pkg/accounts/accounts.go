@@ -1,4 +1,4 @@
-package ldapmanager
+package accounts
 
 import (
 	"errors"
@@ -9,8 +9,8 @@ import (
 
 	"google.golang.org/grpc/codes"
 
-	"github.com/go-ldap/ldap"
-	ldaphash "github.com/romnn/ldap-manager/hash"
+	"github.com/go-ldap/ldap/v3"
+	"github.com/romnn/ldap-manager/pkg/hash"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
 )
@@ -352,7 +352,7 @@ func (m *LDAPManager) NewAccount(req *pb.NewAccountRequest, algorithm pb.Hashing
 		algorithm = m.HashingAlgorithm
 	}
 
-	hashedPassword, err := ldaphash.Password(account.GetPassword(), algorithm)
+	hashedPassword, err := hash.Password(account.GetPassword(), algorithm)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %v", err)
 	}
@@ -505,7 +505,7 @@ func (m *LDAPManager) UpdateAccount(req *pb.UpdateAccountRequest, algorithm pb.H
 		modifyAccountRequest.Replace("mail", []string{mail})
 	}
 	if password := update.GetPassword(); password != "" {
-		hashedPassword, err := ldaphash.Password(password, algorithm)
+		hashedPassword, err := hash.Password(password, algorithm)
 		if err != nil {
 			return "", 0, fmt.Errorf("failed to hash password: %v", err)
 		}

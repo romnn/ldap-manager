@@ -4,8 +4,8 @@ import (
 	"crypto/tls"
 	"strings"
 
-	"github.com/go-ldap/ldap"
-	ldapconfig "github.com/romnn/ldap-manager/config"
+	"github.com/go-ldap/ldap/v3"
+	"github.com/romnn/ldap-manager/pkg/config"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
 )

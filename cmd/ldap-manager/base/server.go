@@ -8,7 +8,7 @@ import (
 	gogrpcservice "github.com/romnn/go-grpc-service"
 	"github.com/romnn/go-grpc-service/auth"
 	ldapmanager "github.com/romnn/ldap-manager"
-	ldapconfig "github.com/romnn/ldap-manager/config"
+	"github.com/romnn/ldap-manager/pkg/config"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
@@ -51,7 +51,7 @@ func NewLDAPManagerServer(ctx *cli.Context) *LDAPManagerServer {
 	}
 
 	manager := &ldapmanager.LDAPManager{
-		OpenLDAPConfig: ldapconfig.OpenLDAPConfig{
+		OpenLDAPConfig: config.OpenLDAPConfig{
 			Host:                 ctx.String("openldap-host"),
 			Port:                 ctx.Int("openldap-port"),
 			Protocol:             ctx.String("openldap-protocol"),

@@ -1,4 +1,4 @@
-package ldapmanager
+package utils
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-ldap/ldap"
+	"github.com/go-ldap/ldap/v3"
 	log "github.com/sirupsen/logrus"
 )
 

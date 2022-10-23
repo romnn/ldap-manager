@@ -1,4 +1,4 @@
-package ldapmanager
+package errors
 
 import (
 	"testing"

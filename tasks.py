@@ -57,6 +57,12 @@ def install_hooks(c):
 
 
 @task
+def install_hooks(c):
+    """Install pre-commit hooks"""
+    c.run("pre-commit install")
+
+
+@task
 def pre_commit(c):
     """Run all pre-commit checks"""
     c.run("pre-commit run --all-files")

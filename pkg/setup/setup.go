@@ -1,11 +1,11 @@
-package ldapmanager
+package setup
 
 import (
 	"errors"
 	"fmt"
 	"strconv"
 
-	"github.com/go-ldap/ldap"
+	"github.com/go-ldap/ldap/v3"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
 )
