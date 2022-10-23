@@ -8,8 +8,8 @@ import (
 	"sync"
 	"testing"
 
-	gogrpcservice "github.com/romnn/go-grpc-service"
-	"github.com/romnn/go-grpc-service/auth"
+	// gogrpcservice "github.com/romnn/go-grpc-service"
+	// "github.com/romnn/go-grpc-service/auth"
 	ldapmanager "github.com/romnn/ldap-manager"
 	ldapbase "github.com/romnn/ldap-manager/cmd/ldap-manager/base"
 	ldapgrpc "github.com/romnn/ldap-manager/cmd/ldap-manager/grpc"

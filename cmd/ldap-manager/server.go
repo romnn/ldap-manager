@@ -9,14 +9,14 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/romnn/go-grpc-service/auth"
+	// "github.com/romnn/go-grpc-service/auth"
 	ldapbase "github.com/romnn/ldap-manager/cmd/ldap-manager/base"
 	ldapgrpc "github.com/romnn/ldap-manager/cmd/ldap-manager/grpc"
 	ldaphttp "github.com/romnn/ldap-manager/cmd/ldap-manager/http"
 
 	"github.com/romnn/flags4urfavecli/flags"
 	"github.com/romnn/flags4urfavecli/values"
-	"github.com/romnn/go-grpc-service/versioning"
+	// "github.com/romnn/go-grpc-service/versioning"
 	ldapmanager "github.com/romnn/ldap-manager"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -73,11 +73,11 @@ func main() {
 		},
 	}
 
-	jwtAuthFlags := auth.DefaultCLIFlags(&auth.DefaultCLIFlagsOptions{
-		Issuer:    "issuer@example.org",
-		Audience:  "example.org",
-		ExpireSec: 1 * 24 * 60 * 60,
-	})
+	// jwtAuthFlags := auth.DefaultCLIFlags(&auth.DefaultCLIFlagsOptions{
+	// 	Issuer:    "issuer@example.org",
+	// 	Audience:  "example.org",
+	// 	ExpireSec: 1 * 24 * 60 * 60,
+	// })
 
 	ldapConfigFlags := []cli.Flag{
 		// Connection

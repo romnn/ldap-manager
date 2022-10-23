@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net"
 
-	gogrpcservice "github.com/romnn/go-grpc-service"
-	"github.com/romnn/go-grpc-service/auth"
+	// gogrpcservice "github.com/romnn/go-grpc-service"
+	// "github.com/romnn/go-grpc-service/auth"
 	ldapmanager "github.com/romnn/ldap-manager"
 	ldapconfig "github.com/romnn/ldap-manager/config"
 	log "github.com/sirupsen/logrus"
@@ -18,7 +18,7 @@ var Rev = ""
 
 // LDAPManagerServer ...
 type LDAPManagerServer struct {
-	gogrpcservice.Service
+	// gogrpcservice.Service
 	Manager       *ldapmanager.LDAPManager
 	Authenticator *auth.Authenticator
 	AuthKeyConfig *auth.AuthenticatorKeyConfig

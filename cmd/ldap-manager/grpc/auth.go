@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/dgrijalva/jwt-go"
-	gogrpcservice "github.com/romnn/go-grpc-service"
+	// gogrpcservice "github.com/romnn/go-grpc-service"
 	ldapmanager "github.com/romnn/ldap-manager"
 	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
 	log "github.com/sirupsen/logrus"
@@ -33,12 +33,13 @@ func (claims *AuthClaims) GetStandardClaims() *jwt.StandardClaims {
 }
 
 func routeRequiresAdmin(ctx context.Context) (bool, error) {
-	if methodDesc, ok := ctx.Value(gogrpcservice.GrpcMethodDescriptor).(pref.MethodDescriptor); ok {
-		if requireAdmin, ok := proto.GetExtension(methodDesc.Options(), pb.E_RequireAdmin).(bool); ok {
-			return requireAdmin, nil
-		}
-	}
-	return true, errors.New("route has no or insufficient authentication policy")
+	// if methodDesc, ok := ctx.Value(gogrpcservice.GrpcMethodDescriptor).(pref.MethodDescriptor); ok {
+	// 	if requireAdmin, ok := proto.GetExtension(methodDesc.Options(), pb.E_RequireAdmin).(bool); ok {
+	// 		return requireAdmin, nil
+	// 	}
+	// }
+	// return true, errors.New("route has no or insufficient authentication policy")
+  return false, nil
 }
 
 // Login logs in a user
