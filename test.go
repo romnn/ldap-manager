@@ -26,9 +26,8 @@ const (
 
 // Test ...
 type Test struct {
-	OpenLDAPC       testcontainers.Container
-	OpenLDAPCConfig ldapconfig.OpenLDAPConfig
-	Manager         *LDAPManager
+	Container *ldaptest.Container
+	Manager   *LDAPManager
 }
 
 func (test *Test) setup(t *testing.T, skipSetupLDAP bool) *Test {
@@ -53,14 +52,14 @@ func (test *Test) setup(t *testing.T, skipSetupLDAP bool) *Test {
 		ContainerOptions: containerOptions,
 		OpenLDAPConfig:   ldapconfig.OpenLDAPConfig{},
 	}
-	test.OpenLDAPC, test.OpenLDAPCConfig, err = ldaptest.StartOpenLDAPContainer(context.Background(), options)
+	container, err := ldaptest.StartOpenLDAP(context.Background(), options)
 	if err != nil {
-		t.Fatalf("failed to start the OpenLDAP container: %v", err)
-		return test
+		t.Fatalf("failed to start OpenLDAP container: %v", err)
 	}
+	test.Container = &container
 
 	// create and setup the LDAP Manager service
-	test.Manager = NewLDAPManager(test.OpenLDAPCConfig)
+	test.Manager = NewLDAPManager(test.Container.OpenLDAPConfig)
 	test.Manager.DefaultAdminUsername = "ldapadmin"
 	test.Manager.DefaultAdminPassword = "123456"
 	if err := test.Manager.Setup(skipSetupLDAP); err != nil {
@@ -81,7 +80,7 @@ func (test *Test) SkipSetup(t *testing.T) *Test {
 
 // Teardown ...
 func (test *Test) Teardown() {
-	if test.OpenLDAPC != nil {
-		_ = test.OpenLDAPC.Terminate(context.Background())
+	if test.Container != nil {
+		test.Container.Terminate(context.Background())
 	}
 }

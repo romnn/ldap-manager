@@ -3,7 +3,7 @@ package ldapmanager
 import (
 	"testing"
 
-	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
+	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
 
 // TestChangePassword ...

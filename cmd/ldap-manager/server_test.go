@@ -15,7 +15,7 @@ import (
 	ldapgrpc "github.com/romnn/ldap-manager/cmd/ldap-manager/grpc"
 	ldaphttp "github.com/romnn/ldap-manager/cmd/ldap-manager/http"
 	ldapconfig "github.com/romnn/ldap-manager/config"
-	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
+	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	ldaptest "github.com/romnn/ldap-manager/testing"
 	tc "github.com/romnn/testcontainers"
 	log "github.com/sirupsen/logrus"
@@ -65,7 +65,7 @@ func (test *Test) setup(t *testing.T, skipSetupLDAP bool) *Test {
 		ContainerOptions: containerOptions,
 		OpenLDAPConfig:   ldapconfig.OpenLDAPConfig{},
 	}
-	test.OpenLDAPC, test.OpenLDAPCConfig, err = ldaptest.StartOpenLDAPContainer(context.Background(), options)
+	container, err := ldaptest.StartOpenLDAP(context.Background(), options)
 	if err != nil {
 		t.Fatalf("failed to start the OpenLDAP container: %v", err)
 		return test

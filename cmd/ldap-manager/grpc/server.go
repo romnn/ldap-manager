@@ -8,7 +8,7 @@ import (
 	gogrpcservice "github.com/romnn/go-grpc-service"
 	ldapmanager "github.com/romnn/ldap-manager"
 	ldapbase "github.com/romnn/ldap-manager/cmd/ldap-manager/base"
-	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
+	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/status"

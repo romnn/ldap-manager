@@ -18,15 +18,33 @@ type ContainerOptions struct {
 	tc.ContainerOptions
 	tc.ContainerConfig
 	ldapconfig.OpenLDAPConfig
+	ImageTag string
 }
 
-const (
-	defaultOpenLDAPPort = 389
-)
+// Container ...
+type Container struct {
+	Container testcontainers.Container
+	tc.ContainerConfig
+	ldapconfig.OpenLDAPConfig
+	// Host     string
+	// Port     int64
+	// Password string
+}
 
-// StartOpenLDAPContainer ...
-func StartOpenLDAPContainer(ctx context.Context, options ContainerOptions) (openldapC testcontainers.Container, openldapCConfig ldapconfig.OpenLDAPConfig, err error) {
-	openLDAPPort, _ := nat.NewPort("", strconv.Itoa(defaultOpenLDAPPort))
+// Terminate ...
+func (c *Container) Terminate(ctx context.Context) {
+	if c.Container != nil {
+		c.Container.Terminate(ctx)
+	}
+}
+
+// StartOpenLDAP ...
+func StartOpenLDAP(ctx context.Context, options ContainerOptions) (Container, error) {
+	var container Container
+	port, err := nat.NewPort("", "389")
+	if err != nil {
+		return container, fmt.Errorf("failed to build port: %v", err)
+	}
 
 	defaultOptions := ContainerOptions{
 		OpenLDAPConfig: ldapconfig.NewOpenLDAPConfig(),
@@ -54,45 +72,43 @@ func StartOpenLDAPContainer(ctx context.Context, options ContainerOptions) (open
 		timeout = 5 * time.Minute // Default timeout
 	}
 
+	tag := "latest"
+	if options.ImageTag != "" {
+		tag = options.ImageTag
+	}
+
 	req := testcontainers.ContainerRequest{
+		Image:        fmt.Sprintf("osixia/openldap:%s", tag),
 		Env:          env,
-		Image:        "osixia/openldap",
-		ExposedPorts: []string{string(openLDAPPort)},
+		ExposedPorts: []string{string(port)},
 		WaitingFor:   wait.ForLog("slapd starting").WithStartupTimeout(timeout),
 	}
 
 	tc.MergeRequest(&req, &options.ContainerOptions.ContainerRequest)
 
-	tc.ClientMux.Lock()
-	openldapC, err = testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+	openLDAPContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
 		Started:          true,
 	})
-	tc.ClientMux.Unlock()
 	if err != nil {
-		err = fmt.Errorf("Failed to start OpenLDAP container: %v", err)
-		return
+		return container, fmt.Errorf("failed to start container: %v", err)
 	}
+	container.Container = openLDAPContainer
 
-	host, err := openldapC.Host(ctx)
+	host, err := openLDAPContainer.Host(ctx)
 	if err != nil {
-		err = fmt.Errorf("Failed to get OpenLDAP container host: %v", err)
-		return
+		return container, fmt.Errorf("failed to get container host: %v", err)
 	}
 
-	port, err := openldapC.MappedPort(ctx, openLDAPPort)
+	realPort, err := openLDAPContainer.MappedPort(ctx, port)
 	if err != nil {
-		err = fmt.Errorf("Failed to get exposed OpenLDAP container port: %v", err)
-		return
+		return container, fmt.Errorf("failed to get exposed container port: %v", err)
 	}
 
-	openldapCConfig = defaultOptions.OpenLDAPConfig
-	openldapCConfig.Host = host
-	openldapCConfig.Port = port.Int()
+	container.OpenLDAPConfig = defaultOptions.OpenLDAPConfig
+	// openldapCConfig = defaultOptions.OpenLDAPConfig
+	container.OpenLDAPConfig.Host = host
+	container.OpenLDAPConfig.Port = realPort.Int()
 
-	if options.CollectLogs {
-		options.ContainerConfig.Log = new(tc.LogCollector)
-		go tc.EnableLogger(openldapC, options.ContainerConfig.Log)
-	}
-	return
+	return container, nil
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	gogrpcservice "github.com/romnn/go-grpc-service"
 	ldapmanager "github.com/romnn/ldap-manager"
-	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
+	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"

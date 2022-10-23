@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-ldap/ldap"
 	ldapconfig "github.com/romnn/ldap-manager/config"
-	pb "github.com/romnn/ldap-manager/grpc/ldap-manager"
+	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
 )
 
