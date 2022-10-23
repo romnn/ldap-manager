@@ -123,8 +123,15 @@ You can then access the website at [localhost:5000](http://localhost:5000).
 #### TODO
 
 - v2
+  - split into more files
+  - decide what goes into pkg and what goes into internal
+  - get rid of the password hashing mess
+  - fix the docker container
   - use an interface for the main functions of the manager
   - fix nil pointer errors
+  - point out that the goal is user management only
+
+  - add pagination
   - documentation
   - Fix flaky tests using fuzzy testing and check slappasswd source
   - Implement missing password hashing algorithms
@@ -138,7 +145,9 @@ You can then access the website at [localhost:5000](http://localhost:5000).
     - add member to group
     - list users
     - verify?
-  - decide on a consistent naming (user vs account)
 
 - done
+  - decide on a consistent naming (user vs account)
+  - update dependencies
+  - fix issues and use new api for grpc and http without a base
   - add images to the readme

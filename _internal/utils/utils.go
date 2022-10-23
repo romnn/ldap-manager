@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+  "github.com/romnn/ldap-manager"
 	"github.com/go-ldap/ldap/v3"
 	log "github.com/sirupsen/logrus"
 )
@@ -125,7 +126,7 @@ func extractAttribute(dn string, attribute string) (string, error) {
 	return "", fmt.Errorf("could not find attribute %q in %q", attribute, dn)
 }
 
-func (m *LDAPManager) findGroup(groupName string, attributes []string) (*ldap.SearchResult, error) {
+func (m *ldapmanager.LDAPManager) findGroup(groupName string, attributes []string) (*ldap.SearchResult, error) {
 	return m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
@@ -135,7 +136,7 @@ func (m *LDAPManager) findGroup(groupName string, attributes []string) (*ldap.Se
 	))
 }
 
-func (m *LDAPManager) getGroupByGID(gid int) (string, int, error) {
+func (m *ldapmanager.LDAPManager) getGroupByGID(gid int) (string, int, error) {
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
@@ -157,7 +158,7 @@ func (m *LDAPManager) getGroupByGID(gid int) (string, int, error) {
 	return cn, gid, nil
 }
 
-func (m *LDAPManager) updateLastID(cn string, newID int) error {
+func (m *ldapmanager.LDAPManager) updateLastID(cn string, newID int) error {
 	modifyRequest := ldap.NewModifyRequest(
 		fmt.Sprintf("cn=%s,%s", cn, m.BaseDN),
 		[]ldap.Control{},
@@ -171,7 +172,7 @@ func (m *LDAPManager) updateLastID(cn string, newID int) error {
 	return nil
 }
 
-func (m *LDAPManager) getHighestID(attribute string) (int, error) {
+func (m *ldapmanager.LDAPManager) getHighestID(attribute string) (int, error) {
 	var highestID int
 	var entryBaseDN, entryFilter, entryAttribute string
 	switch strings.ToUpper(attribute) {

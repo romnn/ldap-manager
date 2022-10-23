@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/docker/go-connections/nat"
-	"github.com/romnn/ldap-manager/pkg/config"
+	ldapconfig "github.com/romnn/ldap-manager/pkg/config"
 	tc "github.com/romnn/testcontainers"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"

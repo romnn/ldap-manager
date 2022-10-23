@@ -22,10 +22,10 @@ message GetUserListRequest {
   repeated string filter = 10;
 }
 
-message User { map<string, string> data = 1; }
+message UserData { map<string, string> data = 1; }
 
 message UserList {
-  repeated User users = 1;
+  repeated UserData users = 1;
   int64 total = 10;
 }
 
@@ -34,7 +34,7 @@ message AuthenticateUserRequest {
   string password = 2;
 }
 
-message GetAccountRequest { string username = 1; }
+message GetUserRequest { string username = 1; }
 
 enum HashingAlgorithm {
   DEFAULT = 0;
@@ -65,14 +65,14 @@ message Account {
   string password = 22;
 }
 
-message NewAccountRequest { Account account = 1; }
+message NewUserRequest { Account account = 1; }
 
-message UpdateAccountRequest {
+message UpdateUserRequest {
   string username = 1;
   Account update = 10;
 }
 
-message DeleteAccountRequest { string username = 1; }
+message DeleteUserRequest { string username = 1; }
 
 message NewGroupRequest {
   string name = 1;
@@ -157,43 +157,39 @@ service LDAPManager {
     };
   }
 
-  // Accounts
+  // Users
   rpc GetUserList(GetUserListRequest) returns (UserList) {
     option (require_admin) = true;
     option (google.api.http) = {
-      get : "/v1/accounts"
+      get : "/v1/users"
     };
   }
-  rpc GetAccount(GetAccountRequest) returns (User) {
-    // option (require_admin) = true;
+  rpc GetUser(GetUserRequest) returns (UserData) {
     option (google.api.http) = {
-      get : "/v1/account/{username}"
+      get : "/v1/user/{username}"
     };
   }
-  rpc NewAccount(NewAccountRequest) returns (Empty) {
+  rpc NewUser(NewUserRequest) returns (Empty) {
     option (require_admin) = true;
     option (google.api.http) = {
-      put : "/v1/account"
+      put : "/v1/user"
       body : "*"
     };
   }
-  rpc UpdateAccount(UpdateAccountRequest) returns (Token) {
-    // option (require_admin) = true;
+  rpc UpdateUser(UpdateUserRequest) returns (Token) {
     option (google.api.http) = {
-      post : "/v1/account/{username}/update"
+      post : "/v1/user/{username}/update"
       body : "*"
     };
   }
-  rpc DeleteAccount(DeleteAccountRequest) returns (Empty) {
-    // option (require_admin) = true;
+  rpc DeleteUser(DeleteUserRequest) returns (Empty) {
     option (google.api.http) = {
-      delete : "/v1/account/{username}"
+      delete : "/v1/user/{username}"
     };
   }
   rpc ChangePassword(ChangePasswordRequest) returns (Empty) {
-    // option (require_admin) = true;
     option (google.api.http) = {
-      post : "/v1/account/password"
+      post : "/v1/user/password"
       body : "*"
     };
   }
@@ -228,20 +224,15 @@ service LDAPManager {
 
   rpc GetUserGroups(GetUserGroupsRequest) returns (GroupList) {
     option (google.api.http) = {
-      get : "/v1/account/{username}/groups"
+      get : "/v1/user/{username}/groups"
     };
   }
 
   // Group members
   rpc IsGroupMember(IsGroupMemberRequest) returns (GroupMemberStatus) {
     option (require_admin) = true;
-    /*
-    option (google.api.http) = {
-      post: "/v1/example/echo"
-      body: "*"
-    };
-    */
   }
+
   rpc GetGroup(GetGroupRequest) returns (Group) {
     option (require_admin) = true;
     option (google.api.http) = {

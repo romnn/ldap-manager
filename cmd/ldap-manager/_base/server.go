@@ -7,7 +7,8 @@ import (
 
 	// gogrpcservice "github.com/romnn/go-grpc-service"
 	// "github.com/romnn/go-grpc-service/auth"
-	ldapmanager "github.com/romnn/ldap-manager"
+	"github.com/romnn/go-service/pkg/auth"
+	ldapmanager "github.com/romnn/ldap-manager/pkg"
 	"github.com/romnn/ldap-manager/pkg/config"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -16,9 +17,8 @@ import (
 // Rev is set on build time to the git HEAD
 var Rev = ""
 
-// LDAPManagerServer ...
-type LDAPManagerServer struct {
-	// gogrpcservice.Service
+// LDAPManagerService ...
+type LDAPManagerService struct {
 	Manager       *ldapmanager.LDAPManager
 	Authenticator *auth.Authenticator
 	AuthKeyConfig *auth.AuthenticatorKeyConfig

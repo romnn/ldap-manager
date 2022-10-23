@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"github.com/go-ldap/ldap/v3"
+	"github.com/romnn/ldap-manager"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
 )
@@ -52,7 +53,7 @@ func (e *ZeroOrMultipleGroupsError) Code() codes.Code {
 	return codes.NotFound
 }
 
-func (m *LDAPManager) getGroupGID(groupName string) (int, error) {
+func (m *ldapmanager.LDAPManager) getGroupGID(groupName string) (int, error) {
 	if groupName == "" {
 		return 0, &ValidationError{Message: "group name can not be empty"}
 	}
@@ -67,19 +68,19 @@ func (m *LDAPManager) getGroupGID(groupName string) (int, error) {
 }
 
 // IsProtectedGroup ...
-func (m *LDAPManager) IsProtectedGroup(groupName string) bool {
+func (m *ldapmanager.LDAPManager) IsProtectedGroup(groupName string) bool {
 	isAdminGroup := strings.ToLower(groupName) == strings.ToLower(m.DefaultAdminGroup)
 	isUserGroup := strings.ToLower(groupName) == strings.ToLower(m.DefaultUserGroup)
 	return isAdminGroup || isUserGroup
 }
 
 // GroupNamed ...
-func (m *LDAPManager) GroupNamed(name string) string {
+func (m *ldapmanager.LDAPManager) GroupNamed(name string) string {
 	return fmt.Sprintf("cn=%s,%s", escapeDN(name), m.GroupsDN)
 }
 
 // NewGroup ...
-func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
+func (m *ldapmanager.LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 	if req.GetName() == "" {
 		return &ValidationError{Message: "group name can not be empty"}
 	}
@@ -154,7 +155,7 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 }
 
 // DeleteGroup ...
-func (m *LDAPManager) DeleteGroup(req *pb.DeleteGroupRequest) error {
+func (m *ldapmanager.LDAPManager) DeleteGroup(req *pb.DeleteGroupRequest) error {
 	if req.GetName() == "" {
 		return &ValidationError{Message: "group name can not be empty"}
 	}
@@ -175,7 +176,7 @@ func (m *LDAPManager) DeleteGroup(req *pb.DeleteGroupRequest) error {
 }
 
 // UpdateGroup ...
-func (m *LDAPManager) UpdateGroup(req *pb.UpdateGroupRequest) error {
+func (m *ldapmanager.LDAPManager) UpdateGroup(req *pb.UpdateGroupRequest) error {
 	if req.GetName() == "" {
 		return &ValidationError{Message: "group name can not be empty"}
 	}
@@ -210,7 +211,7 @@ func (m *LDAPManager) UpdateGroup(req *pb.UpdateGroupRequest) error {
 	return nil
 }
 
-func (m *LDAPManager) countGroups() (int, error) {
+func (m *ldapmanager.LDAPManager) countGroups() (int, error) {
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
@@ -225,7 +226,7 @@ func (m *LDAPManager) countGroups() (int, error) {
 }
 
 // GetGroupList ...
-func (m *LDAPManager) GetGroupList(req *pb.GetGroupListRequest) (*pb.GroupList, error) {
+func (m *ldapmanager.LDAPManager) GetGroupList(req *pb.GetGroupListRequest) (*pb.GroupList, error) {
 	filter := parseFilter(req.Filter)
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,

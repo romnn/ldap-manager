@@ -19,7 +19,7 @@ type RemoveLastGroupMemberError struct {
 
 // RemoveLastGroupMemberError ...
 func (e *RemoveLastGroupMemberError) Error() string {
-	return fmt.Sprintf("cannot remove the only remaining group member from group %q. consider deleting the group.", e.Group)
+	return fmt.Sprintf("cannot remove the only remaining group member from group %q, consider deleting the group", e.Group)
 }
 
 // Code ...
@@ -35,7 +35,7 @@ type NoSuchMemberError struct {
 
 // NoSuchMemberError ...
 func (e *NoSuchMemberError) Error() string {
-	return fmt.Sprintf("no such member %q in group %q", e.Member, e.Group)
+	return fmt.Sprintf("no member %q in group %q", e.Member, e.Group)
 }
 
 // Code ...

@@ -10,7 +10,8 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"github.com/go-ldap/ldap/v3"
-	"github.com/romnn/ldap-manager/pkg/hash"
+	"github.com/romnn/ldap-manager"
+	"github.com/romnn/ldap-manager/internal/hash"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
 )
@@ -89,7 +90,7 @@ func validUsername(un string) bool {
 	return true
 }
 
-func (m *LDAPManager) defaultUserFields() []string {
+func (m *ldapmanager.LDAPManager) defaultUserFields() []string {
 	return []string{
 		m.AccountAttribute,
 		"givenName", "sn", "cn", "displayName", "uidNumber", "gidNumber", "loginShell", "homeDirectory", "mail"}
@@ -103,7 +104,7 @@ func parseUser(entry *ldap.Entry) *pb.User {
 	return user
 }
 
-func (m *LDAPManager) getGroupForAccount(username string) (string, int, error) {
+func (m *ldapmanager.LDAPManager) getGroupForAccount(username string) (string, int, error) {
 	// First, try to get the default user group
 	group := m.DefaultUserGroup
 	if defaultGID, err := m.getGroupGID(m.DefaultUserGroup); err == nil {
@@ -131,11 +132,11 @@ func (m *LDAPManager) getGroupForAccount(username string) (string, int, error) {
 }
 
 // AccountNamed ...
-func (m *LDAPManager) AccountNamed(name string) string {
+func (m *ldapmanager.LDAPManager) AccountNamed(name string) string {
 	return fmt.Sprintf("%s=%s,%s", m.AccountAttribute, escapeDN(name), m.UserGroupDN)
 }
 
-func (m *LDAPManager) countAccounts() (int, error) {
+func (m *ldapmanager.LDAPManager) countAccounts() (int, error) {
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.UserGroupDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
@@ -150,7 +151,7 @@ func (m *LDAPManager) countAccounts() (int, error) {
 }
 
 // GetUserList ...
-func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, error) {
+func (m *ldapmanager.LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, error) {
 	if req.GetSortKey() == "" {
 		req.SortKey = m.AccountAttribute
 	}
@@ -201,7 +202,7 @@ func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, err
 }
 
 // AuthenticateUser ...
-func (m *LDAPManager) AuthenticateUser(req *pb.LoginRequest) (*ldap.Entry, error) {
+func (m *ldapmanager.LDAPManager) AuthenticateUser(req *pb.LoginRequest) (*ldap.Entry, error) {
 	// Validate
 	if req.GetUsername() == "" || req.GetPassword() == "" {
 		return nil, &ValidationError{Message: "must provide username and password"}
@@ -231,7 +232,7 @@ func (m *LDAPManager) AuthenticateUser(req *pb.LoginRequest) (*ldap.Entry, error
 }
 
 // GetAccount ...
-func (m *LDAPManager) GetAccount(req *pb.GetAccountRequest) (*pb.User, error) {
+func (m *ldapmanager.LDAPManager) GetAccount(req *pb.GetAccountRequest) (*pb.User, error) {
 	if req.GetUsername() == "" {
 		return nil, errors.New("account username must not be empty")
 	}
@@ -277,7 +278,7 @@ func ValidAccountRequest(acc *pb.Account) error {
 }
 
 // NewAccount ...
-func (m *LDAPManager) NewAccount(req *pb.NewAccountRequest, algorithm pb.HashingAlgorithm) error {
+func (m *ldapmanager.LDAPManager) NewAccount(req *pb.NewAccountRequest, algorithm pb.HashingAlgorithm) error {
 	// Validate
 	account := req.GetAccount()
 	if err := ValidAccountRequest(account); err != nil {
@@ -399,7 +400,7 @@ func (m *LDAPManager) NewAccount(req *pb.NewAccountRequest, algorithm pb.Hashing
 }
 
 // UpdateAccount ...
-func (m *LDAPManager) UpdateAccount(req *pb.UpdateAccountRequest, algorithm pb.HashingAlgorithm, isAdmin bool) (string, int, error) {
+func (m *ldapmanager.LDAPManager) UpdateAccount(req *pb.UpdateAccountRequest, algorithm pb.HashingAlgorithm, isAdmin bool) (string, int, error) {
 	// Check if the user even exists
 	req.Username = escapeDN(req.GetUsername())
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
@@ -532,7 +533,7 @@ func (m *LDAPManager) UpdateAccount(req *pb.UpdateAccountRequest, algorithm pb.H
 }
 
 // DeleteAccount ...
-func (m *LDAPManager) DeleteAccount(req *pb.DeleteAccountRequest, keepGroups bool) error {
+func (m *ldapmanager.LDAPManager) DeleteAccount(req *pb.DeleteAccountRequest, keepGroups bool) error {
 	if req.GetUsername() == "" {
 		return errors.New("username must not be empty")
 	}
