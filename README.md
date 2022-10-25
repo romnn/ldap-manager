@@ -64,14 +64,7 @@ Before you get started, make sure you have installed the following tools::
     $ go install golang.org/x/lint/golint@latest
     $ go install github.com/fzipp/gocyclo@latest
 
-With the tools in place, it is strongly advised to install the git commit hooks
-to make sure code checks are passing in CI:
-
-```bash
-inv install-hooks
-```
-
-Make sure all code checks pass:
+Please always make sure code checks pass:
 
 ```bash
 inv pre-commit
@@ -84,18 +77,18 @@ you will need
 
 - `protoc`
 - `protoc-gen-go`
-- `protoc-gen-grpc-gateway`
-- `protoc-gen-swagger`
 - `protoc-gen-go-grpc`.
+- `protoc-gen-grpc-gateway`
+- `protoc-gen-openapiv2`
 
 ```bash
 apt install -y protobuf-compiler
 brew install protobuf
 
-go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest
-go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest
+go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
 ```
 
 To compile the protos, you can use the provided script:
@@ -123,6 +116,7 @@ You can then access the website at [localhost:5000](http://localhost:5000).
 #### TODO
 
 - v2
+
   - split into more files
   - decide what goes into pkg and what goes into internal
   - get rid of the password hashing mess
@@ -138,6 +132,7 @@ You can then access the website at [localhost:5000](http://localhost:5000).
   - Embed crypt(3) as vendored?
 
 - nice to have
+
   - Implement CLI interface
     - new acc
     - change password

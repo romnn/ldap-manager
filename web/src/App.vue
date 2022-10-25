@@ -3,7 +3,9 @@
     <div>
       <b-navbar toggleable="sm" size="sm" type="dark" variant="dark">
         <router-link :to="{ name: 'HomeRoute' }">
-          <b-navbar-brand>LDAP Manager</b-navbar-brand>
+          <b-navbar-brand
+            ><span class="title">LDAP Manager</span></b-navbar-brand
+          >
         </router-link>
 
         <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
@@ -47,25 +49,31 @@
         </b-collapse>
       </b-navbar>
     </div>
-    <div class="app-content">
-      <div v-if="pendingConfirmation !== null">
-        <confirmation-c
-          :message="pendingConfirmation.message"
-          :ackMessage="pendingConfirmation.ack"
-          v-on:cancel="cancelConfirmation"
-          v-on:confirm="confirmConfirmation"
-        ></confirmation-c>
-      </div>
-      <div class="logout-container" v-if="isLoggingOut">
-        <p>You are being logged out...</p>
-        <p><b-spinner label="Logging out..."></b-spinner></p>
-      </div>
-      <div v-else>
-        <b-breadcrumb v-if="items.length > 0" :items="items"></b-breadcrumb>
-        <router-view />
+    <div class="app-content-container">
+      <div class="app-content">
+        <div v-if="pendingConfirmation !== null">
+          <confirmation-c
+            :message="pendingConfirmation.message"
+            :ackMessage="pendingConfirmation.ack"
+            v-on:cancel="cancelConfirmation"
+            v-on:confirm="confirmConfirmation"
+          ></confirmation-c>
+        </div>
+        <div class="logout-container" v-if="isLoggingOut">
+          <p>You are being logged out...</p>
+          <p><b-spinner label="Logging out..."></b-spinner></p>
+        </div>
+        <div v-else>
+          <b-breadcrumb v-if="items.length > 0" :items="items"></b-breadcrumb>
+          <router-view />
+        </div>
       </div>
     </div>
-    <div class="footer">LDAP manager</div>
+    <div class="footer">
+      <a href="https://github.com/romnn/ldap-manager"
+        >LDAPManager {{ version }}</a
+      >
+    </div>
   </div>
 </template>
 
@@ -150,30 +158,40 @@ export default class App extends Vue {
 </script>
 
 <style lang="sass" scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap');
+
 #app
-  font-family: Avenir, Helvetica, Arial, sans-serif
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif
   -webkit-font-smoothing: antialiased
   -moz-osx-font-smoothing: grayscale
   text-align: center
-  color: #2c3e50
-  overflow: hidden
+  display: flex
+  flex-flow: column nowrap
+  justify-content: center
+  font-weight: 400
+  color: black
 
-.app-content
-  display: block
-  position: relative
-  top: 70px
-  max-width: 1000px
-  width: 90%
-  margin: 0 auto
+.app-content-container
+  display: flex
+
+  .app-content
+    padding: 50px 0
+    max-width: 1000px
+    width: 90%
+    margin: 0 auto
 
 .footer
-  padding: 100px 0 50px 0
-  position: relative
-  font-size: 10pt
+  display: flex
+  padding: 20px 0
+  justify-content: center
+  font-size: 0.7rem
   color: gray
 
 .navbar
   overflow-x: hidden
+
+  .title
+    font-weight: 600
 </style>
 
 <style lang="sass">

@@ -9,7 +9,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.12.0
 	github.com/romnn/flags4urfavecli v0.1.3
-	github.com/romnn/go-service v0.0.14
+	github.com/romnn/go-service v0.0.15
 	github.com/romnn/testcontainers v0.2.2
 	github.com/sirupsen/logrus v1.9.0
 	github.com/testcontainers/testcontainers-go v0.14.0

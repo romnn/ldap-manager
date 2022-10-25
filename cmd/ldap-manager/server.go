@@ -85,8 +85,8 @@ func newAuthenticator(ctx *cli.Context) auth.Authenticator {
 	expiresAfter, _ := time.ParseDuration(ctx.String(flags.ExpirationTime.Name))
 	return auth.Authenticator{
 		ExpiresAfter: expiresAfter,
-		Issuer:       ctx.String("issuer"),
-		Audience:     ctx.String("audience"),
+		Issuer:       ctx.String(flags.Issuer.Name),
+		Audience:     ctx.String(flags.Audience.Name),
 	}
 }
 
@@ -172,7 +172,7 @@ func serve(cliCtx *cli.Context) error {
 
 	var once sync.Once
 
-	// this function should only be called once
+	// shutdown should only be called once
 	shutdown := func() {
 		log.Warnf("shutdown ...")
 		// cancel setup

@@ -827,6 +827,8 @@ github.com/romnn/go-service v0.0.13 h1:o7hwLAtFev8DM3EIixDtTH4xdceLX+82B7tKMatGQ
 github.com/romnn/go-service v0.0.13/go.mod h1:qnK2WqOtbyQzXPYIwyiIwJrGME625gvTOsZ8JzBcEQ8=
 github.com/romnn/go-service v0.0.14 h1:C3h0WWviYTnrEG9StzwRxdgrxAIJ0oBYNq9rw68jiFs=
 github.com/romnn/go-service v0.0.14/go.mod h1:loJieS/+NgD1cg11I0s8y8h+06E5GTAiyGHVh+RrF2Q=
+github.com/romnn/go-service v0.0.15 h1:zxReWTMQ0LbcW4nSDYhQ7kMLTIa4oof8XfRx7ZTPtX8=
+github.com/romnn/go-service v0.0.15/go.mod h1:loJieS/+NgD1cg11I0s8y8h+06E5GTAiyGHVh+RrF2Q=
 github.com/romnn/testcontainers v0.2.2 h1:nSyJXNpti7kZzY+Lo8i4fVWjLKtsjoN2GM09x1ObPTA=
 github.com/romnn/testcontainers v0.2.2/go.mod h1:0ZVXTlx3S5cLyW1Qa+0lguvqQJ621n5VP4YnNEdpbx0=
 github.com/russross/blackfriday v1.6.0 h1:KqfZb0pUVN2lYqZUYRddxF4OR8ZMURnJIG5Y3VRLtww=
