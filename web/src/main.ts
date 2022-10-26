@@ -1,20 +1,21 @@
-import Vue from "vue";
-import App from "./App.vue";
-import router from "./router";
-import store from "./store";
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 
-Vue.config.productionTip = false;
-
-import { BootstrapVue, IconsPlugin } from "bootstrap-vue";
+import App from './App.vue'
+import router from './router'
 import axios from "axios";
-import VueAxios from "vue-axios";
+import bootstrap, { IconsPlugin } from 'bootstrap-vue-3'
+// import { BootstrapVue, IconsPlugin } from "bootstrap-vue";
 
-Vue.use(VueAxios, axios);
-Vue.use(BootstrapVue);
-Vue.use(IconsPlugin);
+import './assets/main.css'
+import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap-vue-3/dist/bootstrap-vue-3.css'
 
-new Vue({
-  router,
-  store,
-  render: h => h(App)
-}).$mount("#app");
+const app = createApp(App)
+
+app.use(createPinia())
+app.use(bootstrap)
+app.use(icons);
+app.use(router)
+
+app.mount('#app')
