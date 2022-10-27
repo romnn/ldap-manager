@@ -1,23 +1,85 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import { createRouter, createWebHistory } from "vue-router";
+import HomeView from "../views/HomeView.vue";
+
+const checkAuthenticated = (): boolean => {
+  return false;
+  // return AuthModule.isAuthenticated;
+};
+
+const checkNotAlreadyAuthenticated = (
+  to: Route,
+  from: Route,
+  next: (to?: RawLocation | false | void) => void
+) => {
+  if (!checkAuthenticated()) {
+    next();
+    return;
+  }
+  next({ name: "HomeRoute" });
+};
+
+const requireAuth = (
+  to: Route,
+  from: Route,
+  next: (to?: RawLocation | false | void) => void
+) => {
+  if (checkAuthenticated()) {
+    next();
+    return;
+  }
+  // AuthModule.logout();
+  // next({name : "LoginRoute"});
+  next({ name: "HomeRoute" });
+};
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
-      name: 'home',
-      component: HomeView
+      path: "/",
+      name: "HomeRoute",
+      // beforeEnter : requireAuth,
+      meta: { base: [] },
+      component: () => import("../views/HomeView.vue"),
     },
+    // {
+    //   path : "/login",
+    //   name : "LoginRoute",
+    //   meta : {base : []},
+    //   beforeEnter : checkNotAlreadyAuthenticated,
+    //   component : () => import("../views/Login.vue")
+    // }
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue')
-    }
-  ]
-})
+      path: "/accounts",
+      alias: "/account",
+      name: "AccountsRoute",
+      redirect: { name: "ListAccountsRoute" },
+      // beforeEnter : requireAuth,
+      meta: { base: [] },
+      component: () => import("../views/accounts/Base.vue"),
+      children: [
+        {
+          path: "list",
+          name: "ListAccountsRoute",
+          meta: {
+            base: [
+              {
+                text: "Accounts",
+                to: { name: "AccountsRoute" },
+              },
+              {
+                text: "List",
+                to: { name: "ListAccountsRoute" },
+                active: true,
+              },
+            ],
+          },
+          // beforeEnter: requireAuth,
+          component: () => import("../views/accounts/ListView.vue"),
+        },
+      ],
+    },
+  ],
+});
 
-export default router
+export default router;

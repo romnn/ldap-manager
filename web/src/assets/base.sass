@@ -1,0 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap')
+
+body
+  min-height: 100vh
+  transition: color 0.5s, background-color 0.5s
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif
+  text-rendering: optimizeLegibility
+  -webkit-font-smoothing: antialiased
+  -moz-osx-font-smoothing: grayscale
+  font-weight: 400
+  // color: black
+
+a
+  color: inherit
+  text-decoration: none
+  cursor: pointer
+
+  :hover
+    color: inherit
+    text-decoration: none
+
+.striped-table
+  width: 100%
+  thead
+    font-weight: bolder
+  tr
+    border-width: 1px 0
+    border-color: #e9ecef
+    border-style: solid
+    &.even
+      background-color: #e9ecef
+    &.deleted
+      background-color: white !important
+      color: #cccccc
+    &:hover
+      border-color: #aaaaaa
+  td
+    padding: 12px
+    text-align: left
