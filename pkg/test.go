@@ -1,4 +1,4 @@
-package test
+package pkg
 
 import (
 	"context"
@@ -6,42 +6,32 @@ import (
 	// tclog "log"
 	"testing"
 
-	ldapmanager "github.com/romnn/ldap-manager/pkg"
+	// ldapmanager "github.com/romnn/ldap-manager/pkg"
 	ldapconfig "github.com/romnn/ldap-manager/pkg/config"
-	tc "github.com/romnn/testcontainers"
+	// tc "github.com/romnn/testcontainers"
 	// log "github.com/sirupsen/logrus"
-	"github.com/testcontainers/testcontainers-go"
-)
-
-const (
-	parallel        = false
-	enableDebugLogs = false
-
-	skipAccountTests        = false
-	skipChangePasswordTests = false
-	skipGroupTests          = false
-	skipGroupMemberTests    = false
-	skipSetupTests          = false
+	// "github.com/testcontainers/testcontainers-go"
 )
 
 // Test ...
 type Test struct {
 	Container *Container
-	Manager   *ldapmanager.LDAPManager
+	Manager   *LDAPManager
 }
 
 func (test *Test) setup(t *testing.T, skipSetupLDAP bool) *Test {
 	var err error
-  t.Parallel()
+	t.Parallel()
 
-	containerOptions := tc.ContainerOptions{
-		ContainerRequest: testcontainers.ContainerRequest{},
-	}
+	// containerOptions := tc.ContainerOptions{
+	// 	ContainerRequest: testcontainers.ContainerRequest{},
+	// }
 
-	// Start OpenLDAP container
+	// start OpenLDAP container
 	options := ContainerOptions{
-		ContainerOptions: containerOptions,
-		OpenLDAPConfig:   ldapconfig.OpenLDAPConfig{},
+		// ContainerOptions: containerOptions,
+		OpenLDAPConfig: ldapconfig.NewOpenLDAPConfig(),
+		// OpenLDAPConfig:   ldapconfig.OpenLDAPConfig{},
 	}
 	container, err := StartOpenLDAP(context.Background(), options)
 	if err != nil {
@@ -50,13 +40,13 @@ func (test *Test) setup(t *testing.T, skipSetupLDAP bool) *Test {
 	test.Container = &container
 
 	// create and setup the LDAP Manager service
-	test.Manager = ldapmanager.NewLDAPManager(test.Container.OpenLDAPConfig)
+	test.Manager = NewLDAPManager(test.Container.OpenLDAPConfig)
 	test.Manager.DefaultAdminUsername = "ldapadmin"
 	test.Manager.DefaultAdminPassword = "123456"
-  // todo: add this back
 	// if err := test.Manager.Setup(skipSetupLDAP); err != nil {
-	// 	t.Fatal(err)
-	// }
+	if err := test.Manager.Setup(); err != nil {
+		t.Fatal(err)
+	}
 	return test
 }
 

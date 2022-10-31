@@ -41,7 +41,7 @@ type LDAPManagerClient interface {
 	IsGroupMember(ctx context.Context, in *IsGroupMemberRequest, opts ...grpc.CallOption) (*GroupMemberStatus, error)
 	GetGroup(ctx context.Context, in *GetGroupRequest, opts ...grpc.CallOption) (*Group, error)
 	AddGroupMember(ctx context.Context, in *GroupMember, opts ...grpc.CallOption) (*Empty, error)
-	DeleteGroupMember(ctx context.Context, in *GroupMember, opts ...grpc.CallOption) (*Empty, error)
+	RemoveGroupMember(ctx context.Context, in *GroupMember, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type lDAPManagerClient struct {
@@ -187,9 +187,9 @@ func (c *lDAPManagerClient) AddGroupMember(ctx context.Context, in *GroupMember,
 	return out, nil
 }
 
-func (c *lDAPManagerClient) DeleteGroupMember(ctx context.Context, in *GroupMember, opts ...grpc.CallOption) (*Empty, error) {
+func (c *lDAPManagerClient) RemoveGroupMember(ctx context.Context, in *GroupMember, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/ldapmanager.LDAPManager/DeleteGroupMember", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ldapmanager.LDAPManager/RemoveGroupMember", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +219,7 @@ type LDAPManagerServer interface {
 	IsGroupMember(context.Context, *IsGroupMemberRequest) (*GroupMemberStatus, error)
 	GetGroup(context.Context, *GetGroupRequest) (*Group, error)
 	AddGroupMember(context.Context, *GroupMember) (*Empty, error)
-	DeleteGroupMember(context.Context, *GroupMember) (*Empty, error)
+	RemoveGroupMember(context.Context, *GroupMember) (*Empty, error)
 	mustEmbedUnimplementedLDAPManagerServer()
 }
 
@@ -272,8 +272,8 @@ func (UnimplementedLDAPManagerServer) GetGroup(context.Context, *GetGroupRequest
 func (UnimplementedLDAPManagerServer) AddGroupMember(context.Context, *GroupMember) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddGroupMember not implemented")
 }
-func (UnimplementedLDAPManagerServer) DeleteGroupMember(context.Context, *GroupMember) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteGroupMember not implemented")
+func (UnimplementedLDAPManagerServer) RemoveGroupMember(context.Context, *GroupMember) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveGroupMember not implemented")
 }
 func (UnimplementedLDAPManagerServer) mustEmbedUnimplementedLDAPManagerServer() {}
 
@@ -558,20 +558,20 @@ func _LDAPManager_AddGroupMember_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LDAPManager_DeleteGroupMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _LDAPManager_RemoveGroupMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GroupMember)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LDAPManagerServer).DeleteGroupMember(ctx, in)
+		return srv.(LDAPManagerServer).RemoveGroupMember(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ldapmanager.LDAPManager/DeleteGroupMember",
+		FullMethod: "/ldapmanager.LDAPManager/RemoveGroupMember",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LDAPManagerServer).DeleteGroupMember(ctx, req.(*GroupMember))
+		return srv.(LDAPManagerServer).RemoveGroupMember(ctx, req.(*GroupMember))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -644,8 +644,8 @@ var LDAPManager_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _LDAPManager_AddGroupMember_Handler,
 		},
 		{
-			MethodName: "DeleteGroupMember",
-			Handler:    _LDAPManager_DeleteGroupMember_Handler,
+			MethodName: "RemoveGroupMember",
+			Handler:    _LDAPManager_RemoveGroupMember_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

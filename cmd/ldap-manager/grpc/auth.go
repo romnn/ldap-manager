@@ -3,20 +3,20 @@ package grpc
 import (
 	"context"
 	"errors"
+	"time"
 
-	// "github.com/dgrijalva/jwt-go"
 	"github.com/golang-jwt/jwt/v4"
-	// gogrpcservice "github.com/romnn/go-grpc-service"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/romnn/go-service/pkg/grpc/reflect"
-	// ldapmanager "github.com/romnn/ldap-manager"
-	// ldapcli "github.com/romnn/ldap-manager/cmd/ldap-manager"
+	ldaperror "github.com/romnn/ldap-manager/pkg/err"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
-	// log "github.com/sirupsen/logrus"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-	// pref "google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // AuthClaims encode authentication JWT claims
@@ -33,7 +33,8 @@ func (claims *AuthClaims) GetRegisteredClaims() *jwt.RegisteredClaims {
 	return &claims.RegisteredClaims
 }
 
-func routeRequiresAdmin(ctx context.Context) (bool, error) {
+// Checks if the GRPC method requires authentication
+func MethodRequiresAdmin(ctx context.Context) (bool, error) {
 	if info, ok := reflect.GetMethodInfo(ctx); ok {
 		methOptions := info.Method().Options()
 		if requiresAdmin, ok := proto.GetExtension(methOptions, pb.E_RequireAdmin).(bool); ok {
@@ -44,9 +45,26 @@ func routeRequiresAdmin(ctx context.Context) (bool, error) {
 	return true, errors.New("route has no or insufficient authentication policy")
 }
 
-// Login logs in a user
-func (s *LDAPManagerService) authenticate(ctx context.Context) (*AuthClaims, error) {
-	requireAdmin, err := routeRequiresAdmin(ctx)
+// Signs an authentication claim and returns a user token
+func (s *LDAPManagerService) SignUserToken(claims *AuthClaims) (*pb.Token, error) {
+	token, err := s.authenticator.SignJwtClaims(claims)
+	if err != nil {
+		log.Error(err)
+		return nil, status.Error(codes.Internal, "error while signing token")
+	}
+	expirationTime := time.Now().Add(s.authenticator.ExpiresAfter)
+	return &pb.Token{
+		Token:       token,
+		Username:    claims.UID,
+		IsAdmin:     claims.IsAdmin,
+		DisplayName: claims.DisplayName,
+		Expires:     timestamppb.New(expirationTime),
+	}, nil
+}
+
+// Attempts to authenticate a user if a token is supplied in the request context
+func (s *LDAPManagerService) Authenticate(ctx context.Context) (*AuthClaims, error) {
+	requireAdmin, err := MethodRequiresAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -74,46 +92,34 @@ func (s *LDAPManagerService) authenticate(ctx context.Context) (*AuthClaims, err
 
 // Login logs in a user
 func (s *LDAPManagerService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Token, error) {
-	// user, err := s.Manager.AuthenticateUser(in)
-	// if err != nil {
-	// 	if appErr, safe := err.(ldapmanager.Error); safe {
-	// 		return &pb.Token{}, toStatus(appErr)
-	// 	}
-	// 	log.Error(err)
-	// 	return &pb.Token{}, status.Error(codes.Unauthenticated, "unauthorized")
-	// }
-	// uid := user.GetAttributeValue(s.Manager.AccountAttribute)
-	// uidNumber := user.GetAttributeValue("uidNumber")
-	// if uid == "" || uidNumber == "" {
-	// 	return &pb.Token{}, status.Error(codes.NotFound, "user is invalid")
-	// }
+	user, err := s.manager.AuthenticateUser(in)
+	if err != nil {
+		if appErr, safe := err.(ldaperror.Error); safe {
+			return &pb.Token{}, appErr.StatusError()
+		}
+		log.Error(err)
+		return &pb.Token{}, status.Error(codes.Unauthenticated, "unauthorized")
+	}
+	uid := user.GetAttributeValue(s.manager.AccountAttribute)
+	uidNumber := user.GetAttributeValue("uidNumber")
+	if uid == "" || uidNumber == "" {
+		return &pb.Token{}, status.Error(codes.NotFound, "user is invalid")
+	}
 
-	// adminMemberStatus, err := s.Manager.IsGroupMember(&pb.IsGroupMemberRequest{
-	// 	Username: uid,
-	// 	Group:    s.Manager.DefaultAdminGroup,
-	// })
-	// if err != nil {
-	// 	log.Error(err)
-	// 	return nil, status.Error(codes.Internal, "error while checking user member status")
-	// }
-	// isAdmin := adminMemberStatus.GetIsMember()
-	// displayName := user.GetAttributeValue("displayName")
-	// token, expireSeconds, err := s.Authenticator.Login(&AuthClaims{
-	// 	UID:         uid,
-	// 	UIDNumber:   uidNumber,
-	// 	IsAdmin:     isAdmin,
-	// 	DisplayName: displayName,
-	// })
-	// if err != nil {
-	// 	log.Error(err)
-	// 	return nil, status.Error(codes.Internal, "error while signing token")
-	// }
-	// return &pb.Token{
-	// 	Token:       token,
-	// 	Username:    uid,
-	// 	IsAdmin:     isAdmin,
-	// 	DisplayName: displayName,
-	// 	Expiration:  expireSeconds,
-	// }, nil
-	return nil, nil
+	adminMemberStatus, err := s.manager.IsGroupMember(&pb.IsGroupMemberRequest{
+		Username: uid,
+		Group:    s.manager.DefaultAdminGroup,
+	})
+	if err != nil {
+		log.Error(err)
+		return nil, status.Error(codes.Internal, "error while checking user member status")
+	}
+	isAdmin := adminMemberStatus.GetIsMember()
+	displayName := user.GetAttributeValue("displayName")
+	return s.SignUserToken(&AuthClaims{
+		UID:         uid,
+		UIDNumber:   uidNumber,
+		IsAdmin:     isAdmin,
+		DisplayName: displayName,
+	})
 }

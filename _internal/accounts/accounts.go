@@ -7,13 +7,13 @@ import (
 	"sort"
 	"strconv"
 
-	"google.golang.org/grpc/codes"
-
 	"github.com/go-ldap/ldap/v3"
 	"github.com/romnn/ldap-manager"
 	"github.com/romnn/ldap-manager/internal/hash"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
+
+	"google.golang.org/grpc/codes"
 )
 
 var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
@@ -207,7 +207,8 @@ func (m *ldapmanager.LDAPManager) AuthenticateUser(req *pb.LoginRequest) (*ldap.
 	if req.GetUsername() == "" || req.GetPassword() == "" {
 		return nil, &ValidationError{Message: "must provide username and password"}
 	}
-	// Search for the DN for the given username. If found, try binding with the DN and user's password.
+	// Search for the DN for the given username
+  // If found, try binding with the DN and user's password.
 	// If the binding succeeds, return the DN.
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.BaseDN,

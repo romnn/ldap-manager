@@ -2,40 +2,28 @@ package err
 
 import (
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
-
-// // ApplicationError ...
-// type ApplicationError struct{}
-
-// // IsLDAPManagerError ...
-// func (e *ApplicationError) IsLDAPManagerError() bool {
-// 	return true
-// }
-
-// // Code ...
-// func (e *ApplicationError) Code() codes.Code {
-// 	return codes.Internal //e.code
-// }
 
 // Error ...
 type Error interface {
 	error
 	IsLDAPManagerError() bool
-	Code() codes.Code
+	StatusError() error
 }
 
-// // ValidationError ...
-// type ValidationError struct {
-// 	ApplicationError
-// 	Message string
-// }
+// ValidationError ...
+type ValidationError struct {
+	error
+	Message string
+}
 
-// // Error ...
-// func (e *ValidationError) Error() string {
-// 	return e.Message
-// }
+// Error ...
+func (e *ValidationError) Error() string {
+	return e.Message
+}
 
-// // Code ...
-// func (e *ValidationError) Code() codes.Code {
-// 	return codes.InvalidArgument
-// }
+// StatusError ...
+func (e *ValidationError) StatusError() error {
+	return status.Errorf(codes.InvalidArgument, e.Error())
+}

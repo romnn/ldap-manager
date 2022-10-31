@@ -721,7 +721,7 @@ func local_request_LDAPManager_AddGroupMember_0(ctx context.Context, marshaler r
 
 }
 
-func request_LDAPManager_DeleteGroupMember_0(ctx context.Context, marshaler runtime.Marshaler, client LDAPManagerClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_LDAPManager_RemoveGroupMember_0(ctx context.Context, marshaler runtime.Marshaler, client LDAPManagerClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GroupMember
 	var metadata runtime.ServerMetadata
 
@@ -752,12 +752,12 @@ func request_LDAPManager_DeleteGroupMember_0(ctx context.Context, marshaler runt
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "username", err)
 	}
 
-	msg, err := client.DeleteGroupMember(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.RemoveGroupMember(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_LDAPManager_DeleteGroupMember_0(ctx context.Context, marshaler runtime.Marshaler, server LDAPManagerServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_LDAPManager_RemoveGroupMember_0(ctx context.Context, marshaler runtime.Marshaler, server LDAPManagerServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GroupMember
 	var metadata runtime.ServerMetadata
 
@@ -788,7 +788,7 @@ func local_request_LDAPManager_DeleteGroupMember_0(ctx context.Context, marshale
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "username", err)
 	}
 
-	msg, err := server.DeleteGroupMember(ctx, &protoReq)
+	msg, err := server.RemoveGroupMember(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -1149,7 +1149,7 @@ func RegisterLDAPManagerHandlerServer(ctx context.Context, mux *runtime.ServeMux
 
 	})
 
-	mux.Handle("DELETE", pattern_LDAPManager_DeleteGroupMember_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_LDAPManager_RemoveGroupMember_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -1157,12 +1157,12 @@ func RegisterLDAPManagerHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/ldapmanager.LDAPManager/DeleteGroupMember", runtime.WithHTTPPathPattern("/v1/group/{group}/member/{username}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/ldapmanager.LDAPManager/RemoveGroupMember", runtime.WithHTTPPathPattern("/v1/group/{group}/member/{username}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_LDAPManager_DeleteGroupMember_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_LDAPManager_RemoveGroupMember_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -1170,7 +1170,7 @@ func RegisterLDAPManagerHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_LDAPManager_DeleteGroupMember_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_LDAPManager_RemoveGroupMember_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1523,25 +1523,25 @@ func RegisterLDAPManagerHandlerClient(ctx context.Context, mux *runtime.ServeMux
 
 	})
 
-	mux.Handle("DELETE", pattern_LDAPManager_DeleteGroupMember_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_LDAPManager_RemoveGroupMember_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/ldapmanager.LDAPManager/DeleteGroupMember", runtime.WithHTTPPathPattern("/v1/group/{group}/member/{username}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/ldapmanager.LDAPManager/RemoveGroupMember", runtime.WithHTTPPathPattern("/v1/group/{group}/member/{username}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_LDAPManager_DeleteGroupMember_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_LDAPManager_RemoveGroupMember_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_LDAPManager_DeleteGroupMember_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_LDAPManager_RemoveGroupMember_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1577,7 +1577,7 @@ var (
 
 	pattern_LDAPManager_AddGroupMember_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 1, 2, 2}, []string{"v1", "group", "members"}, ""))
 
-	pattern_LDAPManager_DeleteGroupMember_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "group", "member", "username"}, ""))
+	pattern_LDAPManager_RemoveGroupMember_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "group", "member", "username"}, ""))
 )
 
 var (
@@ -1609,5 +1609,5 @@ var (
 
 	forward_LDAPManager_AddGroupMember_0 = runtime.ForwardResponseMessage
 
-	forward_LDAPManager_DeleteGroupMember_0 = runtime.ForwardResponseMessage
+	forward_LDAPManager_RemoveGroupMember_0 = runtime.ForwardResponseMessage
 )

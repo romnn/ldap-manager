@@ -2,34 +2,33 @@ package grpc
 
 import (
 	"context"
-	// "strconv"
 
-	// ldapmanager "github.com/romnn/ldap-manager"
-	// ldaperror "github.com/romnn/ldap-manager/pkg/err"
-	// log "github.com/sirupsen/logrus"
-	// "google.golang.org/grpc/codes"
-	// "google.golang.org/grpc/status"
-
+	ldaperror "github.com/romnn/ldap-manager/pkg/err"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
+	log "github.com/sirupsen/logrus"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // DeleteUser deletes an account
-func (s *LDAPManagerService) DeleteUser(ctx context.Context, in *pb.DeleteUserRequest) (*pb.Empty, error) {
-	// claims, err := s.authenticate(ctx)
-	// if err != nil {
-	// 	return &pb.Empty{}, err
-	// }
-	// log.Info(claims.UID, in.GetUsername())
-	// if !claims.IsAdmin && claims.UID != in.GetUsername() {
-	// 	return &pb.Empty{}, status.Error(codes.PermissionDenied, "requires admin privileges")
-	// }
-	// allowDeleteOfDefaultGroups := false
-	// if err := s.Manager.DeleteAccount(in, allowDeleteOfDefaultGroups); err != nil {
-	// 	if appErr, safe := err.(ldaperror.Error); safe {
-	// 		return &pb.Empty{}, toStatus(appErr)
-	// 	}
-	// 	log.Error(err)
-	// 	return &pb.Empty{}, status.Error(codes.Internal, "error while deleting account")
-	// }
+func (s *LDAPManagerService) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest) (*pb.Empty, error) {
+	claims, err := s.Authenticate(ctx)
+	if err != nil {
+		return nil, err
+	}
+	log.Info(claims.UID, req.GetUsername())
+
+	if !claims.IsAdmin && claims.UID != req.GetUsername() {
+		return nil, status.Error(codes.PermissionDenied, "requires admin privileges")
+	}
+	allowDeleteOfDefaultGroups := false
+	if err := s.manager.DeleteUser(req, allowDeleteOfDefaultGroups); err != nil {
+		log.Error(err)
+		if appErr, safe := err.(ldaperror.Error); safe {
+			return nil, appErr.StatusError()
+		}
+		return nil, status.Error(codes.Internal, "error while deleting account")
+	}
 	return &pb.Empty{}, nil
 }

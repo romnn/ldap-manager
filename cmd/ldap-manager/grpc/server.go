@@ -7,21 +7,14 @@ import (
 
 	"github.com/romnn/go-service/pkg/auth"
 	"github.com/romnn/go-service/pkg/grpc/reflect"
-
 	ldapmanager "github.com/romnn/ldap-manager/pkg"
-	ldaperror "github.com/romnn/ldap-manager/pkg/err"
 
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
-	"google.golang.org/grpc/status"
 )
-
-func toStatus(e ldaperror.Error) error {
-	return status.Error(e.Code(), e.Error())
-}
 
 // LDAPManagerService implements the GRPC service
 type LDAPManagerService struct {

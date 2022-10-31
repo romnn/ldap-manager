@@ -3,6 +3,7 @@ package ldapmanager;
 
 import "google/protobuf/descriptor.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 
 extend google.protobuf.MethodOptions { bool require_admin = 51234; }
 
@@ -56,7 +57,7 @@ message Account {
   string last_name = 2;
 
   int32 uid = 10;
-  int32 gid = 11;
+  int64 gid = 11;
   string login_shell = 12;
   string home_directory = 13;
 
@@ -96,7 +97,7 @@ message GetGroupListRequest {
 }
 
 message GroupList {
-  repeated string groups = 1;
+  repeated Group groups = 1;
   int64 total = 10;
 }
 
@@ -120,7 +121,7 @@ message GetUserGroupsRequest { string username = 1; }
 message Group {
   string name = 1;
   repeated string members = 2;
-  int32 gid = 3;
+  int64 gid = 3;
   int64 total = 10;
 }
 
@@ -145,7 +146,7 @@ message Token {
   string username = 2;
   string display_name = 3;
   bool is_admin = 4;
-  int64 expiration = 10;
+  google.protobuf.Timestamp expires = 10;
 }
 
 service LDAPManager {
@@ -246,7 +247,7 @@ service LDAPManager {
       body : "*"
     };
   }
-  rpc DeleteGroupMember(GroupMember) returns (Empty) {
+  rpc RemoveGroupMember(GroupMember) returns (Empty) {
     option (require_admin) = true;
     option (google.api.http) = {
       delete : "/v1/group/{group}/member/{username}"

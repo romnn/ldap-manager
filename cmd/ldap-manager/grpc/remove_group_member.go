@@ -11,8 +11,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// GetUserGroups gets the groups an account is member of
-func (s *LDAPManagerService) GetUserGroups(ctx context.Context, req *pb.GetUserGroupsRequest) (*pb.GroupList, error) {
+// RemoveGroupMember removes a member of a group
+func (s *LDAPManagerService) RemoveGroupMember(ctx context.Context, req *pb.GroupMember) (*pb.Empty, error) {
 	claims, err := s.Authenticate(ctx)
 	if err != nil {
 		return nil, err
@@ -20,13 +20,13 @@ func (s *LDAPManagerService) GetUserGroups(ctx context.Context, req *pb.GetUserG
 	if !claims.IsAdmin && claims.UID != req.GetUsername() {
 		return nil, status.Error(codes.PermissionDenied, "requires admin privileges")
 	}
-	groups, err := s.manager.GetUserGroups(req)
-	if err != nil {
+	allowDeleteDefaultGroups := claims.IsAdmin
+	if err := s.manager.RemoveGroupMember(req, allowDeleteDefaultGroups); err != nil {
+		log.Error(err)
 		if appErr, safe := err.(ldaperror.Error); safe {
 			return nil, appErr.StatusError()
 		}
-		log.Error(err)
-		return nil, status.Error(codes.Internal, "error while getting groups")
+		return nil, status.Error(codes.Internal, "error while deleting group member")
 	}
-	return groups, nil
+	return &pb.Empty{}, nil
 }
