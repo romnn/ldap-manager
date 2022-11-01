@@ -17,15 +17,15 @@ func (s *LDAPManagerService) ChangePassword(ctx context.Context, req *pb.ChangeP
 	if err != nil {
 		return nil, err
 	}
-	if !claims.IsAdmin && claims.UID != req.GetUsername() {
+	if !claims.IsAdmin && claims.Username != req.GetUsername() {
 		return nil, status.Error(codes.PermissionDenied, "requires admin privileges")
 	}
 	if err := s.manager.ChangePassword(req); err != nil {
-		if appErr, safe := err.(ldaperror.Error); safe {
+		log.Error(err)
+		if appErr, ok := err.(ldaperror.Error); ok {
 			return nil, appErr.StatusError()
 		}
-		log.Error(err)
-		return nil, status.Error(codes.Internal, "error while chaning password of account")
+		return nil, status.Error(codes.Internal, "error changing password of user")
 	}
 	return &pb.Empty{}, nil
 }

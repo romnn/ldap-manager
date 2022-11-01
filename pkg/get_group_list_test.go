@@ -1,16 +1,10 @@
 package pkg
 
 import (
-	// "fmt"
 	"testing"
-	// "strconv"
-	// "strings"
-	// "github.com/google/go-cmp/cmp"
-	// "github.com/romnn/deepequal"
-	// "github.com/romnn/go-recursive-sort"
+
+	"github.com/romnn/go-recursive-sort"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
-	// ldaptest "github.com/romnn/ldap-manager/test"
-	// ldaphash "github.com/romnn/ldap-manager/pkg/hash"
 )
 
 // TestGetGroupList tests getting a list of all groups
@@ -18,49 +12,17 @@ func TestGetGroupList(t *testing.T) {
 	test := new(Test).Setup(t)
 	defer test.Teardown()
 
-	// username := "romnn"
-	// req := pb.NewUserRequest{
-	// 	Account: &pb.Account{
-	// 		Username:  username,
-	// 		Password:  "Hallo Welt",
-	// 		Email:     "a@b.de",
-	// 		FirstName: "roman",
-	// 		LastName:  "d",
-	// 	},
-	// }
-	// expected := map[string]string{
-	// 	"uid":           "romnn",
-	// 	"givenName":     "roman",
-	// 	"displayName":   "roman d",
-	// 	"uidNumber":     "2001",
-	// 	"sn":            "d",
-	// 	"cn":            "roman d",
-	// 	"gidNumber":     "2002",
-	// 	"loginShell":    "/bin/bash",
-	// 	"homeDirectory": "/home/romnn",
-	// 	"mail":          "a@b.de",
-	// }
-
-	// if err := test.Manager.NewUser(&req, pb.HashingAlgorithm_DEFAULT); err != nil {
-	// 	t.Fatalf("failed to add user: %v", err)
-	// }
-	// user, err := test.Manager.GetUser(username)
-	// if err != nil {
-	// 	t.Fatalf("failed to get user: %v", err)
-	// }
 	username := "test-user"
 	req := pb.NewUserRequest{
-		Account: &pb.Account{
-			Username:  username,
-			Password:  "Hallo Welt",
-			Email:     "a@b.de",
-			FirstName: "roman",
-			LastName:  "d",
-		},
+		Username:  username,
+		Password:  "Hallo Welt",
+		Email:     "a@b.de",
+		FirstName: "roman",
+		LastName:  "d",
 	}
 
 	// create a new user (will create the user group)
-	if err := test.Manager.NewUser(&req, pb.HashingAlgorithm_DEFAULT); err != nil {
+	if err := test.Manager.NewUser(&req); err != nil {
 		t.Fatalf("failed to add new user: %v", err)
 	}
 
@@ -73,11 +35,50 @@ func TestGetGroupList(t *testing.T) {
 		t.Fatalf("failed to add new group: %v", err)
 	}
 
-  // get all groups
+	// get all groups
 	groups, err := test.Manager.GetGroupList(&pb.GetGroupListRequest{})
 	if err != nil {
 		t.Fatalf("failed to get list of groups: %v", err)
 	}
 
+	expected := []*pb.Group{
+		&pb.Group{
+			Name: "admins",
+			Members: []string{
+				"uid=ldapadmin,ou=users,dc=example,dc=org",
+			},
+			GID:   2000,
+			Total: 0,
+		},
+		&pb.Group{
+			Name: "test-group",
+			Members: []string{
+				"uid=test-user,ou=users,dc=example,dc=org",
+			},
+			GID:   2002,
+			Total: 0,
+		},
+		&pb.Group{
+			Name: "users",
+			Members: []string{
+				"uid=ldapadmin,ou=users,dc=example,dc=org",
+				"uid=test-user,ou=users,dc=example,dc=org",
+			},
+			GID:   2001,
+			Total: 0,
+		},
+	}
+
+	sort := recursivesort.RecursiveSort{StructSortField: "GID"}
+	sort.Sort(&groups)
+	sort.Sort(&expected)
+
 	t.Log(PrettyPrint(groups))
+	t.Log(PrettyPrint(expected))
+
+	for i := range expected {
+		if equal, diff := EqualProto(expected[i], groups.GetGroups()[i]); !equal {
+			t.Fatalf("unexpected group at index %d: \n%s", i, diff)
+		}
+	}
 }

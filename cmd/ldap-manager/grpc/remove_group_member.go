@@ -17,16 +17,16 @@ func (s *LDAPManagerService) RemoveGroupMember(ctx context.Context, req *pb.Grou
 	if err != nil {
 		return nil, err
 	}
-	if !claims.IsAdmin && claims.UID != req.GetUsername() {
+	if !claims.IsAdmin && claims.Username != req.GetUsername() {
 		return nil, status.Error(codes.PermissionDenied, "requires admin privileges")
 	}
 	allowDeleteDefaultGroups := claims.IsAdmin
 	if err := s.manager.RemoveGroupMember(req, allowDeleteDefaultGroups); err != nil {
 		log.Error(err)
-		if appErr, safe := err.(ldaperror.Error); safe {
+		if appErr, ok := err.(ldaperror.Error); ok {
 			return nil, appErr.StatusError()
 		}
-		return nil, status.Error(codes.Internal, "error while deleting group member")
+		return nil, status.Error(codes.Internal, "error deleting group member")
 	}
 	return &pb.Empty{}, nil
 }

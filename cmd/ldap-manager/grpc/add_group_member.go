@@ -19,7 +19,7 @@ func (s *LDAPManagerService) AddGroupMember(ctx context.Context, req *pb.GroupMe
 	}
 	if err := s.manager.AddGroupMember(req, false); err != nil {
 		log.Error(err)
-		if appErr, safe := err.(ldaperror.Error); safe {
+		if appErr, ok := err.(ldaperror.Error); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error while adding group member")

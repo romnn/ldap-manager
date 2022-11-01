@@ -12,14 +12,14 @@ import (
 )
 
 // UpdateGroup updates an LDAP group
-func (s *LDAPManagerService) UpdateGroup(ctx context.Context, in *pb.UpdateGroupRequest) (*pb.Empty, error) {
+func (s *LDAPManagerService) UpdateGroup(ctx context.Context, req *pb.UpdateGroupRequest) (*pb.Empty, error) {
 	_, err := s.Authenticate(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.manager.UpdateGroup(in); err != nil {
+	if err := s.manager.UpdateGroup(req); err != nil {
 		log.Error(err)
-		if appErr, safe := err.(ldaperror.Error); safe {
+		if appErr, ok := err.(ldaperror.Error); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error while updating group")

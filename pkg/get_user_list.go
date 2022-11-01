@@ -8,20 +8,20 @@ import (
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
 
-// CountUsers counts the number of total users
-func (m *LDAPManager) CountUsers() (int, error) {
-	result, err := m.ldap.Search(ldap.NewSearchRequest(
-		m.UserGroupDN,
-		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(%s=*)", m.AccountAttribute),
-		[]string{"dn"},
-		[]ldap.Control{},
-	))
-	if err != nil {
-		return 0, err
-	}
-	return len(result.Entries), nil
-}
+// // CountUsers counts the number of total users
+// func (m *LDAPManager) CountUsers() (int, error) {
+// 	result, err := m.ldap.Search(ldap.NewSearchRequest(
+// 		m.UserGroupDN,
+// 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+// 		fmt.Sprintf("(%s=*)", m.AccountAttribute),
+// 		[]string{"dn"},
+// 		[]ldap.Control{},
+// 	))
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	return len(result.Entries), nil
+// }
 
 // GetUserList gets a list of all users
 func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, error) {
@@ -33,28 +33,30 @@ func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, err
 		m.UserGroupDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		fmt.Sprintf("(&(%s=*)%s)", m.AccountAttribute, filter),
-		m.defaultUserFields(),
+		m.userFields(),
 		[]ldap.Control{},
 	))
 	if err != nil {
 		return nil, err
 	}
-	total, err := m.CountUsers()
-	if err != nil {
-		return nil, err
-	}
-	users := make(map[string]*pb.UserData)
+	// total, err := m.CountUsers()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	users := make(map[string]*pb.User)
 	for _, entry := range result.Entries {
 		if entryKey := entry.GetAttributeValue(req.GetSortKey()); entryKey != "" {
-			users[entryKey] = ParseUser(entry)
+			users[entryKey] = m.ParseUser(entry)
 		}
 	}
-	// Sort for deterministic clipping
+
+	// sort for deterministic clipping
 	keys := make([]string, 0, len(users))
 	for k := range users {
 		keys = append(keys, k)
 	}
-	// Sort
+
+	// sort
 	sort.Slice(keys, func(i, j int) bool {
 		asc := keys[i] < keys[j]
 		if req.GetSortOrder() == pb.SortOrder_ASCENDING {
@@ -62,15 +64,21 @@ func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, err
 		}
 		return asc
 	})
-	// Clip
+
+	// clip
 	clippedKeys := keys
-	if req.GetStart() >= 0 && req.GetEnd() < int32(len(keys)) && req.GetStart() < req.GetEnd() {
+	validStart := req.GetStart() >= 0
+	validEnd := req.GetEnd() < int32(len(keys))
+	validRange := req.GetStart() < req.GetEnd()
+	if validStart && validEnd && validRange {
 		clippedKeys = keys[req.GetStart():req.GetEnd()]
 	}
-	// total := 0
-	clipped := &pb.UserList{Total: int64(total)}
+	var clipped []*pb.User
 	for _, key := range clippedKeys {
-		clipped.Users = append(clipped.Users, users[key])
+		clipped = append(clipped, users[key])
 	}
-	return clipped, nil
+	return &pb.UserList{
+		Users: clipped,
+		Total: int64(len(users)),
+	}, nil
 }

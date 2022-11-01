@@ -43,7 +43,7 @@ func (m *LDAPManager) GetGroupList(req *pb.GetGroupListRequest) (*pb.GroupList, 
 	}
 	groups := []*pb.Group{}
 	for _, entry := range result.Entries {
-		group, err := m.ParseGroup(entry)
+		group, err := m.parseGroup(entry)
 		if err != nil {
 			log.Errorf("failed to parse group %v: %v", entry, err)
 			continue

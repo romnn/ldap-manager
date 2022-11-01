@@ -1,8 +1,7 @@
 ## ldap-manager
 
 [![Build Status](https://github.com/romnn/ldap-manager/workflows/test/badge.svg)](https://github.com/romnn/ldap-manager/actions)
-[![GitHub](https://img.shields.io/github/license/romnn/ldap-manager)](https://github.com/romnn/ldap-manager)
-[![Docker Pulls](https://img.shields.io/docker/pulls/romnn/ldap-manager)](https://hub.docker.com/r/romnn/ldap-manager)
+[![GitHub](https://img.shields.io/github/license/romnn/ldap-manager)](https://github.com/romnn/ldap-manager) [![Docker Pulls](https://img.shields.io/docker/pulls/romnn/ldap-manager)](https://hub.docker.com/r/romnn/ldap-manager)
 [![Test Coverage](https://codecov.io/gh/romnn/ldap-manager/branch/master/graph/badge.svg)](https://codecov.io/gh/romnn/ldap-manager)
 [![Release](https://img.shields.io/github/release/romnn/ldap-manager)](https://github.com/romnn/ldap-manager/releases/latest)
 

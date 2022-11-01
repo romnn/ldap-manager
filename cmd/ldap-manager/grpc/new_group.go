@@ -19,7 +19,7 @@ func (s *LDAPManagerService) NewGroup(ctx context.Context, req *pb.NewGroupReque
 	}
 	if err := s.manager.NewGroup(req, false); err != nil {
 		log.Error(err)
-		if appErr, safe := err.(ldaperror.Error); safe {
+		if appErr, ok := err.(ldaperror.Error); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error while creating group")

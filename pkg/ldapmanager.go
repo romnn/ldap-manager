@@ -1,19 +1,15 @@
 package pkg
 
 import (
-	// "crypto/tls"
-	// "strings"
-
 	"github.com/go-ldap/ldap/v3"
+	"github.com/jwalton/go-supportscolor"
+	"github.com/k0kubun/pp/v3"
+	log "github.com/sirupsen/logrus"
+
 	ldapconfig "github.com/romnn/ldap-manager/pkg/config"
-	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
-	// log "github.com/sirupsen/logrus"
 )
 
-// Version is incremented using bump2version
-// const Version = "0.0.26"
-
-// LDAPManager ...
+// LDAPManager implements the LDAP manager functionality
 type LDAPManager struct {
 	ldapconfig.OpenLDAPConfig
 	// this is the only thing to guard with a mutex?
@@ -25,7 +21,6 @@ type LDAPManager struct {
 	GroupsOU string
 	UsersOU  string
 
-	HashingAlgorithm  pb.HashingAlgorithm
 	DefaultUserGroup  string
 	DefaultAdminGroup string
 	DefaultUserShell  string
@@ -41,8 +36,16 @@ type LDAPManager struct {
 	GroupMembershipUsesUID bool
 }
 
-// NewLDAPManager ...
+// NewLDAPManager creates a new LDAPManager
 func NewLDAPManager(config ldapconfig.OpenLDAPConfig) *LDAPManager {
+	useColor := supportscolor.Stdout().SupportsColor
+	pp.Default.SetColoringEnabled(useColor)
+	pp.Default.SetExportedOnly(true)
+
+	log.SetFormatter(&log.TextFormatter{
+		DisableQuote: true,
+	})
+
 	return &LDAPManager{
 		OpenLDAPConfig:           config,
 		GroupsDN:                 "ou=groups," + config.BaseDN,
@@ -62,7 +65,7 @@ func NewLDAPManager(config ldapconfig.OpenLDAPConfig) *LDAPManager {
 	}
 }
 
-// Close ...
+// Close closes the LDAP connection
 func (m *LDAPManager) Close() {
 	if m.ldap != nil {
 		// FIXME: This will panic if the connection was not established

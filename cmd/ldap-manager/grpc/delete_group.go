@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// DeleteGroup deletes an LDAP group
+// DeleteGroup deletes a group
 func (s *LDAPManagerService) DeleteGroup(ctx context.Context, req *pb.DeleteGroupRequest) (*pb.Empty, error) {
 	_, err := s.Authenticate(ctx)
 	if err != nil {
@@ -19,7 +19,7 @@ func (s *LDAPManagerService) DeleteGroup(ctx context.Context, req *pb.DeleteGrou
 	}
 	if err := s.manager.DeleteGroup(req); err != nil {
 		log.Error(err)
-		if appErr, safe := err.(ldaperror.Error); safe {
+		if appErr, ok := err.(ldaperror.Error); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error while deleting group")

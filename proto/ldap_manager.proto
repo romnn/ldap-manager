@@ -5,7 +5,9 @@ import "google/protobuf/descriptor.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
-extend google.protobuf.MethodOptions { bool require_admin = 51234; }
+extend google.protobuf.MethodOptions {
+  bool require_admin = 51234;
+}
 
 message Empty {}
 
@@ -23,10 +25,25 @@ message GetUserListRequest {
   repeated string filter = 10;
 }
 
-message UserData { map<string, string> data = 1; }
+message User {
+  string username = 1;
+
+  string first_name = 10;
+  string last_name = 11;
+  string display_name = 12;
+  string CN = 13;
+  string email = 14;
+
+  int32 UID = 20;
+  int64 GID = 21;
+
+  string login_shell = 30;
+  string home_directory = 31;
+  /* map<string, string> data = 100; */
+}
 
 message UserList {
-  repeated UserData users = 1;
+  repeated User users = 1;
   int64 total = 10;
 }
 
@@ -35,29 +52,16 @@ message AuthenticateUserRequest {
   string password = 2;
 }
 
-message GetUserRequest { string username = 1; }
-
-enum HashingAlgorithm {
-  DEFAULT = 0;
-  SHA512CRYPT = 1;
-  SHA256CRYPT = 2;
-  BLOWFISH = 3;
-  EXTDES = 4;
-  MD5CRYPT = 5;
-  SMD5 = 6;
-  MD5 = 7;
-  SHA = 8;
-  SSHA = 9;
-  CRYPT = 10;
-  CLEAR = 11;
+message GetUserRequest {
+  string username = 1;
 }
 
-message Account {
+message NewUserRequest {
   string first_name = 1;
   string last_name = 2;
 
-  int32 uid = 10;
-  int64 gid = 11;
+  int32 UID = 10;
+  int64 GID = 11;
   string login_shell = 12;
   string home_directory = 13;
 
@@ -66,26 +70,28 @@ message Account {
   string password = 22;
 }
 
-message NewUserRequest { Account account = 1; }
-
 message UpdateUserRequest {
   string username = 1;
-  Account update = 10;
+  NewUserRequest update = 10;
 }
 
-message DeleteUserRequest { string username = 1; }
+message DeleteUserRequest {
+  string username = 1;
+}
 
 message NewGroupRequest {
   string name = 1;
   repeated string members = 2;
 }
 
-message DeleteGroupRequest { string name = 1; }
+message DeleteGroupRequest {
+  string name = 1;
+}
 
 message UpdateGroupRequest {
   string name = 1;
   string new_name = 2;
-  int32 gid = 3;
+  int32 GID = 3;
 }
 
 message GetGroupListRequest {
@@ -106,7 +112,9 @@ message IsGroupMemberRequest {
   string group = 2;
 }
 
-message GroupMemberStatus { bool is_member = 1; }
+message GroupMemberStatus {
+  bool is_member = 1;
+}
 
 message GetGroupRequest {
   int32 start = 1;
@@ -116,12 +124,14 @@ message GetGroupRequest {
   string name = 10;
 }
 
-message GetUserGroupsRequest { string username = 1; }
+message GetUserGroupsRequest {
+  string username = 1;
+}
 
 message Group {
   string name = 1;
   repeated string members = 2;
-  int64 gid = 3;
+  int64 GID = 3;
   int64 total = 10;
 }
 
@@ -133,7 +143,6 @@ message GroupMember {
 message ChangePasswordRequest {
   string username = 1;
   string password = 2;
-  HashingAlgorithm hashing_algorithm = 100;
 }
 
 message LoginRequest {
@@ -144,8 +153,9 @@ message LoginRequest {
 message Token {
   string token = 1;
   string username = 2;
-  string display_name = 3;
-  bool is_admin = 4;
+  int32 UID = 3;
+  string display_name = 4;
+  bool is_admin = 5;
   google.protobuf.Timestamp expires = 10;
 }
 
@@ -153,8 +163,8 @@ service LDAPManager {
   // Authentication
   rpc Login(LoginRequest) returns (Token) {
     option (google.api.http) = {
-      post : "/v1/login"
-      body : "*"
+      post: "/v1/login"
+      body: "*"
     };
   }
 
@@ -162,36 +172,36 @@ service LDAPManager {
   rpc GetUserList(GetUserListRequest) returns (UserList) {
     option (require_admin) = true;
     option (google.api.http) = {
-      get : "/v1/users"
+      get: "/v1/users"
     };
   }
-  rpc GetUser(GetUserRequest) returns (UserData) {
+  rpc GetUser(GetUserRequest) returns (User) {
     option (google.api.http) = {
-      get : "/v1/user/{username}"
+      get: "/v1/user/{username}"
     };
   }
   rpc NewUser(NewUserRequest) returns (Empty) {
     option (require_admin) = true;
     option (google.api.http) = {
-      put : "/v1/user"
-      body : "*"
+      put: "/v1/user"
+      body: "*"
     };
   }
   rpc UpdateUser(UpdateUserRequest) returns (Token) {
     option (google.api.http) = {
-      post : "/v1/user/{username}/update"
-      body : "*"
+      post: "/v1/user/{username}/update"
+      body: "*"
     };
   }
   rpc DeleteUser(DeleteUserRequest) returns (Empty) {
     option (google.api.http) = {
-      delete : "/v1/user/{username}"
+      delete: "/v1/user/{username}"
     };
   }
   rpc ChangePassword(ChangePasswordRequest) returns (Empty) {
     option (google.api.http) = {
-      post : "/v1/user/password"
-      body : "*"
+      post: "/v1/user/password"
+      body: "*"
     };
   }
 
@@ -199,33 +209,33 @@ service LDAPManager {
   rpc NewGroup(NewGroupRequest) returns (Empty) {
     option (require_admin) = true;
     option (google.api.http) = {
-      put : "/v1/group"
-      body : "*"
+      put: "/v1/group"
+      body: "*"
     };
   }
   rpc DeleteGroup(DeleteGroupRequest) returns (Empty) {
     option (require_admin) = true;
     option (google.api.http) = {
-      delete : "/v1/group/{name}"
+      delete: "/v1/group/{name}"
     };
   }
   rpc UpdateGroup(UpdateGroupRequest) returns (Empty) {
     option (require_admin) = true;
     option (google.api.http) = {
-      post : "/v1/group/{name}/update"
-      body : "*"
+      post: "/v1/group/{name}/update"
+      body: "*"
     };
   }
   rpc GetGroupList(GetGroupListRequest) returns (GroupList) {
     // option (require_admin) = true;
     option (google.api.http) = {
-      get : "/v1/groups"
+      get: "/v1/groups"
     };
   }
 
   rpc GetUserGroups(GetUserGroupsRequest) returns (GroupList) {
     option (google.api.http) = {
-      get : "/v1/user/{username}/groups"
+      get: "/v1/user/{username}/groups"
     };
   }
 
@@ -237,20 +247,20 @@ service LDAPManager {
   rpc GetGroup(GetGroupRequest) returns (Group) {
     option (require_admin) = true;
     option (google.api.http) = {
-      get : "/v1/group/{name}"
+      get: "/v1/group/{name}"
     };
   }
   rpc AddGroupMember(GroupMember) returns (Empty) {
     option (require_admin) = true;
     option (google.api.http) = {
-      put : "/v1/group/{group}/members"
-      body : "*"
+      put: "/v1/group/{group}/members"
+      body: "*"
     };
   }
   rpc RemoveGroupMember(GroupMember) returns (Empty) {
     option (require_admin) = true;
     option (google.api.http) = {
-      delete : "/v1/group/{group}/member/{username}"
+      delete: "/v1/group/{group}/member/{username}"
     };
   }
 }

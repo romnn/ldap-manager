@@ -6,6 +6,10 @@ import (
 	// tclog "log"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/testing/protocmp"
+
 	// ldapmanager "github.com/romnn/ldap-manager/pkg"
 	ldapconfig "github.com/romnn/ldap-manager/pkg/config"
 	// tc "github.com/romnn/testcontainers"
@@ -13,7 +17,18 @@ import (
 	// "github.com/testcontainers/testcontainers-go"
 )
 
-// Test ...
+// EqualProto checks if two proto messages are equal
+// if they are not equal, a diff describes how they differ
+func EqualProto(a proto.Message, b proto.Message) (bool, string) {
+	opts := cmp.Options{
+		protocmp.Transform(),
+	}
+	equal := cmp.Equal(a, b, opts)
+	diff := cmp.Diff(a, b, opts)
+	return equal, diff
+}
+
+// Test wraps a pre-configured OpenLDAP container and Manager instance
 type Test struct {
 	Container *Container
 	Manager   *LDAPManager

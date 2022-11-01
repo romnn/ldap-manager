@@ -20,7 +20,7 @@ func (s *LDAPManagerService) GetUserList(ctx context.Context, req *pb.GetUserLis
 	result, err := s.manager.GetUserList(req)
 	if err != nil {
 		log.Error(err)
-		if appErr, safe := err.(ldaperror.Error); safe {
+		if appErr, ok := err.(ldaperror.Error); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error while getting list of accounts")

@@ -17,12 +17,12 @@ func (s *LDAPManagerService) GetUserGroups(ctx context.Context, req *pb.GetUserG
 	if err != nil {
 		return nil, err
 	}
-	if !claims.IsAdmin && claims.UID != req.GetUsername() {
+	if !claims.IsAdmin && claims.Username != req.GetUsername() {
 		return nil, status.Error(codes.PermissionDenied, "requires admin privileges")
 	}
 	groups, err := s.manager.GetUserGroups(req)
 	if err != nil {
-		if appErr, safe := err.(ldaperror.Error); safe {
+		if appErr, ok := err.(ldaperror.Error); ok {
 			return nil, appErr.StatusError()
 		}
 		log.Error(err)

@@ -1,27 +1,43 @@
 package pkg
-import ( // "github.com/go-ldap/ldap/v3"
+
+import (
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
+	log "github.com/sirupsen/logrus"
 )
 
-// UpdateAccount ...
-func (m *LDAPManager) UpdateUser(req *pb.UpdateUserRequest, algorithm pb.HashingAlgorithm, isAdmin bool) (string, int, error) {
-	// // Check if the user even exists
+// UpdateUser updates a user
+func (m *LDAPManager) UpdateUser(req *pb.UpdateUserRequest, isAdmin bool) (string, int32, error) {
+	// Check if the user exists
+	username := req.GetUsername()
+	user, err := m.GetUser(username)
+	if err != nil {
+		return "", 0, err
+	}
+	log.Infof("user: %v", user)
+	// if err != nil {
+	//   if _, notfound := ZeroOrMultipleAccountsError
+	// }
 	// req.Username = escapeDN(req.GetUsername())
 	// result, err := m.ldap.Search(ldap.NewSearchRequest(
-	// 	m.UserGroupDN,
-	// 	ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-	// 	fmt.Sprintf("(%s=%s)", m.AccountAttribute, req.GetUsername()),
-	// 	m.defaultUserFields(),
-	// 	[]ldap.Control{},
+	// m.UserGroupDN,
+	// ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+	// fmt.Sprintf("(%s=%s)", m.AccountAttribute, req.GetUsername()),
+	// m.defaultUserFields(),
+	// []ldap.Control{},
 	// ))
 	// if err != nil {
-	// 	return "", 0, fmt.Errorf("failed to check for existing user %q: %v", req.GetUsername(), err)
+	// return "", 0, fmt.Errorf("failed to check for existing user %q: %v", req.GetUsername(), err)
 	// }
 	// if len(result.Entries) != 1 {
-	// 	return "", 0, &ZeroOrMultipleAccountsError{Username: req.GetUsername(), Count: len(result.Entries)}
+	// return "", 0, &ZeroOrMultipleAccountsError{Username: req.GetUsername(), Count: len(result.Entries)}
 	// }
 
 	// user := result.Entries[0]
+	// uidNumber, err := strconv.Atoi(user.GetUid)
+	// uidNumber := user.GetUID()
+	// userDN := user.DN
+	// update := req.GetUpdate()
+
 	// uidNumber, _ := strconv.Atoi(user.GetAttributeValue("uidNumber"))
 	// username := req.GetUsername()
 	// userDN := user.DN

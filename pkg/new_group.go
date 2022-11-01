@@ -70,11 +70,10 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 	if _, notfound := err.(*ZeroOrMultipleGroupsError); !notfound {
 		return &GroupAlreadyExistsError{Group: name}
 	}
-	highestGID, err := m.GetHighestGID()
+	GID, err := m.GetHighestGID()
 	if err != nil {
 		return err
 	}
-	newGID := highestGID + 1
 
 	var memberList []string
 	for _, username := range req.GetMembers() {
@@ -103,7 +102,7 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 		groupAttributes = []ldap.Attribute{
 			{Type: "objectClass", Vals: []string{"top", "posixGroup"}},
 			{Type: "cn", Vals: []string{EscapeDN(name)}},
-			{Type: "gidNumber", Vals: []string{strconv.Itoa(newGID)}},
+			{Type: "gidNumber", Vals: []string{strconv.Itoa(GID)}},
 		}
 	} else {
 		if len(memberList) < 1 {
@@ -114,7 +113,7 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 		groupAttributes = []ldap.Attribute{
 			{Type: "objectClass", Vals: []string{"top", "groupOfUniqueNames", "posixGroup"}},
 			{Type: "cn", Vals: []string{EscapeDN(name)}},
-			{Type: "gidNumber", Vals: []string{strconv.Itoa(newGID)}},
+			{Type: "gidNumber", Vals: []string{strconv.Itoa(GID)}},
 		}
 	}
 
@@ -132,9 +131,9 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 	if err := m.ldap.Add(addGroupRequest); err != nil {
 		return err
 	}
-	if err := m.updateLastID("lastGID", newGID); err != nil {
+	if err := m.updateLastID("lastGID", GID+1); err != nil {
 		return err
 	}
-	log.Infof("added new group %q with %d members (gid=%d)", name, len(memberList), newGID)
+	log.Infof("added new group %q with %d members (gid=%d)", name, len(memberList), GID)
 	return nil
 }

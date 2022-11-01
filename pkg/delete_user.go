@@ -8,8 +8,8 @@ import (
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
 
-	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // A NoSuchMemberError is returned when the group does not contain the member
@@ -28,7 +28,7 @@ func (err *NoSuchMemberError) StatusError() error {
 	return status.Errorf(codes.NotFound, err.Error())
 }
 
-// A RemoveLastGroupMemberError is returned when attempting 
+// A RemoveLastGroupMemberError is returned when attempting
 // to remove the only member of a group
 type RemoveLastGroupMemberError struct {
 	error
@@ -42,9 +42,6 @@ func (err *RemoveLastGroupMemberError) Error() string {
 func (err *RemoveLastGroupMemberError) StatusError() error {
 	return status.Errorf(codes.FailedPrecondition, err.Error())
 }
-
-
-
 
 // DeleteUser deletes a user
 func (m *LDAPManager) DeleteUser(req *pb.DeleteUserRequest, keepGroups bool) error {

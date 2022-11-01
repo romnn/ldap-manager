@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -27,10 +28,10 @@ func (e *UserAlreadyExistsError) StatusError() error {
 	return status.Errorf(codes.AlreadyExists, e.Error())
 }
 
-// InvalidUserError ...
+// An InvalidUserError is returned when the user contains invalid values
 type InvalidUserError struct {
 	error
-	Invalid []string
+	Invalid map[string]error
 }
 
 func (e *InvalidUserError) Error() string {
@@ -43,40 +44,75 @@ func (e *InvalidUserError) StatusError() error {
 
 var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
-func validEmail(e string) bool {
-	if len(e) < 3 || len(e) > 254 {
-		return false
+// ValidateEmail validates an email
+func ValidateEmail(email string) error {
+	if len(email) < 3 {
+		return errors.New("email must contain at least 3 characters")
 	}
-	return emailRegex.MatchString(e)
+	if len(email) > 254 {
+		return errors.New("email can contain at most 254 characters")
+	}
+	if !emailRegex.MatchString(email) {
+		return fmt.Errorf("%q is not a valid email", email)
+	}
+	return nil
 }
 
-func validPassword(pw string) bool {
-	// TODO: maybe we enforce some password length in the future
-	return true
+// ValidatePassword validates a password
+func ValidatePassword(password string) error {
+	if password == "" {
+		return errors.New("password must not be empty")
+	}
+	if len(password) < 5 {
+		return errors.New("password must contain at least 5 characters")
+	}
+	return nil
 }
 
-func validUsername(un string) bool {
-	// TODO: maybe we enforce some username regex in the future
-	return true
+// ValidateUsername validates a username
+func ValidateUsername(username string) error {
+	if username == "" {
+		return errors.New("username must not be empty")
+	}
+	if len(username) < 5 {
+		return errors.New("username must contain at least 5 characters")
+	}
+	return nil
 }
 
-// ValidateUser validates a user account
-func ValidateUser(acc *pb.Account) *InvalidUserError {
-	var invalid []string
-	if acc.GetUsername() == "" || !validUsername(acc.GetUsername()) {
-		invalid = append(invalid, "username")
+// ValidateFirstName validates a first name
+func ValidateFirstName(name string) error {
+	if name == "" {
+		return errors.New("first name must not be empty")
 	}
-	if acc.GetPassword() == "" || !validPassword(acc.GetPassword()) {
-		invalid = append(invalid, "password")
+	return nil
+}
+
+// ValidateLastName validates a last name
+func ValidateLastName(name string) error {
+	if name == "" {
+		return errors.New("last name must not be empty")
 	}
-	if acc.GetEmail() == "" || !validEmail(acc.GetEmail()) {
-		invalid = append(invalid, "email")
+	return nil
+}
+
+// ValidateNewUser validates a new user request
+func ValidateNewUser(req *pb.NewUserRequest) *InvalidUserError {
+	invalid := make(map[string]error)
+	if err := ValidateUsername(req.GetUsername()); err != nil {
+		invalid["username"] = err
 	}
-	if acc.GetFirstName() == "" {
-		invalid = append(invalid, "first name")
+	if err := ValidatePassword(req.GetPassword()); err != nil {
+		invalid["password"] = err
 	}
-	if acc.GetLastName() == "" {
-		invalid = append(invalid, "last name")
+	if err := ValidateEmail(req.GetEmail()); err != nil {
+		invalid["email"] = err
+	}
+	if err := ValidateFirstName(req.GetFirstName()); err != nil {
+		invalid["first name"] = err
+	}
+	if err := ValidateLastName(req.GetLastName()); err != nil {
+		invalid["last name"] = err
 	}
 	if len(invalid) > 0 {
 		return &InvalidUserError{Invalid: invalid}
@@ -91,8 +127,10 @@ func (m *LDAPManager) GetUserGroup(username string) (*pb.Group, error) {
 		return group, nil
 	}
 	// slow path: the default user group might not yet exist
-	// note that a group can only be created with at least one member when using RFC2307BIS
-	// because we need the GID to create the user, strict checking of members is disabled
+	// note that a group can only be created with at least one member
+	// when using RFC2307BIS
+	// because we need the GID to create the user,
+	// strict checking of members is disabled
 	strict := false
 	if err := m.NewGroup(&pb.NewGroupRequest{
 		Name:    groupName,
@@ -115,15 +153,14 @@ func (m *LDAPManager) GetUserGroup(username string) (*pb.Group, error) {
 	return group, nil
 }
 
-// NewUser ...
-func (m *LDAPManager) NewUser(req *pb.NewUserRequest, algorithm pb.HashingAlgorithm) error {
-	account := req.GetAccount()
-	if err := ValidateUser(account); err != nil {
+// NewUser adds a new user
+func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
+	if err := ValidateNewUser(req); err != nil {
 		return err
 	}
 
 	// check for existing user with the same username
-	username := EscapeDN(account.GetUsername())
+	username := EscapeDN(req.GetUsername())
 	search := ldap.NewSearchRequest(
 		m.UserGroupDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
@@ -132,7 +169,6 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest, algorithm pb.HashingAlgori
 		[]ldap.Control{},
 	)
 	result, err := m.ldap.Search(search)
-	// log.Infof("result: %v error: %v", result, err)
 	if err != nil {
 		return err
 		// notFound := ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject)
@@ -164,28 +200,27 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest, algorithm pb.HashingAlgori
 		return fmt.Errorf("failed to check for existing user %q: %v", username, err)
 	}
 	if len(result.Entries) > 0 {
-		return &UserAlreadyExistsError{Username: username}
+		return &UserAlreadyExistsError{
+			Username: username,
+		}
 	}
 
 	// set default values
-	loginShell := account.GetLoginShell()
+	loginShell := req.GetLoginShell()
 	if loginShell == "" {
 		loginShell = m.DefaultUserShell
 	}
 
-	homeDirectory := account.GetHomeDirectory()
+	homeDirectory := req.GetHomeDirectory()
 	if homeDirectory == "" {
 		homeDirectory = fmt.Sprintf("/home/%s", username)
 	}
 
-	// skip for now to see what openLDAP does
-	// newUID := int(account.GetUid())
-	highestUID, err := m.GetHighestUID()
+	UID, err := m.GetHighestUID()
 	if err != nil {
-
-		return fmt.Errorf("failed to get highest %s: %v", m.AccountAttribute, err)
+		return fmt.Errorf("failed to get highest UID (%s): %v", m.AccountAttribute, err)
 	}
-  newUID := highestUID + 1
+	// newUID := highestUID + 1
 	// if newUID < MinUID {
 	// 	highestUID, err := m.GetHighestID(m.AccountAttribute)
 	// 	if err != nil {
@@ -233,22 +268,23 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest, algorithm pb.HashingAlgori
 		// fmt.Errorf("failed to get GID of default user group: %v", err)
 	}
 
-	fullName := fmt.Sprintf("%s %s", account.GetFirstName(), account.GetLastName())
+	fullName := fmt.Sprintf("%s %s", req.GetFirstName(), req.GetLastName())
 	userAttributes := []ldap.Attribute{
-		{Type: "objectClass", Vals: []string{"person", "inetOrgPerson", "posixAccount"}},
+		{Type: "objectClass", Vals: []string{
+			"person",
+			"inetOrgPerson",
+			"posixAccount",
+		}},
 		{Type: m.AccountAttribute, Vals: []string{username}},
-		{Type: "givenName", Vals: []string{account.GetFirstName()}},
-		{Type: "sn", Vals: []string{account.GetLastName()}},
+		{Type: "givenName", Vals: []string{req.GetFirstName()}},
+		{Type: "sn", Vals: []string{req.GetLastName()}},
 		{Type: "cn", Vals: []string{fullName}},
 		{Type: "displayName", Vals: []string{fullName}},
-		{Type: "uidNumber", Vals: []string{strconv.Itoa(newUID)}},
-		// add to users group
-		{Type: "gidNumber", Vals: []string{strconv.Itoa(int(userGroup.GetGid()))}},
-		// {Type: "gidNumber", Vals: []string{strconv.Itoa(GID)}},
+		{Type: "uidNumber", Vals: []string{strconv.Itoa(UID)}},
+		{Type: "gidNumber", Vals: []string{strconv.Itoa(int(userGroup.GetGID()))}},
 		{Type: "loginShell", Vals: []string{loginShell}},
 		{Type: "homeDirectory", Vals: []string{homeDirectory}},
-		// {Type: "userPassword", Vals: []string{hashedPassword}},
-		{Type: "mail", Vals: []string{account.GetEmail()}},
+		{Type: "mail", Vals: []string{req.GetEmail()}},
 	}
 
 	// add user
@@ -258,7 +294,7 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest, algorithm pb.HashingAlgori
 		Attributes: userAttributes,
 		Controls:   []ldap.Control{},
 	}
-	log.Infof("addUserRequest=%v", addUserRequest)
+	log.Debug(PrettyPrint(addUserRequest))
 	if err := m.ldap.Add(addUserRequest); err != nil {
 		exists := ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists)
 		if exists {
@@ -270,10 +306,9 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest, algorithm pb.HashingAlgori
 	// change password of user
 	passwordModifyRequest := &ldap.PasswordModifyRequest{
 		UserIdentity: userDN,
-		// OldPassword: "",
-		NewPassword: account.GetPassword(),
+		NewPassword:  req.GetPassword(),
 	}
-	log.Infof("passwordModifyRequest=%v", passwordModifyRequest)
+	log.Debug(PrettyPrint(passwordModifyRequest))
 	resp, err := m.ldap.PasswordModify(passwordModifyRequest)
 	if err != nil {
 		// exists := ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists)
@@ -282,8 +317,7 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest, algorithm pb.HashingAlgori
 		// }
 		return fmt.Errorf("failed to set password of new user %q: %v", userDN, err)
 	}
-	// GeneratedPassword
-	log.Infof("password response=%v", resp)
+	log.Debug(PrettyPrint(resp))
 
 	allowNonExistent := false
 	if err := m.AddGroupMember(&pb.GroupMember{
@@ -294,9 +328,9 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest, algorithm pb.HashingAlgori
 			return fmt.Errorf("failed to add user %q to group %q: %v", username, userGroup.Name, err)
 		}
 	}
-	// if err := m.updateLastID("lastUID", newUID); err != nil {
-	// 	return err
-	// }
-	log.Infof("added new account %q (member of group %q)", username, userGroup.Name)
+	if err := m.updateLastID("lastUID", UID+1); err != nil {
+		return err
+	}
+	log.Infof("added new user %q (member of group %q)", username, userGroup.Name)
 	return nil
 }

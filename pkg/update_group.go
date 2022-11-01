@@ -1,41 +1,52 @@
 package pkg
 
 import (
+  "fmt"
+	"strconv"
+
+	"github.com/go-ldap/ldap/v3"
+	ldaperror "github.com/romnn/ldap-manager/pkg/err"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
+	log "github.com/sirupsen/logrus"
 )
 
-// UpdateGroup ...
+// UpdateGroup updates a group
 func (m *LDAPManager) UpdateGroup(req *pb.UpdateGroupRequest) error {
-	// if req.GetName() == "" {
-	// 	return &ValidationError{Message: "group name can not be empty"}
-	// }
+	groupName := req.GetName()
+	if groupName == "" {
+		return &ldaperror.ValidationError{
+			Message: "group name must not be empty",
+		}
+	}
 
-	// groupName := req.GetName()
-	// if req.GetNewName() != "" && req.GetNewName() != groupName {
-	// 	modifyRequest := &ldap.ModifyDNRequest{
-	// 		DN:           m.GroupNamed(groupName),
-	// 		NewRDN:       fmt.Sprintf("cn=%s", req.GetNewName()),
-	// 		DeleteOldRDN: true,
-	// 		NewSuperior:  "",
-	// 	}
-	// 	log.Debugf("UpdateGroup modifyRequest=%v", modifyRequest)
-	// 	if err := m.ldap.ModifyDN(modifyRequest); err != nil {
-	// 		return err
-	// 	}
-	// 	log.Infof("renamed group from %q to %q", req.GetName(), req.GetNewName())
-	// 	groupName = req.GetNewName()
-	// }
+	newGroupName := req.GetNewName()
+	if newGroupName != "" && newGroupName != groupName {
+		modifyRequest := &ldap.ModifyDNRequest{
+			DN:           m.GroupNamed(groupName),
+			NewRDN:       fmt.Sprintf("cn=%s", newGroupName),
+			DeleteOldRDN: true,
+			NewSuperior:  "",
+		}
+		log.Debugf("UpdateGroup modifyRequest=%v", modifyRequest)
+		if err := m.ldap.ModifyDN(modifyRequest); err != nil {
+			return fmt.Errorf("failed to rename group %q to %q", groupName, newGroupName)
+		}
+		log.Infof("renamed group from %q to %q", groupName, newGroupName)
+		groupName = newGroupName
+	}
 
-	// modifyGroupRequest := ldap.NewModifyRequest(
-	// 	m.GroupNamed(groupName),
-	// 	[]ldap.Control{},
-	// )
-	// if req.GetGid() >= MinGID {
-	// 	modifyGroupRequest.Replace("gidNumber", []string{strconv.Itoa(int(req.GetGid()))})
-	// }
-	// if err := m.ldap.Modify(modifyGroupRequest); err != nil {
-	// 	return fmt.Errorf("failed to modify group %q: %v", groupName, err)
-	// }
-	// log.Infof("updated %d attributes of group %q", len(modifyGroupRequest.Changes), groupName)
+	modifyGroupRequest := ldap.NewModifyRequest(
+		m.GroupNamed(groupName),
+		[]ldap.Control{},
+	)
+	if req.GetGID() >= MinGID {
+		GID := strconv.Itoa(int(req.GetGID()))
+		modifyGroupRequest.Replace("gidNumber", []string{GID})
+	}
+	if err := m.ldap.Modify(modifyGroupRequest); err != nil {
+		return fmt.Errorf("failed to modify group %q: %v", groupName, err)
+	}
+	updated := len(modifyGroupRequest.Changes)
+	log.Infof("updated %d attributes of group %q", updated, groupName)
 	return nil
 }

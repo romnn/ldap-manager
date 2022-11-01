@@ -12,17 +12,17 @@ import (
 )
 
 // NewUser creates a new user
-func (s *LDAPManagerService) NewUser(ctx context.Context, in *pb.NewUserRequest) (*pb.Empty, error) {
+func (s *LDAPManagerService) NewUser(ctx context.Context, req *pb.NewUserRequest) (*pb.Empty, error) {
 	_, err := s.Authenticate(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.manager.NewUser(in, pb.HashingAlgorithm_DEFAULT); err != nil {
+	if err := s.manager.NewUser(req); err != nil {
 		log.Error(err)
-		if appErr, safe := err.(ldaperror.Error); safe {
+		if appErr, ok := err.(ldaperror.Error); ok {
 			return nil, appErr.StatusError()
 		}
-		return nil, status.Error(codes.Internal, "error while creating new account")
+		return nil, status.Error(codes.Internal, "error creating new account")
 	}
 	return &pb.Empty{}, nil
 }

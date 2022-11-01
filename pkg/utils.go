@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"regexp"
 	// "strconv"
-	"encoding/json"
+	// "encoding/json"
 	"strings"
 
-	"github.com/k0kubun/pp"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
-	// "github.com/romnn/ldap-manager"
+	"github.com/k0kubun/pp/v3"
+	// "google.golang.org/protobuf/encoding/protojson"
+	// "google.golang.org/protobuf/proto"
 	"github.com/go-ldap/ldap/v3"
 	// log "github.com/sirupsen/logrus"
 )
@@ -44,16 +43,22 @@ var (
 	}
 )
 
-// PrettyPrint formats a proto message into a human readable string
-func PrettyPrint(m proto.Message) (string, error) {
-	encoded, err := protojson.Marshal(m)
-	if err != nil {
-		return "", err
-	}
-	var decoded map[string]interface{}
-	err = json.Unmarshal(encoded, &decoded)
-	return pp.Sprint(decoded), err
+// PrettyPrint formats an interface into a human readable string
+func PrettyPrint(m interface{}) string {
+	return pp.Sprint(m)
 }
+
+
+// PrettyPrintProto formats a proto message into a human readable string
+// func PrettyPrintProto(m proto.Message) (string, error) {
+// 	encoded, err := protojson.Marshal(m)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	var decoded map[string]interface{}
+// 	err = json.Unmarshal(encoded, &decoded)
+// 	return PrettyPrint(decoded), err
+// }
 
 // Contains is a generic function that checks if a collection contains a value
 func Contains[T comparable](s []T, e T) bool {

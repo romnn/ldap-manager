@@ -12,19 +12,19 @@ import (
 )
 
 // GetUser gets a user
-func (s *LDAPManagerService) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.UserData, error) {
+func (s *LDAPManagerService) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.User, error) {
 	claims, err := s.Authenticate(ctx)
 	if err != nil {
 		return nil, err
 	}
 	username := req.GetUsername()
-	if !claims.IsAdmin && claims.UID != username {
+	if !claims.IsAdmin && claims.Username != username {
 		return nil, status.Error(codes.PermissionDenied, "requires admin privileges")
 	}
 	user, err := s.manager.GetUser(username)
 	if err != nil {
 		log.Error(err)
-		if appErr, safe := err.(ldaperror.Error); safe {
+		if appErr, ok := err.(ldaperror.Error); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error while getting account")

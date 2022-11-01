@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	// "errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -61,7 +60,6 @@ func (m *LDAPManager) setupLastGID() error {
 	}
 	return m.setupLastID(
 		highestGID,
-		// m.GroupAttribute,
 		"lastGID",
 		`the last GID used to create a posix group,
 prevents re-use of a GID from a deleted group.`,
@@ -75,20 +73,14 @@ func (m *LDAPManager) setupLastUID() error {
 	}
 	return m.setupLastID(
 		highestUID,
-		// m.AccountAttribute,
 		"lastUID",
 		`last UID used to create a posix user,
 prevents the re-use of a UID from a deleted user.`,
 	)
 }
 
-// func (m *LDAPManager) setupUserGroup() error {
-// 	strict := false
-// 	return m.NewGroup(&pb.NewGroupRequest{Name: m.DefaultUserGroup}, strict)
-// }
-
 func (m *LDAPManager) setupAdmin() error {
-	admin := &pb.Account{
+	admin := pb.NewUserRequest{
 		Username:  m.DefaultAdminUsername,
 		Password:  m.DefaultAdminPassword,
 		FirstName: "changeme",
@@ -96,30 +88,28 @@ func (m *LDAPManager) setupAdmin() error {
 		Email:     "changeme@changeme.com",
 	}
 
-	// create admin group (admin user may not exist yet)
-	strict := false
-	if err := m.NewGroup(&pb.NewGroupRequest{
-		Name:    m.DefaultAdminGroup,
-		Members: []string{admin.GetUsername()},
-	}, strict); err != nil {
-		if _, exists := err.(*GroupAlreadyExistsError); !exists {
-			return fmt.Errorf("failed to create admins group: %v", err)
+	// get the admin group
+	adminGroup, err := m.GetGroupByName(m.DefaultAdminGroup)
+	_, missing := err.(*ZeroOrMultipleGroupsError)
+
+	if missing {
+		// create admin group (admin user may not exist yet)
+		strict := false
+		if err := m.NewGroup(&pb.NewGroupRequest{
+			Name:    m.DefaultAdminGroup,
+			Members: []string{admin.GetUsername()},
+		}, strict); err != nil {
+			if _, exists := err.(*GroupAlreadyExistsError); !exists {
+				return fmt.Errorf("failed to create admin group: %v", err)
+			}
 		}
 	}
 
-	// get the admin group
-	adminGroup, err := m.GetGroupByName(m.DefaultAdminGroup)
-	if err != nil {
-		return fmt.Errorf("failed to get admin group: %v", err)
-	}
-
-	if len(adminGroup.Members) < 1 || m.ForceCreateAdmin {
+	if missing || len(adminGroup.Members) < 1 || m.ForceCreateAdmin {
 		// add the initial admin
-		if err := m.NewUser(&pb.NewUserRequest{
-			Account: admin,
-		}, pb.HashingAlgorithm_DEFAULT); err != nil {
+		if err := m.NewUser(&admin); err != nil {
 			if _, exists := err.(*UserAlreadyExistsError); !exists {
-				return fmt.Errorf("failed to create initial admin account: %v", err)
+				return fmt.Errorf("failed to create initial admin user: %v", err)
 			}
 		}
 
@@ -130,79 +120,12 @@ func (m *LDAPManager) setupAdmin() error {
 			Group:    m.DefaultAdminGroup,
 		}, allowNonExistent); err != nil {
 			if _, exists := err.(*MemberAlreadyExistsError); !exists {
-				return fmt.Errorf("failed to add initial admin user to admins group: %v", err)
+				return fmt.Errorf("failed to add admin user to admins group: %v", err)
 			}
 		}
 	}
 	return nil
 }
-
-// func (m *LDAPManager) setupAdminGroup() error {
-// 	initialAdmin := &pb.NewUserRequest{
-// 		Account: &pb.Account{
-// 			Username:  m.DefaultAdminUsername,
-// 			Password:  m.DefaultAdminPassword,
-// 			FirstName: "changeme",
-// 			LastName:  "changeme",
-// 			Email:     "changeme@changeme.com",
-// 		},
-// 	}
-
-// 	// Check if the group already exists
-// 	adminGroup, err := m.GetGroupByName(m.DefaultAdminGroup)
-// 	if err != nil {
-// 		if _, ok := err.(*ZeroOrMultipleGroupsError); ok {
-// 			// Create the initial admin user in the group
-// 			if err := m.NewUser(initialAdmin, pb.HashingAlgorithm_DEFAULT); err != nil {
-// 				if _, exists := err.(*UserAlreadyExistsError); !exists {
-// 					return fmt.Errorf("failed to create initial admin account: %v", err)
-// 				}
-// 			}
-// 			// Create the group
-// 			strict := false
-// 			if err := m.NewGroup(&pb.NewGroupRequest{
-// 				Name:    m.DefaultAdminGroup,
-// 				Members: []string{initialAdmin.GetAccount().GetUsername()},
-// 			}, strict); err != nil {
-// 				return fmt.Errorf("failed to create admins group: %v", err)
-// 			}
-// 			return nil
-// 		}
-// 		return fmt.Errorf("failed to check if the admins group already exists: %v", err)
-// 	}
-
-// 	// Group already exists
-// 	if len(adminGroup.Members) < 1 || m.ForceCreateAdmin {
-// 		// Add the default admin user
-// 		if err := m.NewUser(initialAdmin, pb.HashingAlgorithm_DEFAULT); err != nil {
-// 			if _, exists := err.(*UserAlreadyExistsError); !exists {
-// 				return fmt.Errorf("failed to create initial admin account: %v", err)
-// 			}
-// 		}
-// 		allowNonExistent := false
-// 		if err := m.AddGroupMember(&pb.GroupMember{
-// 			Username: initialAdmin.GetAccount().GetUsername(),
-// 			Group:    m.DefaultAdminGroup,
-// 		}, allowNonExistent); err != nil {
-// 			if _, ok := err.(*MemberAlreadyExistsError); !ok {
-// 				return fmt.Errorf("failed to add the default admin user to the admins group: %v", err)
-// 			}
-// 		}
-// 	}
-// 	return nil
-// }
-
-// func (m *LDAPManager) setupDefaultAdmin() error {
-// 	// Check if there are already admins
-// 	adminGroup, err := m.GetGroupByName(m.DefaultAdminGroup)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if len(adminGroup.Members) < 1 {
-// 		return errors.New("no admin user created")
-// 	}
-// 	return nil
-// }
 
 // SetupLDAP ...
 func (m *LDAPManager) SetupLDAP() error {
@@ -212,7 +135,7 @@ func (m *LDAPManager) SetupLDAP() error {
 			return fmt.Errorf("failed to setup group organizational unit (OU): %v", err)
 		}
 	} else {
-		log.Debug("completed setup of group organizational unit")
+		log.Debug("completed group organizational unit (OU) setup")
 	}
 
 	if err := m.setupUserOU(); err != nil {
@@ -221,27 +144,27 @@ func (m *LDAPManager) SetupLDAP() error {
 			return fmt.Errorf("failed to setup user organizational unit (OU): %v", err)
 		}
 	} else {
-		log.Debug("completed setup of user organizational unit")
+		log.Debug("completed user organizational unit (OU) setup")
 	}
 
 	if err := m.setupLastGID(); err != nil {
 		exists := ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists)
 		notFound := ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject)
 		if !exists && !notFound {
-			return fmt.Errorf("failed to setup the last GID: %v", err)
+			return fmt.Errorf("failed to setup GID: %v", err)
 		}
 	} else {
-		log.Info("completed setup of the last GID")
+		log.Info("completed GID setup")
 	}
 
 	if err := m.setupLastUID(); err != nil {
 		exists := ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists)
 		notFound := ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject)
 		if !exists && !notFound {
-			return fmt.Errorf("failed to setup the last UID: %v", err)
+			return fmt.Errorf("failed to setup UID: %v", err)
 		}
 	} else {
-		log.Info("completed setup of the last UID")
+		log.Info("completed UID setup")
 	}
 
 	if err := m.setupAdmin(); err != nil {
@@ -250,7 +173,7 @@ func (m *LDAPManager) SetupLDAP() error {
 	return nil
 }
 
-// Setup ...
+// Setup sets up the LDAP server
 // func (m *LDAPManager) Setup(skipSetupLDAP bool) error {
 func (m *LDAPManager) Setup() error {
 	var err error
@@ -275,10 +198,8 @@ func (m *LDAPManager) Setup() error {
 	if err := m.BindAdmin(); err != nil {
 		return err
 	}
-	// if !skipSetupLDAP {
 	if err := m.SetupLDAP(); err != nil {
 		return err
 	}
-	// }
 	return nil
 }

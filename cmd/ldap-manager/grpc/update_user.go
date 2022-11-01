@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"strconv"
 
 	ldaperror "github.com/romnn/ldap-manager/pkg/err"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
@@ -18,20 +17,20 @@ func (s *LDAPManagerService) UpdateUser(ctx context.Context, req *pb.UpdateUserR
 	if err != nil {
 		return nil, err
 	}
-	if !claims.IsAdmin && claims.UID != req.GetUsername() {
+	if !claims.IsAdmin && claims.Username != req.GetUsername() {
 		return nil, status.Error(codes.PermissionDenied, "requires admin privileges")
 	}
-	username, uidNumber, err := s.manager.UpdateUser(req, pb.HashingAlgorithm_DEFAULT, claims.IsAdmin)
+	username, uidNumber, err := s.manager.UpdateUser(req, claims.IsAdmin)
 	if err != nil {
 		log.Error(err)
-		if appErr, safe := err.(ldaperror.Error); safe {
+		if appErr, ok := err.(ldaperror.Error); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error while updating account")
 	}
 	return s.SignUserToken(&AuthClaims{
-		UID:         username,
-		UIDNumber:   strconv.Itoa(uidNumber),
+		Username:    username,
+		UID:         uidNumber,
 		IsAdmin:     claims.IsAdmin,
 		DisplayName: claims.DisplayName,
 	})

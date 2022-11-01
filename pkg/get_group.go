@@ -15,7 +15,7 @@ import (
 // groups are found
 type ZeroOrMultipleGroupsError struct {
 	Group string
-	Gid   int
+	GID   int
 	Count int
 }
 
@@ -23,7 +23,7 @@ func (e *ZeroOrMultipleGroupsError) groupName() string {
 	if e.Group != "" {
 		return fmt.Sprintf("name %q", e.Group)
 	}
-	return fmt.Sprintf("GID %d", e.Gid)
+	return fmt.Sprintf("GID %d", e.GID)
 }
 
 func (e *ZeroOrMultipleGroupsError) Error() string {
@@ -41,11 +41,11 @@ func (e *ZeroOrMultipleGroupsError) StatusError() error {
 }
 
 // GetGroupByGID gets a group by its GID
-func (m *LDAPManager) GetGroupByGID(gid int) (*pb.Group, error) {
+func (m *LDAPManager) GetGroupByGID(GID int) (*pb.Group, error) {
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(gid=%d)", gid),
+		fmt.Sprintf("(gid=%d)", GID),
 		[]string{"cn"},
 		[]ldap.Control{},
 	))
@@ -53,9 +53,12 @@ func (m *LDAPManager) GetGroupByGID(gid int) (*pb.Group, error) {
 		return nil, err
 	}
 	if len(result.Entries) != 1 {
-		return nil, &ZeroOrMultipleGroupsError{Gid: gid, Count: len(result.Entries)}
+		return nil, &ZeroOrMultipleGroupsError{
+			GID:   GID,
+			Count: len(result.Entries),
+		}
 	}
-	return m.ParseGroup(result.Entries[0])
+	return m.parseGroup(result.Entries[0])
 	// group := result.Entries[0]
 	// cn := group.GetAttributeValue("cn")
 	// if cn == "" {
@@ -77,24 +80,27 @@ func (m *LDAPManager) GetGroupByName(name string) (*pb.Group, error) {
 		return nil, err
 	}
 	if len(result.Entries) != 1 {
-		return nil, &ZeroOrMultipleGroupsError{Group: name, Count: len(result.Entries)}
+		return nil, &ZeroOrMultipleGroupsError{
+			Group: name,
+			Count: len(result.Entries),
+		}
 	}
-	return m.ParseGroup(result.Entries[0])
+	return m.parseGroup(result.Entries[0])
 }
 
 // ParseGroup parses an ldap.Entry as a group
-func (m *LDAPManager) ParseGroup(entry *ldap.Entry) (*pb.Group, error) {
+func (m *LDAPManager) parseGroup(entry *ldap.Entry) (*pb.Group, error) {
 	var members []string
 	for _, member := range entry.GetAttributeValues(m.GroupMembershipAttribute) {
 		members = append(members, member)
 	}
-	gid, err := strconv.Atoi(entry.GetAttributeValue("gidNumber"))
+	GID, err := strconv.Atoi(entry.GetAttributeValue("gidNumber"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to gid to integer: %v", err)
 	}
 	return &pb.Group{
 		Members: members,
 		Name:    entry.GetAttributeValue("cn"),
-		Gid:     int64(gid),
+		GID:     int64(GID),
 	}, nil
 }

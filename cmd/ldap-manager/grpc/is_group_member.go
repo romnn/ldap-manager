@@ -17,15 +17,15 @@ func (s *LDAPManagerService) IsGroupMember(ctx context.Context, req *pb.IsGroupM
 	if err != nil {
 		return nil, err
 	}
-	if !claims.IsAdmin && claims.UID != req.GetUsername() {
+	if !claims.IsAdmin && claims.Username != req.GetUsername() {
 		return nil, status.Error(codes.PermissionDenied, "requires admin privileges")
 	}
 	memberStatus, err := s.manager.IsGroupMember(req)
 	if err != nil {
-		if appErr, safe := err.(ldaperror.Error); safe {
+		log.Error(err)
+		if appErr, ok := err.(ldaperror.Error); ok {
 			return nil, appErr.StatusError()
 		}
-		log.Error(err)
 		return nil, status.Error(codes.Internal, "error while checking if user is member")
 	}
 	return memberStatus, nil

@@ -19,13 +19,13 @@ func (s *LDAPManagerService) DeleteUser(ctx context.Context, req *pb.DeleteUserR
 	}
 	log.Info(claims.UID, req.GetUsername())
 
-	if !claims.IsAdmin && claims.UID != req.GetUsername() {
+	if !claims.IsAdmin && claims.Username != req.GetUsername() {
 		return nil, status.Error(codes.PermissionDenied, "requires admin privileges")
 	}
-	allowDeleteOfDefaultGroups := false
-	if err := s.manager.DeleteUser(req, allowDeleteOfDefaultGroups); err != nil {
+	keepGroups := false
+	if err := s.manager.DeleteUser(req, keepGroups); err != nil {
 		log.Error(err)
-		if appErr, safe := err.(ldaperror.Error); safe {
+		if appErr, ok := err.(ldaperror.Error); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error while deleting account")

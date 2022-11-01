@@ -21,8 +21,8 @@ import (
 
 // AuthClaims encode authentication JWT claims
 type AuthClaims struct {
-	UID         string `json:"uid"`
-	UIDNumber   string `json:"uid_num"`
+	Username    string `json:"username"`
+	UID         int32  `json:"uid"`
 	IsAdmin     bool   `json:"is_admin"`
 	DisplayName string `json:"display_name"`
 	jwt.RegisteredClaims
@@ -55,14 +55,16 @@ func (s *LDAPManagerService) SignUserToken(claims *AuthClaims) (*pb.Token, error
 	expirationTime := time.Now().Add(s.authenticator.ExpiresAfter)
 	return &pb.Token{
 		Token:       token,
-		Username:    claims.UID,
+		Username:    claims.Username,
+		UID:         claims.UID,
 		IsAdmin:     claims.IsAdmin,
 		DisplayName: claims.DisplayName,
 		Expires:     timestamppb.New(expirationTime),
 	}, nil
 }
 
-// Attempts to authenticate a user if a token is supplied in the request context
+// Authenticate attempts to authenticate a user.
+// It checks if a token is supplied in the request context
 func (s *LDAPManagerService) Authenticate(ctx context.Context) (*AuthClaims, error) {
 	requireAdmin, err := MethodRequiresAdmin(ctx)
 	if err != nil {
@@ -91,35 +93,33 @@ func (s *LDAPManagerService) Authenticate(ctx context.Context) (*AuthClaims, err
 }
 
 // Login logs in a user
-func (s *LDAPManagerService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Token, error) {
-	user, err := s.manager.AuthenticateUser(in)
+func (s *LDAPManagerService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Token, error) {
+	user, err := s.manager.AuthenticateUser(req)
 	if err != nil {
-		if appErr, safe := err.(ldaperror.Error); safe {
+		log.Error(err)
+		if appErr, ok := err.(ldaperror.Error); ok {
 			return &pb.Token{}, appErr.StatusError()
 		}
-		log.Error(err)
-		return &pb.Token{}, status.Error(codes.Unauthenticated, "unauthorized")
+		return nil, status.Error(codes.Unauthenticated, "unauthorized")
 	}
-	uid := user.GetAttributeValue(s.manager.AccountAttribute)
-	uidNumber := user.GetAttributeValue("uidNumber")
-	if uid == "" || uidNumber == "" {
-		return &pb.Token{}, status.Error(codes.NotFound, "user is invalid")
+	username := user.GetUsername()
+	UID := user.GetUID()
+	if username == "" || UID == 0 {
+		return nil, status.Error(codes.NotFound, "user is invalid")
 	}
 
 	adminMemberStatus, err := s.manager.IsGroupMember(&pb.IsGroupMemberRequest{
-		Username: uid,
+		Username: username,
 		Group:    s.manager.DefaultAdminGroup,
 	})
 	if err != nil {
 		log.Error(err)
-		return nil, status.Error(codes.Internal, "error while checking user member status")
+		return nil, status.Error(codes.Internal, "error checking user member status")
 	}
-	isAdmin := adminMemberStatus.GetIsMember()
-	displayName := user.GetAttributeValue("displayName")
 	return s.SignUserToken(&AuthClaims{
-		UID:         uid,
-		UIDNumber:   uidNumber,
-		IsAdmin:     isAdmin,
-		DisplayName: displayName,
+		Username:    username,
+		UID:         UID,
+		IsAdmin:     adminMemberStatus.GetIsMember(),
+		DisplayName: user.GetDisplayName(),
 	})
 }
