@@ -12,23 +12,22 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// MemberAlreadyExistsError ...
+// A MemberAlreadyExistsError is returned when a user is
+// already a member of a group
 type MemberAlreadyExistsError struct {
 	error
 	Group, Member string
 }
 
-// Error ...
 func (e *MemberAlreadyExistsError) Error() string {
 	return fmt.Sprintf("member %q is already a member of group %q", e.Member, e.Group)
 }
 
-// StatusError...
 func (e *MemberAlreadyExistsError) StatusError() error {
 	return status.Errorf(codes.AlreadyExists, e.Error())
 }
 
-// AddGroupMember ...
+// AddGroupMember adds a user as a group member
 func (m *LDAPManager) AddGroupMember(req *pb.GroupMember, allowNonExistent bool) error {
 	group := req.GetGroup()
 	if group == "" {

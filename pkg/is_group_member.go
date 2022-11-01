@@ -1,26 +1,35 @@
 package pkg
 
 import (
+	"fmt"
+
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
 
-// IsGroupMember ...
+// IsGroupMember checks if a user is member of a group
 func (m *LDAPManager) IsGroupMember(req *pb.IsGroupMemberRequest) (*pb.GroupMemberStatus, error) {
-	var status pb.GroupMemberStatus
 	// result, err := m.findGroup(req.Group, []string{"dn", m.GroupMembershipAttribute})
-	// if err != nil {
-	// 	return &status, err
-	// }
+	group, err := m.GetGroupByName(req.GetGroup())
+	// , []string{"dn", m.GroupMembershipAttribute})
+	if err != nil {
+		return nil, err
+	}
 	// if len(result.Entries) != 1 {
-	// 	return &status, &ZeroOrMultipleGroupsError{Group: req.GetGroup(), Count: len(result.Entries)}
-	// }
-	// if !m.GroupMembershipUsesUID {
-	// 	req.Username = fmt.Sprintf("%s=%s,%s", m.AccountAttribute, req.GetUsername(), m.UserGroupDN)
-	// }
-	// for _, member := range result.Entries[0].GetAttributeValues(m.GroupMembershipAttribute) {
-	// 	if member == req.GetUsername() {
-	// 		return &pb.GroupMemberStatus{IsMember: true}, nil
+	// 	return nil, &ZeroOrMultipleGroupsError{
+	// 		Group: req.GetGroup(),
+	// 		Count: len(result.Entries),
 	// 	}
 	// }
-	return &status, nil
+	username := req.GetUsername()
+	if !m.GroupMembershipUsesUID {
+		username = fmt.Sprintf("%s=%s,%s", m.AccountAttribute, username, m.UserGroupDN)
+	}
+	// group := groups.Entries[0]
+	// for _, member := range group.GetAttributeValues(m.GroupMembershipAttribute) {
+	for _, member := range group.GetMembers() {
+		if member == username {
+			return &pb.GroupMemberStatus{IsMember: true}, nil
+		}
+	}
+	return &pb.GroupMemberStatus{IsMember: false}, nil
 }

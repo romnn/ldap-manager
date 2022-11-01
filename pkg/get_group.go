@@ -11,7 +11,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// A ZeroOrMultipleGroupsError is returned when zero or multiple groups are found
+// A ZeroOrMultipleGroupsError is returned when zero or multiple
+// groups are found
 type ZeroOrMultipleGroupsError struct {
 	Group string
 	Gid   int
@@ -39,7 +40,8 @@ func (e *ZeroOrMultipleGroupsError) StatusError() error {
 	return status.Errorf(codes.NotFound, e.Error())
 }
 
-func (m *LDAPManager) GetGroupByGID(gid int) (string, int, error) {
+// GetGroupByGID gets a group by its GID
+func (m *LDAPManager) GetGroupByGID(gid int) (*pb.Group, error) {
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
@@ -48,33 +50,21 @@ func (m *LDAPManager) GetGroupByGID(gid int) (string, int, error) {
 		[]ldap.Control{},
 	))
 	if err != nil {
-		return "", 0, err
+		return nil, err
 	}
 	if len(result.Entries) != 1 {
-		return "", 0, &ZeroOrMultipleGroupsError{Gid: gid, Count: len(result.Entries)}
+		return nil, &ZeroOrMultipleGroupsError{Gid: gid, Count: len(result.Entries)}
 	}
-	group := result.Entries[0]
-	cn := group.GetAttributeValue("cn")
-	if cn == "" {
-		return "", 0, fmt.Errorf("group with GID %d has no valid CN attribute", gid)
-	}
-	return cn, gid, nil
+	return m.ParseGroup(result.Entries[0])
+	// group := result.Entries[0]
+	// cn := group.GetAttributeValue("cn")
+	// if cn == "" {
+	// 	return "", 0, fmt.Errorf("group with GID %d has no valid CN attribute", gid)
+	// }
+	// return cn, gid, nil
 }
 
-// func (m *ldapmanager.LDAPManager) getGroupGID(groupName string) (int, error) {
-// 	if groupName == "" {
-// 		return 0, &ValidationError{Message: "group name can not be empty"}
-// 	}
-// 	result, err := m.findGroup(groupName, []string{"gidNumber"})
-// 	if err != nil {
-// 		return 0, err
-// 	}
-// 	if len(result.Entries) != 1 {
-// 		return 0, &ZeroOrMultipleGroupsError{Group: groupName, Count: len(result.Entries)}
-// 	}
-// 	return strconv.Atoi(result.Entries[0].GetAttributeValue("gidNumber"))
-// }
-
+// GetGroupByName gets a group by its name
 func (m *LDAPManager) GetGroupByName(name string) (*pb.Group, error) {
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,

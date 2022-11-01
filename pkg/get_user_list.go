@@ -46,7 +46,7 @@ func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, err
 	users := make(map[string]*pb.UserData)
 	for _, entry := range result.Entries {
 		if entryKey := entry.GetAttributeValue(req.GetSortKey()); entryKey != "" {
-			users[entryKey] = parseUser(entry)
+			users[entryKey] = ParseUser(entry)
 		}
 	}
 	// Sort for deterministic clipping

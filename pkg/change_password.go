@@ -1,42 +1,50 @@
 package pkg
 
 import (
-	"errors"
+	// "errors"
 	"fmt"
 
 	"github.com/go-ldap/ldap/v3"
-	// ldaphash "github.com/romnn/ldap-manager/pkg/hash"
+	ldaperror "github.com/romnn/ldap-manager/pkg/err"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
 )
 
-// ChangePassword ...
+// ChangePassword changes the password of a user
 func (m *LDAPManager) ChangePassword(req *pb.ChangePasswordRequest) error {
-	// Validate
 	username := req.GetUsername()
+	if username == "" {
+		return &ldaperror.ValidationError{Message: "username must not be empty"}
+	}
 	password := req.GetPassword()
-	if username == "" || password == "" {
-		// todo: make this application error
-		return errors.New("username and password must not be empty")
+	if password == "" {
+		return &ldaperror.ValidationError{Message: "password must not be empty"}
 	}
-	if req.GetHashingAlgorithm() == pb.HashingAlgorithm_DEFAULT {
-		req.HashingAlgorithm = m.HashingAlgorithm
-	}
-
-	result, err := m.ldap.Search(ldap.NewSearchRequest(
-		m.BaseDN,
-		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(%s=%s)", m.AccountAttribute, EscapeFilter(username)),
-		[]string{"dn"},
-		[]ldap.Control{},
-	))
+	user, err := m.GetUser(username)
+	log.Infof("user: %v", user)
 	if err != nil {
-		// todo: make this application error
-		return fmt.Errorf("failed to find existing user: %v", err)
+		return err
 	}
-	if len(result.Entries) != 1 {
-		return &ZeroOrMultipleUsersError{Username: username, Count: len(result.Entries)}
-	}
+	// result, err := m.ldap.Search(ldap.NewSearchRequest(
+	// 	m.BaseDN,
+	// 	ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+	// 	fmt.Sprintf("(%s=%s)", m.AccountAttribute, EscapeFilter(username)),
+	// 	[]string{"dn"},
+	// 	[]ldap.Control{},
+	// ))
+	// if err != nil {
+	// return
+	// return &ZeroOrMultipleUsersError{
+	// Username: username,
+	// Count: len(result.Entries),
+	// }
+	// }
+	// if len(result.Entries) != 1 {
+	// 	return &ZeroOrMultipleUsersError{
+	// Username: username,
+	// Count: len(result.Entries),
+	// }
+	// }
 	// TODO
 	// userDN := result.Entries[0].DN
 	// hashedPassword, err := ldaphash.Password(req.GetPassword(), req.GetHashingAlgorithm())
@@ -48,10 +56,22 @@ func (m *LDAPManager) ChangePassword(req *pb.ChangePasswordRequest) error {
 	// 	[]ldap.Control{},
 	// )
 	// modifyPasswordRequest.Replace("userPassword", []string{hashedPassword})
-	// log.Debugf("modifyPasswordRequest=%v", modifyPasswordRequest)
+	// // log.Debugf("modifyPasswordRequest=%v", modifyPasswordRequest)
 	// if err := m.ldap.Modify(modifyPasswordRequest); err != nil {
 	// 	return fmt.Errorf("failed to modify existing user: %v", err)
 	// }
-	log.Infof("changed password for user %q", username)
+
+	// change password of user
+	passwordModifyRequest := &ldap.PasswordModifyRequest{
+		UserIdentity: username,
+		NewPassword:  password,
+	}
+	// log.Infof("passwordModifyRequest=%v", passwordModifyRequest)
+	_, err = m.ldap.PasswordModify(passwordModifyRequest)
+	if err != nil {
+		return fmt.Errorf("failed to set password of user %q: %v", username, err)
+	}
+
+	// log.Infof("changed password for user %q", username)
 	return nil
 }

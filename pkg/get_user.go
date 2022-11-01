@@ -1,10 +1,11 @@
 package pkg
 
 import (
-	"errors"
+	// "errors"
 	"fmt"
 
 	"github.com/go-ldap/ldap/v3"
+	ldaperror "github.com/romnn/ldap-manager/pkg/err"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 
 	"google.golang.org/grpc/codes"
@@ -32,7 +33,8 @@ func (e *ZeroOrMultipleUsersError) StatusError() error {
 	return status.Errorf(codes.NotFound, e.Error())
 }
 
-func parseUser(entry *ldap.Entry) *pb.UserData {
+// ParseUser parses an ldap entry as `UserData`
+func ParseUser(entry *ldap.Entry) *pb.UserData {
 	user := &pb.UserData{Data: make(map[string]string)}
 	for _, attr := range entry.Attributes {
 		user.Data[attr.Name] = entry.GetAttributeValue(attr.Name)
@@ -58,8 +60,9 @@ func (m *LDAPManager) defaultUserFields() []string {
 // GetUser gets a user
 func (m *LDAPManager) GetUser(username string) (*pb.UserData, error) {
 	if username == "" {
-		// todo: make this application error
-		return nil, errors.New("account username must not be empty")
+		return nil, &ldaperror.ValidationError{
+      Message: "username must not be empty",
+    }
 	}
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.UserGroupDN,
@@ -69,10 +72,13 @@ func (m *LDAPManager) GetUser(username string) (*pb.UserData, error) {
 		[]ldap.Control{},
 	))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get account %q: %v", username, err)
+		return nil, fmt.Errorf("failed to get user %q: %v", username, err)
 	}
 	if len(result.Entries) != 1 {
-		return nil, &ZeroOrMultipleUsersError{Username: username, Count: len(result.Entries)}
+		return nil, &ZeroOrMultipleUsersError{
+			Username: username,
+			Count:    len(result.Entries),
+		}
 	}
-	return parseUser(result.Entries[0]), nil
+	return ParseUser(result.Entries[0]), nil
 }

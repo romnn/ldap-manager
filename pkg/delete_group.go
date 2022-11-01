@@ -1,36 +1,36 @@
 package pkg
 
 import (
-	// "fmt"
-	// "sort"
-	// "strconv"
-	// "strings"
-
-	// "google.golang.org/grpc/codes"
-
-	// "github.com/go-ldap/ldap/v3"
-	// "github.com/romnn/ldap-manager"
+	"github.com/go-ldap/ldap/v3"
+	ldaperror "github.com/romnn/ldap-manager/pkg/err"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
-	// log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
-// DeleteGroup ...
+// DeleteGroup deletes a group
 func (m *LDAPManager) DeleteGroup(req *pb.DeleteGroupRequest) error {
-	// if req.GetName() == "" {
-	// 	return &ValidationError{Message: "group name can not be empty"}
-	// }
-	// if m.IsProtectedGroup(req.GetName()) {
-	// 	return &ValidationError{Message: "deleting the default user or admin group is not allowed"}
-	// }
-	// if err := m.ldap.Del(ldap.NewDelRequest(
-	// 	m.GroupNamed(req.GetName()),
-	// 	[]ldap.Control{},
-	// )); err != nil {
-	// 	if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
-	// 		return &ZeroOrMultipleGroupsError{Group: req.GetName()}
-	// 	}
-	// 	return err
-	// }
-	// log.Infof("removed group %q", req.GetName())
+	name := req.GetName()
+	if name == "" {
+		return &ldaperror.ValidationError{
+			Message: "group name can not be empty",
+		}
+	}
+	if m.IsProtectedGroup(name) {
+		return &ldaperror.ValidationError{
+			Message: "deleting the default user or admin group is not allowed",
+		}
+	}
+	if err := m.ldap.Del(ldap.NewDelRequest(
+		m.GroupNamed(name),
+		[]ldap.Control{},
+	)); err != nil {
+		if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
+			return &ZeroOrMultipleGroupsError{
+				Group: name,
+			}
+		}
+		return err
+	}
+	log.Infof("removed group %q", name)
 	return nil
 }
