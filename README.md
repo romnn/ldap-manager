@@ -115,21 +115,19 @@ You can then access the website at [localhost:5000](http://localhost:5000).
 #### TODO
 
 - v2
-
-  - split into more files
+  - add integration test with harbor
+  - test the grpc and http servers as well
+  - refactor to use manual ldap search only where necessary
+  - fix the frontend
+  - add tests for each file in pkg
   - decide what goes into pkg and what goes into internal
-  - get rid of the password hashing mess
   - fix the docker container
-  - use an interface for the main functions of the manager
+  - use an interface for the main functions of the manager in GRPC server
   - fix nil pointer errors
   - point out that the goal is user management only
 
-  - add pagination
   - documentation
-  - Fix flaky tests using fuzzy testing and check slappasswd source
-  - Implement missing password hashing algorithms
-  - Embed crypt(3) as vendored?
-
+  
 - nice to have
 
   - Implement CLI interface
@@ -141,7 +139,13 @@ You can then access the website at [localhost:5000](http://localhost:5000).
     - verify?
 
 - done
+  - Implement missing password hashing algorithms
+  - Embed crypt(3) as vendored?
+  - Fix flaky tests using fuzzy testing and check slappasswd source
+  - add pagination
+  - get rid of the password hashing mess
   - decide on a consistent naming (user vs account)
+  - split into more files
   - update dependencies
   - fix issues and use new api for grpc and http without a base
   - add images to the readme

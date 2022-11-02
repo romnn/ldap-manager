@@ -39,7 +39,6 @@ message User {
 
   string login_shell = 30;
   string home_directory = 31;
-  /* map<string, string> data = 100; */
 }
 
 message UserList {
@@ -132,7 +131,6 @@ message Group {
   string name = 1;
   repeated string members = 2;
   int64 GID = 3;
-  int64 total = 10;
 }
 
 message GroupMember {

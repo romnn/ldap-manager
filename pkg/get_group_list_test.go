@@ -47,16 +47,14 @@ func TestGetGroupList(t *testing.T) {
 			Members: []string{
 				"uid=ldapadmin,ou=users,dc=example,dc=org",
 			},
-			GID:   2000,
-			Total: 0,
+			GID: 2000,
 		},
 		&pb.Group{
 			Name: "test-group",
 			Members: []string{
 				"uid=test-user,ou=users,dc=example,dc=org",
 			},
-			GID:   2002,
-			Total: 0,
+			GID: 2002,
 		},
 		&pb.Group{
 			Name: "users",
@@ -64,8 +62,7 @@ func TestGetGroupList(t *testing.T) {
 				"uid=ldapadmin,ou=users,dc=example,dc=org",
 				"uid=test-user,ou=users,dc=example,dc=org",
 			},
-			GID:   2001,
-			Total: 0,
+			GID: 2001,
 		},
 	}
 

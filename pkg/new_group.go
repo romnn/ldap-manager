@@ -127,7 +127,7 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 		Attributes: groupAttributes,
 		Controls:   []ldap.Control{},
 	}
-	log.Debugf("addGroupRequest=%v", addGroupRequest)
+	log.Debug(PrettyPrint(addGroupRequest))
 	if err := m.ldap.Add(addGroupRequest); err != nil {
 		return err
 	}

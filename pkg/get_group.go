@@ -40,13 +40,43 @@ func (e *ZeroOrMultipleGroupsError) StatusError() error {
 	return status.Errorf(codes.NotFound, e.Error())
 }
 
+const (
+	groupGidNumber = "gidNumber"
+	groupCN        = "cn"
+)
+
+// ParseGroup parses an ldap.Entry as a group
+func (m *LDAPManager) parseGroup(entry *ldap.Entry) (*pb.Group, error) {
+	var members []string
+	for _, member := range entry.GetAttributeValues(m.GroupMembershipAttribute) {
+		members = append(members, member)
+	}
+	GID, err := strconv.Atoi(entry.GetAttributeValue(groupGidNumber))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse group GID as integer: %v", err)
+	}
+	return &pb.Group{
+		Members: members,
+		Name:    entry.GetAttributeValue(groupCN),
+		GID:     int64(GID),
+	}, nil
+}
+
+func (m *LDAPManager) groupFields() []string {
+	return []string{
+		m.GroupMembershipAttribute,
+		groupGidNumber,
+		groupCN,
+	}
+}
+
 // GetGroupByGID gets a group by its GID
 func (m *LDAPManager) GetGroupByGID(GID int) (*pb.Group, error) {
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		fmt.Sprintf("(gid=%d)", GID),
-		[]string{"cn"},
+		m.groupFields(),
 		[]ldap.Control{},
 	))
 	if err != nil {
@@ -59,12 +89,6 @@ func (m *LDAPManager) GetGroupByGID(GID int) (*pb.Group, error) {
 		}
 	}
 	return m.parseGroup(result.Entries[0])
-	// group := result.Entries[0]
-	// cn := group.GetAttributeValue("cn")
-	// if cn == "" {
-	// 	return "", 0, fmt.Errorf("group with GID %d has no valid CN attribute", gid)
-	// }
-	// return cn, gid, nil
 }
 
 // GetGroupByName gets a group by its name
@@ -73,7 +97,7 @@ func (m *LDAPManager) GetGroupByName(name string) (*pb.Group, error) {
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		fmt.Sprintf("(cn=%s)", EscapeFilter(name)),
-		[]string{m.GroupMembershipAttribute, "gidNumber"},
+		m.groupFields(),
 		[]ldap.Control{},
 	))
 	if err != nil {
@@ -86,21 +110,4 @@ func (m *LDAPManager) GetGroupByName(name string) (*pb.Group, error) {
 		}
 	}
 	return m.parseGroup(result.Entries[0])
-}
-
-// ParseGroup parses an ldap.Entry as a group
-func (m *LDAPManager) parseGroup(entry *ldap.Entry) (*pb.Group, error) {
-	var members []string
-	for _, member := range entry.GetAttributeValues(m.GroupMembershipAttribute) {
-		members = append(members, member)
-	}
-	GID, err := strconv.Atoi(entry.GetAttributeValue("gidNumber"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to gid to integer: %v", err)
-	}
-	return &pb.Group{
-		Members: members,
-		Name:    entry.GetAttributeValue("cn"),
-		GID:     int64(GID),
-	}, nil
 }

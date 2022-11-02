@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	// "errors"
 	"fmt"
 	"strconv"
 
@@ -35,64 +34,48 @@ func (e *ZeroOrMultipleUsersError) StatusError() error {
 }
 
 const (
-	uidNumber     = "uidNumber"
-	gidNumber     = "gidNumber"
-	givenName     = "givenName"
-	displayName   = "displayName"
-	loginShell    = "loginShell"
-	homeDirectory = "homeDirectory"
-	mail          = "mail"
-	sn            = "sn"
-	cn            = "cn"
+	userUidNumber     = "uidNumber"
+	userGidNumber     = "gidNumber"
+	userGivenName     = "givenName"
+	userDisplayName   = "displayName"
+	userLoginShell    = "loginShell"
+	userHomeDirectory = "homeDirectory"
+	userMail          = "mail"
+	userSN            = "sn"
+	userCN            = "cn"
 )
 
 // ParseUser parses an ldap entry as a User
 func (m *LDAPManager) ParseUser(entry *ldap.Entry) *pb.User {
-	// user := &pb.User{Data: make(map[string]string)}
-	// for _, attr := range entry.Attributes {
-	// 	user.Data[attr.Name] = entry.GetAttributeValue(attr.Name)
-	// }
-
-	// string first_name = 1;
-	// string last_name = 2;
-
-	// int32 uid = 10;
-	// int64 gid = 11;
-	// string login_shell = 12;
-	// string home_directory = 13;
-
-	// string username = 20;
-	// string email = 21;
-
-	uid, _ := strconv.Atoi(entry.GetAttributeValue(uidNumber))
-	gid, _ := strconv.Atoi(entry.GetAttributeValue(gidNumber))
+	uid, _ := strconv.Atoi(entry.GetAttributeValue(userUidNumber))
+	gid, _ := strconv.Atoi(entry.GetAttributeValue(userGidNumber))
 	return &pb.User{
 		Username:      entry.GetAttributeValue(m.AccountAttribute),
-		FirstName:     entry.GetAttributeValue(givenName),
-		LastName:      entry.GetAttributeValue(sn),
-		CN:            entry.GetAttributeValue(cn),
-		DisplayName:   entry.GetAttributeValue(displayName),
+		FirstName:     entry.GetAttributeValue(userGivenName),
+		LastName:      entry.GetAttributeValue(userSN),
+		CN:            entry.GetAttributeValue(userCN),
+		DisplayName:   entry.GetAttributeValue(userDisplayName),
 		UID:           int32(uid),
 		GID:           int64(gid),
-		LoginShell:    entry.GetAttributeValue(loginShell),
-		HomeDirectory: entry.GetAttributeValue(homeDirectory),
-		Email:         entry.GetAttributeValue(mail),
+		LoginShell:    entry.GetAttributeValue(userLoginShell),
+		HomeDirectory: entry.GetAttributeValue(userHomeDirectory),
+		Email:         entry.GetAttributeValue(userMail),
 	}
 }
 
 func (m *LDAPManager) userFields() []string {
-  return []string{
-			m.AccountAttribute,
-			givenName,
-			sn,
-			cn,
-			displayName,
-			uidNumber,
-			gidNumber,
-			loginShell,
-			homeDirectory,
-			mail,
-		}
+	return []string{
+		m.AccountAttribute,
+		userGivenName,
+		userSN,
+		userCN,
+		userDisplayName,
+		userUidNumber,
+		userGidNumber,
+		userLoginShell,
+		userHomeDirectory,
+		userMail,
+	}
 }
 
 // GetUser gets a user
