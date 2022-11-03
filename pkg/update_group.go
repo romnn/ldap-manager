@@ -51,9 +51,15 @@ func (m *LDAPManager) UpdateGroup(req *pb.UpdateGroupRequest) error {
 		modifyGroupRequest.Replace("gidNumber", []string{GID})
 	}
 	if err := m.ldap.Modify(modifyGroupRequest); err != nil {
-		return fmt.Errorf("failed to modify group %q: %v", groupName, err)
+		return fmt.Errorf(
+      "failed to modify group %q: %v",
+      groupName, err,
+    )
 	}
 	updated := len(modifyGroupRequest.Changes)
-	log.Infof("updated %d attributes of group %q", updated, groupName)
+	log.Infof(
+    "updated %d attributes of group %q",
+    updated, groupName,
+  )
 	return nil
 }

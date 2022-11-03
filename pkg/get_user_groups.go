@@ -15,9 +15,9 @@ func (m *LDAPManager) GetUserGroups(req *pb.GetUserGroupsRequest) (*pb.GroupList
 		username = m.UserNamed(req.GetUsername())
 	}
 	filter := fmt.Sprintf(
-    "(&(objectClass=posixGroup)(%s=%s))",
-    m.GroupMembershipAttribute, username,
-  )
+		"(&(objectClass=posixGroup)(%s=%s))",
+		m.GroupMembershipAttribute, username,
+	)
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
@@ -32,7 +32,10 @@ func (m *LDAPManager) GetUserGroups(req *pb.GetUserGroupsRequest) (*pb.GroupList
 	for _, entry := range result.Entries {
 		group, err := m.parseGroup(entry)
 		if err != nil {
-			log.Warnf("failed to parse group %s: %v", PrettyPrint(entry), err)
+			log.Warnf(
+				"failed to parse group %s: %v",
+				PrettyPrint(entry), err,
+			)
 		} else {
 			groups = append(groups, group)
 		}

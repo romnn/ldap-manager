@@ -7,7 +7,7 @@ import (
 
 // TestAuthenticateUser tests authenticating as a user
 func TestAuthenticateUser(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	// create new user
@@ -21,7 +21,10 @@ func TestAuthenticateUser(t *testing.T) {
 		LastName:  "d",
 	}
 	if err := test.Manager.NewUser(req); err != nil {
-		t.Fatalf("failed to add user %q: %v", username, err)
+		t.Fatalf(
+			"failed to add user %q: %v",
+			username, err,
+		)
 	}
 
 	// check that authenticating the user using wrong password fails

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-ldap/ldap/v3"
+	log "github.com/sirupsen/logrus"
 )
 
 type highestIDRequest struct {
@@ -41,27 +42,12 @@ func (m *LDAPManager) GetHighestGID() (int, error) {
 }
 
 func (m *LDAPManager) getHighestID(req *highestIDRequest) (int, error) {
-	// var highestID int
-	// var entryBaseDN, entryFilter, entryAttribute string
-
-	// switch strings.ToUpper(attribute) {
-	// case strings.ToUpper(m.GroupAttribute):
-	// 	highestID = MinGID
-	// 	entryBaseDN = m.GroupsDN
-	// 	entryFilter = "(objectClass=posixGroup)"
-	// 	entryAttribute = "gidNumber"
-	// case strings.ToUpper(m.AccountAttribute):
-	// 	highestID = MinUID
-	// 	entryBaseDN = m.UserGroupDN
-	// 	entryFilter = fmt.Sprintf("(%s=*)", m.AccountAttribute)
-	// 	entryAttribute = "uidNumber"
-	// default:
-	// 	return highestID, fmt.Errorf("unknown id attribute %q", attribute)
-	// }
-
-	// Check for cached lastUID / lastGID value first
+	// check for cached lastUID / lastGID value first
 	attribute := strings.ToUpper(req.attribute)
-	filter := fmt.Sprintf("(&(objectClass=device)(cn=last%s))", attribute)
+	filter := fmt.Sprintf(
+		"(&(objectClass=device)(cn=last%s))",
+		attribute,
+	)
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
@@ -74,7 +60,8 @@ func (m *LDAPManager) getHighestID(req *highestIDRequest) (int, error) {
 	}
 	if len(result.Entries) > 0 {
 		serial := result.Entries[0].GetAttributeValue("serialNumber")
-		if fetchedID, err := strconv.Atoi(serial); err == nil && fetchedID >= req.min {
+		fetchedID, err := strconv.Atoi(serial)
+		if err == nil && fetchedID >= req.min {
 			return fetchedID, nil
 		}
 	}
@@ -109,11 +96,16 @@ func (m *LDAPManager) updateLastID(cn string, lastID int) error {
 		fmt.Sprintf("cn=%s,%s", cn, m.BaseDN),
 		[]ldap.Control{},
 	)
-	req.Replace("serialNumber", []string{strconv.Itoa(lastID)})
-	// log.Debugf("modifyRequest=%v", modifyRequest)
+	req.Replace("serialNumber", []string{
+		strconv.Itoa(lastID),
+	})
+	log.Debug(PrettyPrint(req))
+
 	if err := m.ldap.Modify(req); err != nil {
-		return fmt.Errorf("failed to update cn=%s: %v", cn, err)
+		return fmt.Errorf(
+			"failed to update cn=%s: %v",
+			cn, err,
+		)
 	}
-	// log.Debugf("updated cn=%s with %d", cn, newID)
 	return nil
 }

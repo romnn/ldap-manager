@@ -13,21 +13,6 @@ const (
 	PagingSize = 256
 )
 
-// CountGroups counts the number of groups
-// func (m *LDAPManager) CountGroups() (int, error) {
-// 	result, err := m.ldap.Search(ldap.NewSearchRequest(
-// 		m.GroupsDN,
-// 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-// 		"(objectClass=posixGroup)",
-// 		[]string{"cn"},
-// 		[]ldap.Control{},
-// 	))
-// 	if err != nil {
-// 		return 0, err
-// 	}
-// 	return len(result.Entries), nil
-// }
-
 // GetGroupList gets a list of all groups
 func (m *LDAPManager) GetGroupList(req *pb.GetGroupListRequest) (*pb.GroupList, error) {
 	filter := ParseFilter(req.Filter)
@@ -45,7 +30,10 @@ func (m *LDAPManager) GetGroupList(req *pb.GetGroupListRequest) (*pb.GroupList, 
 	for _, entry := range result.Entries {
 		group, err := m.parseGroup(entry)
 		if err != nil {
-			log.Errorf("failed to parse group %v: %v", entry, err)
+			log.Errorf(
+				"failed to parse group %v: %v",
+				entry, err,
+			)
 			continue
 		}
 		groups = append(groups, group)

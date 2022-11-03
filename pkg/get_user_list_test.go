@@ -9,7 +9,7 @@ import (
 
 // TestGetUserList tests getting a list of all users
 func TestGetUserList(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	req := pb.NewUserRequest{

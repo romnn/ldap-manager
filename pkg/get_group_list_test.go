@@ -9,7 +9,7 @@ import (
 
 // TestGetGroupList tests getting a list of all groups
 func TestGetGroupList(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	username := "test-user"

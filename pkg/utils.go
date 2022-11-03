@@ -3,15 +3,10 @@ package pkg
 import (
 	"fmt"
 	"regexp"
-	// "strconv"
-	// "encoding/json"
 	"strings"
 
 	"github.com/k0kubun/pp/v3"
-	// "google.golang.org/protobuf/encoding/protojson"
-	// "google.golang.org/protobuf/proto"
 	"github.com/go-ldap/ldap/v3"
-	// log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -28,37 +23,26 @@ const (
 	hex = "0123456789abcdef"
 )
 
-var (
-	validAttributes = []string{
-		"uid",
-		"cn",
-		"uidNumber",
-		"gidNumber",
-		"mail",
-		"sn",
-		"givenName",
-		"displayName",
-		"loginShell",
-		"homeDirectory",
-	}
-)
+// var (
+// 	validAttributes = []string{
+// 		"uid",
+// 		"cn",
+// 		"uidNumber",
+// 		"gidNumber",
+// 		"mail",
+// 		"sn",
+// 		"givenName",
+// 		"displayName",
+// 		"loginShell",
+// 		"homeDirectory",
+// 	}
+// )
 
 // PrettyPrint formats an interface into a human readable string
 func PrettyPrint(m interface{}) string {
 	return pp.Sprint(m)
 }
 
-
-// PrettyPrintProto formats a proto message into a human readable string
-// func PrettyPrintProto(m proto.Message) (string, error) {
-// 	encoded, err := protojson.Marshal(m)
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	var decoded map[string]interface{}
-// 	err = json.Unmarshal(encoded, &decoded)
-// 	return PrettyPrint(decoded), err
-// }
 
 // Contains is a generic function that checks if a collection contains a value
 func Contains[T comparable](s []T, e T) bool {
@@ -71,7 +55,8 @@ func Contains[T comparable](s []T, e T) bool {
 }
 
 func IsValidAttribute(attr string) bool {
-	return Contains(validAttributes, attr)
+  return true
+	// return Contains(validAttributes, attr)
 }
 
 func EscapeFilter(s string) string {

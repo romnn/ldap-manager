@@ -28,9 +28,15 @@ func (e *ZeroOrMultipleGroupsError) groupName() string {
 
 func (e *ZeroOrMultipleGroupsError) Error() string {
 	if e.Count > 1 {
-		return fmt.Sprintf("multiple (%d) groups with %s", e.Count, e.groupName())
+		return fmt.Sprintf(
+			"multiple (%d) groups with %s",
+			e.Count, e.groupName(),
+		)
 	}
-	return fmt.Sprintf("no group with %s", e.groupName())
+	return fmt.Sprintf(
+		"no group with %s",
+		e.groupName(),
+	)
 }
 
 func (e *ZeroOrMultipleGroupsError) StatusError() error {
@@ -53,7 +59,10 @@ func (m *LDAPManager) parseGroup(entry *ldap.Entry) (*pb.Group, error) {
 	}
 	GID, err := strconv.Atoi(entry.GetAttributeValue(groupGidNumber))
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse group GID as integer: %v", err)
+		return nil, fmt.Errorf(
+			"failed to parse group GID as integer: %v",
+			err,
+		)
 	}
 	return &pb.Group{
 		Members: members,

@@ -9,7 +9,7 @@ import (
 
 // TestChangeMissingUserPassword tests changing the password of a missing user
 func TestChangeMissingUserPassword(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	err := test.Manager.ChangePassword(&pb.ChangePasswordRequest{
@@ -24,7 +24,7 @@ func TestChangeMissingUserPassword(t *testing.T) {
 
 // TestChangeExistingUserPassword tests changing the password of an existing user
 func TestChangeExistingUserPassword(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	username := "romnn"
@@ -52,7 +52,10 @@ func TestChangeExistingUserPassword(t *testing.T) {
 		Username: username,
 		Password: oldPassword,
 	}); err != nil {
-		t.Fatalf("cannot authenticate user %q with password %q: %v", username, oldPassword, err)
+		t.Fatalf(
+			"cannot authenticate user %q with password %q: %v",
+			username, oldPassword, err,
+		)
 	}
 
 	// change the password
@@ -61,7 +64,10 @@ func TestChangeExistingUserPassword(t *testing.T) {
 		Username: username,
 		Password: newPassword,
 	}); err != nil {
-		t.Fatalf("failed to change password for user %q to %q: %v", username, newPassword, err)
+		t.Fatalf(
+			"failed to change password for user %q to %q: %v",
+			username, newPassword, err,
+		)
 	}
 
 	// check if we can authenticate the user using the new password
@@ -69,7 +75,10 @@ func TestChangeExistingUserPassword(t *testing.T) {
 		Username: username,
 		Password: newPassword,
 	}); err != nil {
-		t.Fatalf("cannot authenticate user %q with password %q: %v", username, newPassword, err)
+		t.Fatalf(
+			"cannot authenticate user %q with password %q: %v",
+			username, newPassword, err,
+		)
 	}
 
 	// check if authenticating the user with the old password fails
@@ -77,7 +86,10 @@ func TestChangeExistingUserPassword(t *testing.T) {
 		Username: username,
 		Password: oldPassword,
 	}); err == nil {
-		t.Fatalf("expected authenticating user %q with password %q to fail", username, oldPassword)
+		t.Fatalf(
+			"expected authenticating user %q with password %q to fail",
+			username, oldPassword,
+		)
 	}
 
 	// assert users did not change during the process

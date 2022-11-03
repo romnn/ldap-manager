@@ -3,18 +3,16 @@ package pkg
 import (
 	"testing"
 
-	// "github.com/romnn/go-recursive-sort"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
 
 // TestAddGroupMember tests adding a group member
 func TestAddGroupMember(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
-	username1 := "test-user-1"
-	username2 := "test-user-2"
-	for _, username := range []string{username1, username2} {
+	usernames := []string{"test-user-1", "test-user-2"}
+	for _, username := range usernames {
 		req := pb.NewUserRequest{
 			Username:  username,
 			Password:  "Hallo Welt",
@@ -33,7 +31,7 @@ func TestAddGroupMember(t *testing.T) {
 	groupName := "test-group"
 	if err := test.Manager.NewGroup(&pb.NewGroupRequest{
 		Name:    groupName,
-		Members: []string{username1},
+		Members: []string{usernames[0]},
 	}, strict); err != nil {
 		t.Fatalf("failed to add new group: %v", err)
 	}
@@ -47,7 +45,7 @@ func TestAddGroupMember(t *testing.T) {
 	expected := &pb.Group{
 		Name: groupName,
 		Members: []string{
-			test.Manager.UserNamed(username1),
+			test.Manager.UserNamed(usernames[0]),
 		},
 		GID: 2002,
 	}
@@ -60,52 +58,73 @@ func TestAddGroupMember(t *testing.T) {
 	}
 
 	memberStatus, err := test.Manager.IsGroupMember(&pb.IsGroupMemberRequest{
-		Username: username1,
+		Username: usernames[0],
 		Group:    groupName,
 	})
 	if err != nil {
-		t.Fatalf("failed to get membership status of user %q for group %q: %v", username1, groupName, err)
+		t.Fatalf(
+			"failed to get membership status of user %q for group %q: %v",
+			usernames[0], groupName, err,
+		)
 	}
 	if !memberStatus.GetIsMember() {
-		t.Fatalf("user %q should be a member of group %q", username1, groupName)
+		t.Fatalf(
+			"user %q should be a member of group %q",
+			usernames[0], groupName,
+		)
 	}
 
 	memberStatus, err = test.Manager.IsGroupMember(&pb.IsGroupMemberRequest{
-		Username: username2,
+		Username: usernames[1],
 		Group:    groupName,
 	})
 	if err != nil {
-		t.Fatalf("failed to get membership status of user %q for group %q: %v", username2, groupName, err)
+		t.Fatalf(
+			"failed to get membership status of user %q for group %q: %v",
+			usernames[1], groupName, err,
+		)
 	}
 	if memberStatus.GetIsMember() {
-		t.Fatalf("user %q should not yet be a member of group %q", username2, groupName)
+		t.Fatalf(
+			"user %q should not yet be a member of group %q",
+			usernames[1], groupName,
+		)
 	}
 
-	// add username2 as group member
+	// add second user as group member
 	allowNonExistent := false
 	if err := test.Manager.AddGroupMember(&pb.GroupMember{
-		Username: username2,
+		Username: usernames[1],
 		Group:    groupName,
 	}, allowNonExistent); err != nil {
-		t.Fatalf("failed to add user %q to group %q: %v", username2, groupName, err)
+		t.Fatalf(
+			"failed to add user %q to group %q: %v",
+			usernames[1], groupName, err,
+		)
 	}
 
 	memberStatus, err = test.Manager.IsGroupMember(&pb.IsGroupMemberRequest{
-		Username: username2,
+		Username: usernames[1],
 		Group:    groupName,
 	})
 	if err != nil {
-		t.Fatalf("failed to get membership status of user %q for group %q: %v", username2, groupName, err)
+		t.Fatalf(
+			"failed to get membership status of user %q for group %q: %v",
+			usernames[1], groupName, err,
+		)
 	}
 	if !memberStatus.GetIsMember() {
-		t.Fatalf("user %q should be a member of group %q", username2, groupName)
+		t.Fatalf(
+			"user %q should be a member of group %q",
+			usernames[1], groupName,
+		)
 	}
 }
 
 // TestAddGroupMemberMissing tests adding a group member
 // when either the user or the group does not exist.
 func TestAddGroupMemberMissing(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	strict := false
@@ -127,7 +146,10 @@ func TestAddGroupMemberMissing(t *testing.T) {
 		Group:    groupName,
 		Username: username,
 	}, allowNonExistent); err == nil {
-		t.Errorf("expected error adding user %q to group %q", username, groupName)
+		t.Errorf(
+			"expected error adding user %q to group %q",
+			username, groupName,
+		)
 	}
 
 	// add an existing user to an non-existing group
@@ -147,6 +169,9 @@ func TestAddGroupMemberMissing(t *testing.T) {
 		Group:    groupName,
 		Username: username,
 	}, allowNonExistent); err == nil {
-		t.Fatalf("expected error adding user %q to a group %q", username, groupName)
+		t.Fatalf(
+			"expected error adding user %q to a group %q",
+			username, groupName,
+		)
 	}
 }

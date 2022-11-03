@@ -8,7 +8,7 @@ import (
 
 // TestSetup tests the default LDAP setup
 func TestSetup(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	userGroup := test.Manager.DefaultUserGroup
@@ -16,10 +16,16 @@ func TestSetup(t *testing.T) {
 
 	// check if the default admin and user groups were created
 	if _, err := test.Manager.GetGroupByName(userGroup); err != nil {
-		t.Fatalf("failed to get default user group %q: %v", userGroup, err)
+		t.Fatalf(
+			"failed to get default user group %q: %v",
+			userGroup, err,
+		)
 	}
 	if _, err := test.Manager.GetGroupByName(adminGroup); err != nil {
-		t.Fatalf("failed to get default admin group %q: %v", adminGroup, err)
+		t.Fatalf(
+			"failed to get default admin group %q: %v",
+			adminGroup, err,
+		)
 	}
 
 	// assert the default admin user was created
@@ -56,7 +62,7 @@ func TestSetup(t *testing.T) {
 
 // TestForceSetup tests the default LDAP setup
 func TestForceSetup(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t)
 	defer test.Teardown()
 
 	defaultAdminGroup := test.Manager.DefaultAdminGroup
@@ -86,7 +92,10 @@ func TestForceSetup(t *testing.T) {
 		Name:    defaultAdminGroup,
 		Members: []string{differentAdminUsername},
 	}, strict); err != nil {
-		t.Fatalf("failed to create admin group: %v", err)
+		_, exists := err.(*GroupAlreadyExistsError)
+		if !exists {
+			t.Fatalf("failed to create admin group: %v", err)
+		}
 	}
 
 	if err := test.Manager.SetupLDAP(); err != nil {
@@ -100,7 +109,7 @@ func TestForceSetup(t *testing.T) {
 		Password: defaultAdminPassword,
 	}); err == nil {
 		t.Errorf(
-			"expected error authenticating as the default admin %q when another admin account already existed",
+			"expected error authenticating as the default admin %q, when another admin account already existed",
 			defaultAdminUsername,
 		)
 	}
@@ -114,8 +123,8 @@ func TestForceSetup(t *testing.T) {
 		Username: defaultAdminUsername,
 		Password: defaultAdminPassword,
 	}); err != nil {
-		t.Errorf(
-			"failed to authenticate as the default admin %q after forced creation: %v",
+		t.Errorf(`failed to authenticate as the default admin %q, 
+after forced creation: %v`,
 			defaultAdminUsername, err,
 		)
 	}

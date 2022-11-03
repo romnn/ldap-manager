@@ -8,7 +8,7 @@ import (
 
 // TestDeleteGroupMissing tests deleting a missing group will fail
 func TestDeleteGroupMissing(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	// assert deleting a non-existent group failed
@@ -21,7 +21,7 @@ func TestDeleteGroupMissing(t *testing.T) {
 
 // TestDeleteDefaultGroup tests deleting default groups will fail
 func TestDeleteDefaultGroup(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	// make sure deleting the users group is not allowed
@@ -39,7 +39,7 @@ func TestDeleteDefaultGroup(t *testing.T) {
 
 // TestDeleteGroup tests deleting a valid group
 func TestDeleteGroup(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	// add a user
@@ -61,23 +61,35 @@ func TestDeleteGroup(t *testing.T) {
 		Name:    groupName,
 		Members: []string{username},
 	}, strict); err != nil {
-		t.Fatalf("failed to add group %q with member %v: %v", groupName, username, err)
+		t.Fatalf(
+			"failed to add group %q with member %v: %v",
+			groupName, username, err,
+		)
 	}
 
 	// assert the group is found
 	if _, err := test.Manager.GetGroupByName(groupName); err != nil {
-		t.Fatalf("failed to get group %q: %v", groupName, err)
+		t.Fatalf(
+			"failed to get group %q: %v",
+			groupName, err,
+		)
 	}
 
 	// now delete the group
 	if err := test.Manager.DeleteGroup(&pb.DeleteGroupRequest{
 		Name: groupName,
 	}); err != nil {
-		t.Fatalf("failed to delete group %q: %v", groupName, err)
+		t.Fatalf(
+			"failed to delete group %q: %v",
+			groupName, err,
+		)
 	}
 
 	// assert that the group is no longer found
 	if _, err := test.Manager.GetGroupByName(groupName); err == nil {
-		t.Fatalf("unexpected success getting deleted group %q", groupName)
+		t.Fatalf(
+			"unexpected success getting deleted group %q",
+			groupName,
+		)
 	}
 }

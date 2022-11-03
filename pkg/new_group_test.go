@@ -9,7 +9,7 @@ import (
 
 // TestNewGroupEmpty tests that adding an empty group fails
 func TestNewGroupEmpty(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	// adding a group with no members should fail
@@ -24,7 +24,7 @@ func TestNewGroupEmpty(t *testing.T) {
 
 // TestNewGroupMissingMember tests that adding an group with missing members fails
 func TestNewGroupMissingMember(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 	username := "this-user-does-not-exist"
 	groupName := "my-group-with-non-existent-members"
@@ -35,7 +35,10 @@ func TestNewGroupMissingMember(t *testing.T) {
 		Name:    groupName,
 		Members: []string{username},
 	}, strict); err == nil {
-		t.Fatalf("expected error adding group %q with missing member %q (strict=%t)", groupName, username, strict)
+		t.Fatalf(
+			"expected error adding group %q with missing member %q (strict=%t)",
+			groupName, username, strict,
+		)
 	}
 
 	// adding a group with missing members is allowed if not strict
@@ -44,13 +47,16 @@ func TestNewGroupMissingMember(t *testing.T) {
 		Name:    groupName,
 		Members: []string{username},
 	}, strict); err != nil {
-		t.Fatalf("failed to add group %q with missing member %q (strict=%t)", groupName, username, strict)
+		t.Fatalf(
+			"failed to add group %q with missing member %q (strict=%t)",
+			groupName, username, strict,
+		)
 	}
 }
 
 // TestNewGroup tests adding a valid new group
 func TestNewGroup(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	// add a user
@@ -62,7 +68,10 @@ func TestNewGroup(t *testing.T) {
 		FirstName: "roman",
 		LastName:  "d",
 	}); err != nil {
-		t.Fatalf("failed to add new user: %v", err)
+		t.Fatalf(
+			"failed to add new user: %v",
+			err,
+		)
 	}
 
 	// now add a valid group with the user
@@ -72,38 +81,47 @@ func TestNewGroup(t *testing.T) {
 		Name:    groupName,
 		Members: []string{username},
 	}, strict); err != nil {
-		t.Fatalf("failed to add group %q with member %v: %v", groupName, username, err)
+		t.Fatalf(
+			"failed to add group %q with member %v: %v",
+			groupName, username, err,
+		)
 	}
 
 	// get all groups
 	groups, err := test.Manager.GetGroupList(&pb.GetGroupListRequest{})
 	if err != nil {
-		t.Fatalf("failed to get list of groups: %v", err)
+		t.Fatalf(
+			"failed to get list of groups: %v",
+			err,
+		)
 	}
 
-	expected := []*pb.Group{
-		{
-			Name: "admins",
-			Members: []string{
-				"uid=ldapadmin,ou=users,dc=example,dc=org",
+	expected := &pb.GroupList{
+		Groups: []*pb.Group{
+			{
+				Name: "admins",
+				Members: []string{
+					"uid=ldapadmin,ou=users,dc=example,dc=org",
+				},
+				GID: 2000,
 			},
-			GID: 2000,
-		},
-		{
-			Name: "my-group",
-			Members: []string{
-				"uid=some-user,ou=users,dc=example,dc=org",
+			{
+				Name: "my-group",
+				Members: []string{
+					"uid=some-user,ou=users,dc=example,dc=org",
+				},
+				GID: 2002,
 			},
-			GID: 2002,
-		},
-		{
-			Name: "users",
-			Members: []string{
-				"uid=ldapadmin,ou=users,dc=example,dc=org",
-				"uid=some-user,ou=users,dc=example,dc=org",
+			{
+				Name: "users",
+				Members: []string{
+					"uid=ldapadmin,ou=users,dc=example,dc=org",
+					"uid=some-user,ou=users,dc=example,dc=org",
+				},
+				GID: 2001,
 			},
-			GID: 2001,
 		},
+		Total: 3,
 	}
 
 	sort := recursivesort.RecursiveSort{StructSortField: "GID"}
@@ -113,9 +131,7 @@ func TestNewGroup(t *testing.T) {
 	t.Log(PrettyPrint(groups))
 	t.Log(PrettyPrint(expected))
 
-	for i := range expected {
-		if equal, diff := EqualProto(expected[i], groups.GetGroups()[i]); !equal {
-			t.Fatalf("unexpected group at index %d: \n%s", i, diff)
-		}
+	if equal, diff := EqualProto(expected, groups); !equal {
+		t.Fatalf("unexpected group: \n%s", diff)
 	}
 }

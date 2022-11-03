@@ -8,7 +8,6 @@ import (
 
 	"github.com/docker/go-connections/nat"
 	ldapconfig "github.com/romnn/ldap-manager/pkg/config"
-	// tc "github.com/romnn/testcontainers"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -18,41 +17,32 @@ var (
 	imageTag = "latest"
 )
 
-// ContainerOptions ...
+// ContainerOptions describes options for the container
 type ContainerOptions struct {
-	// tc.ContainerOptions
-	// tc.ContainerConfig
 	ldapconfig.OpenLDAPConfig
 	ImageTag string
 }
 
-// Container ...
+// Container holds the LDAP container
 type Container struct {
 	Container testcontainers.Container
-	// tc.ContainerConfig
 	ldapconfig.OpenLDAPConfig
 }
 
-// Terminate ...
+// Terminate terminates the container
 func (c *Container) Terminate(ctx context.Context) {
 	if c.Container != nil {
 		c.Container.Terminate(ctx)
 	}
 }
 
-// StartOpenLDAP ...
+// StartOpenLDAP starts the OpenLDAP container
 func StartOpenLDAP(ctx context.Context, options ContainerOptions) (Container, error) {
 	var container Container
 	port, err := nat.NewPort("", "389")
 	if err != nil {
 		return container, fmt.Errorf("failed to build port: %v", err)
 	}
-
-	// defaultOptions := ContainerOptions{
-	// 	OpenLDAPConfig: ldapconfig.NewOpenLDAPConfig(),
-	// }
-
-	// tc.MergeOptions(&defaultOptions, options)
 
 	var env = make(map[string]string)
 	env["LDAP_ORGANISATION"] = options.Organization
@@ -80,13 +70,19 @@ func StartOpenLDAP(ctx context.Context, options ContainerOptions) (Container, er
 	}
 	openLDAPContainer, err := testcontainers.GenericContainer(ctx, req)
 	if err != nil {
-		return container, fmt.Errorf("failed to start container: %v", err)
+		return container, fmt.Errorf(
+			"failed to start container: %v",
+			err,
+		)
 	}
 	container.Container = openLDAPContainer
 
 	host, err := openLDAPContainer.Host(ctx)
 	if err != nil {
-		return container, fmt.Errorf("failed to get container host: %v", err)
+		return container, fmt.Errorf(
+			"failed to get container host: %v",
+			err,
+		)
 	}
 
 	realPort, err := openLDAPContainer.MappedPort(ctx, port)

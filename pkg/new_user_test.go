@@ -8,7 +8,7 @@ import (
 
 // TestNewUser tests adding a new user
 func TestNewUser(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	username := "romnn"
@@ -56,7 +56,10 @@ func TestNewUser(t *testing.T) {
 		Password: password,
 	})
 	if err != nil {
-		t.Fatalf("cannot authenticate user %q with password %q: %v", username, password, err)
+		t.Fatalf(
+			"cannot authenticate user %q with password %q: %v",
+			username, password, err,
+		)
 	}
 
 	// check if the user data matches
@@ -67,7 +70,7 @@ func TestNewUser(t *testing.T) {
 
 // TestNewUserValidation tests validation of user data
 func TestNewUserValidation(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	cases := []struct {
@@ -131,10 +134,16 @@ func TestNewUserValidation(t *testing.T) {
 	for _, c := range cases {
 		err := test.Manager.NewUser(c.request)
 		if err != nil && c.valid {
-			t.Errorf("failed to add valid user: %v", err)
+			t.Errorf(
+				"failed to add valid user: %v",
+				err,
+			)
 		}
 		if err == nil && !c.valid {
-			t.Errorf("expected error when adding invalid user %v", c.request)
+			t.Errorf(
+				"expected error when adding invalid user %v",
+				c.request,
+			)
 		}
 	}
 }

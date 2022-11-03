@@ -20,7 +20,10 @@ type NoSuchMemberError struct {
 
 // Error ...
 func (err *NoSuchMemberError) Error() string {
-	return fmt.Sprintf("no member %q in group %q", err.Member, err.Group)
+	return fmt.Sprintf(
+		"no member %q in group %q",
+		err.Member, err.Group,
+	)
 }
 
 // StatusError ...
@@ -42,7 +45,10 @@ func (m *LDAPManager) DeleteUser(req *pb.DeleteUserRequest, keepGroups bool) err
 			Username: username,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to get list of groups: %v", err)
+			return fmt.Errorf(
+				"failed to get list of groups: %v",
+				err,
+			)
 		}
 		log.Info(PrettyPrint(groups))
 		for _, group := range groups.GetGroups() {
@@ -56,7 +62,6 @@ func (m *LDAPManager) DeleteUser(req *pb.DeleteUserRequest, keepGroups bool) err
 				}
 				if _, ok := err.(*NoSuchMemberError); !ok {
 					return err
-					// fmt.Errorf("failed to remove user %q from group %q: %v", username, group, err)
 				}
 			}
 		}

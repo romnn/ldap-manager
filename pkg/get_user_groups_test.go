@@ -9,7 +9,7 @@ import (
 
 // TestGetUserGroups tests getting the groups a user is member of
 func TestGetUserGroups(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	username := "test-user"
@@ -61,7 +61,10 @@ func TestGetUserGroups(t *testing.T) {
 		Username: username,
 	})
 	if err != nil {
-		t.Fatalf("failed to get the groups of user %q: %v", username, err)
+		t.Fatalf(
+			"failed to get the groups of user %q: %v",
+			username, err,
+		)
 	}
 
 	sort := recursivesort.RecursiveSort{StructSortField: "GID"}

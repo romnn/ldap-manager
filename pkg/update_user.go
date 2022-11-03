@@ -71,8 +71,12 @@ func (m *LDAPManager) UpdateUser(req *pb.UpdateUserRequest, isAdmin bool) (strin
 		}
 
 		modifyRequest := &ldap.ModifyDNRequest{
-			DN:           m.UserNamed(username),
-			NewRDN:       fmt.Sprintf("%s=%s", m.AccountAttribute, newUsername),
+			DN: m.UserNamed(username),
+			NewRDN: fmt.Sprintf(
+				"%s=%s",
+				m.AccountAttribute,
+				newUsername,
+			),
 			DeleteOldRDN: true,
 			NewSuperior:  "",
 		}
@@ -80,14 +84,20 @@ func (m *LDAPManager) UpdateUser(req *pb.UpdateUserRequest, isAdmin bool) (strin
 		if err := m.ldap.ModifyDN(modifyRequest); err != nil {
 			return "", err
 		}
-		log.Infof("renamed user from %q to %q", username, newUsername)
+		log.Infof(
+			"renamed user from %q to %q",
+			username, newUsername,
+		)
 
 		// migrate user from all its groups
 		groups, err := m.GetUserGroups(&pb.GetUserGroupsRequest{
 			Username: username,
 		})
 		if err != nil {
-			return "", fmt.Errorf("failed to get list of groups: %v", err)
+			return "", fmt.Errorf(
+				"failed to get list of groups: %v",
+				err,
+			)
 		}
 		for _, group := range groups.GetGroups() {
 			// add first, to avoid removing the only member of a group

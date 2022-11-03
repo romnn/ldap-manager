@@ -21,9 +21,15 @@ type ZeroOrMultipleUsersError struct {
 
 func (e *ZeroOrMultipleUsersError) Error() string {
 	if e.Count > 1 {
-		return fmt.Sprintf("multiple (%d) accounts with username %q", e.Count, e.Username)
+		return fmt.Sprintf(
+			"multiple (%d) accounts with username %q",
+			e.Count, e.Username,
+		)
 	}
-	return fmt.Sprintf("no account with username %q", e.Username)
+	return fmt.Sprintf(
+		"no account with username %q",
+		e.Username,
+	)
 }
 
 func (e *ZeroOrMultipleUsersError) StatusError() error {
@@ -93,7 +99,10 @@ func (m *LDAPManager) GetUser(username string) (*pb.User, error) {
 		[]ldap.Control{},
 	))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user %q: %v", username, err)
+		return nil, fmt.Errorf(
+			"failed to get user %q: %v",
+			username, err,
+		)
 	}
 	if len(result.Entries) != 1 {
 		return nil, &ZeroOrMultipleUsersError{

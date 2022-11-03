@@ -8,7 +8,7 @@ import (
 
 // TestIsGroupMember tests checking if a user is member of a group
 func TestIsGroupMember(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	strict := false
@@ -19,7 +19,10 @@ func TestIsGroupMember(t *testing.T) {
 		Name:    groupName,
 		Members: usernames,
 	}, strict); err != nil {
-		t.Fatalf("failed to add new group: %v", err)
+		t.Fatalf(
+			"failed to add new group: %v",
+			err,
+		)
 	}
 	for _, username := range usernames {
 		if err := test.Manager.NewUser(&pb.NewUserRequest{
@@ -29,7 +32,10 @@ func TestIsGroupMember(t *testing.T) {
 			FirstName: "roman",
 			LastName:  "d",
 		}); err != nil {
-			t.Fatalf("failed to add new user: %v", err)
+			t.Fatalf(
+				"failed to add new user: %v",
+				err,
+			)
 		}
 	}
 
@@ -38,7 +44,10 @@ func TestIsGroupMember(t *testing.T) {
 		userGroup := test.Manager.DefaultUserGroup
 		memberStatus := test.isGroupMember(t, username, userGroup)
 		if !memberStatus.GetIsMember() {
-			t.Fatalf("expected user %q to be a member of group %q", username, userGroup)
+			t.Fatalf(
+				"expected user %q to be a member of group %q",
+				username, userGroup,
+			)
 		}
 	}
 
@@ -46,7 +55,10 @@ func TestIsGroupMember(t *testing.T) {
 	for _, username := range usernames {
 		memberStatus := test.isGroupMember(t, username, groupName)
 		if !memberStatus.GetIsMember() {
-			t.Fatalf("expected user %q to be a member of group %q", username, groupName)
+			t.Fatalf(
+				"expected user %q to be a member of group %q",
+				username, groupName,
+			)
 		}
 	}
 
@@ -57,22 +69,34 @@ func TestIsGroupMember(t *testing.T) {
 		Name:    groupName2,
 		Members: []string{username},
 	}, strict); err != nil {
-		t.Fatalf("failed to add new group: %v", err)
+		t.Fatalf(
+			"failed to add new group: %v",
+			err,
+		)
 	}
 	memberStatus := test.isGroupMember(t, username, groupName2)
 	if !memberStatus.GetIsMember() {
-		t.Fatalf("expected user %q to be a member of group %q", username, groupName2)
+		t.Fatalf(
+			"expected user %q to be a member of group %q",
+			username, groupName2,
+		)
 	}
 	username = usernames[1]
 	memberStatus = test.isGroupMember(t, username, groupName2)
 	if memberStatus.GetIsMember() {
-		t.Fatalf("expected user %q to not be a member of group %q", username, groupName2)
+		t.Fatalf(
+			"expected user %q to not be a member of group %q",
+			username, groupName2,
+		)
 	}
 
 	// assert a user is not longer member of any group after it is deleted
 	groups, err := test.Manager.GetGroupList(&pb.GetGroupListRequest{})
 	if err != nil {
-		t.Fatalf("failed to get list of all groups: %v", err)
+		t.Fatalf(
+			"failed to get list of all groups: %v",
+			err,
+		)
 	}
 	t.Log(PrettyPrint(groups))
 
@@ -81,19 +105,25 @@ func TestIsGroupMember(t *testing.T) {
 	if err := test.Manager.DeleteUser(&pb.DeleteUserRequest{
 		Username: username,
 	}, keepGroups); err != nil {
-		t.Fatalf("failed to delete user %q: %v", username, err)
+		t.Fatalf(
+			"failed to delete user %q: %v",
+			username, err,
+		)
 	}
 	for _, group := range groups.GetGroups() {
 		memberStatus = test.isGroupMember(t, username, group.GetName())
 		if memberStatus.GetIsMember() {
-			t.Errorf("expected user %q to not be a member of group %q", username, group.GetName())
+			t.Errorf(
+				"expected user %q to not be a member of group %q",
+				username, group.GetName(),
+			)
 		}
 	}
 }
 
 // TestIsGroupMemberMissing tests checking group membership where either the user or group does not exist
 func TestIsGroupMemberMissing(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	// assert sure a non-existent user is not a member of an existent group
@@ -101,7 +131,10 @@ func TestIsGroupMemberMissing(t *testing.T) {
 	groupName := test.Manager.DefaultUserGroup
 	memberStatus := test.isGroupMember(t, username, groupName)
 	if memberStatus.GetIsMember() {
-		t.Fatalf("expected user %q to not be a member of group %q", username, groupName)
+		t.Fatalf(
+			"expected user %q to not be a member of group %q",
+			username, groupName,
+		)
 	}
 
 	// make sure an existent user is not a member of a non-existent group
@@ -113,6 +146,9 @@ func TestIsGroupMemberMissing(t *testing.T) {
 	})
 	_, missing := err.(*ZeroOrMultipleGroupsError)
 	if err == nil || !missing {
-		t.Fatalf("expected error due to missing group %q", groupName)
+		t.Fatalf(
+			"expected error due to missing group %q",
+			groupName,
+		)
 	}
 }

@@ -8,7 +8,7 @@ import (
 
 // TestGetGroup tests getting a group
 func TestGetGroup(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	// add a user
@@ -55,13 +55,16 @@ func TestGetGroup(t *testing.T) {
 		)
 	}
 	if equal, diff := EqualProto(expected, group); !equal {
-		t.Fatalf("unexpected group %q: \n%s", groupName, diff)
+		t.Fatalf(
+			"unexpected group %q: \n%s",
+			groupName, diff,
+		)
 	}
 }
 
 // TestGetDefaultGroup tests getting the default groups
 func TestGetDefaultGroup(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	for _, c := range []struct {
@@ -101,7 +104,10 @@ func TestGetDefaultGroup(t *testing.T) {
 			)
 		}
 		if equal, diff := EqualProto(c.expected, group); !equal {
-			t.Fatalf("unexpected group %q: \n%s", c.name, diff)
+			t.Fatalf(
+				"unexpected group %q: \n%s",
+				c.name, diff,
+			)
 		}
 	}
 }

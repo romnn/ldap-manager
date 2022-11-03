@@ -9,7 +9,7 @@ import (
 
 // TestUpdateUser tests updating a user
 func TestUpdateUser(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	// add a user

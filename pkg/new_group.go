@@ -21,7 +21,10 @@ type GroupAlreadyExistsError struct {
 }
 
 func (e *GroupAlreadyExistsError) Error() string {
-	return fmt.Sprintf("group %q already exists", e.Group)
+	return fmt.Sprintf(
+		"group %q already exists",
+		e.Group,
+	)
 }
 
 func (e *GroupAlreadyExistsError) StatusError() error {
@@ -37,38 +40,35 @@ func (m *LDAPManager) IsProtectedGroup(group string) bool {
 
 // GroupNamed ...
 func (m *LDAPManager) GroupNamed(name string) string {
-	return fmt.Sprintf("cn=%s,%s", EscapeDN(name), m.GroupsDN)
+	return fmt.Sprintf(
+		"cn=%s,%s",
+		EscapeDN(name), m.GroupsDN,
+	)
 }
 
 // UserNamed ...
 func (m *LDAPManager) UserNamed(name string) string {
-	return fmt.Sprintf("%s=%s,%s", m.AccountAttribute, EscapeDN(name), m.UserGroupDN)
+	return fmt.Sprintf(
+		"%s=%s,%s",
+		m.AccountAttribute,
+		EscapeDN(name),
+		m.UserGroupDN,
+	)
 }
-
-// GetGroupByName ...
-// func (m *LDAPManager) GetGroupByName(group string, attributes []string) (*ldap.SearchResult, error) {
-// func (m *LDAPManager) GetGroupByName(group string) (*ldap.SearchResult, error) {
-// 	return m.ldap.Search(ldap.NewSearchRequest(
-// 		m.GroupsDN,
-// 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-// 		fmt.Sprintf("(cn=%s)", EscapeFilter(group)),
-// 		[]string{"dn", m.GroupMembershipAttribute},
-// 		// attributes,
-// 		[]ldap.Control{},
-// 	))
-// }
 
 // NewGroup creates a new group
 func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
-	name := req.GetName()
-	if name == "" {
+	groupName := req.GetName()
+	if groupName == "" {
 		return &ldaperror.ValidationError{
 			Message: "group name can not be empty",
 		}
 	}
-	_, err := m.GetGroupByName(name)
+	_, err := m.GetGroupByName(groupName)
 	if _, notfound := err.(*ZeroOrMultipleGroupsError); !notfound {
-		return &GroupAlreadyExistsError{Group: name}
+		return &GroupAlreadyExistsError{
+			Group: groupName,
+		}
 	}
 	GID, err := m.GetHighestGID()
 	if err != nil {
@@ -83,10 +83,16 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 				Group:    m.DefaultUserGroup,
 			})
 			if err != nil {
-				return fmt.Errorf("failed to check if member %q exists: %v", username, err)
+				return fmt.Errorf(
+					"failed to check if member %q exists: %v",
+					username, err,
+				)
 			}
 			if !memberStatus.GetIsMember() {
-				log.Warnf("skipping adding user %q to group %q because it is not in the default user group (%q)", username, name, m.DefaultUserGroup)
+				log.Warnf(
+					"skip adding user %q to group %q (not in user group %q)",
+					username, groupName, m.DefaultUserGroup,
+				)
 				continue
 			}
 		}
@@ -100,19 +106,26 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 	var groupAttributes []ldap.Attribute
 	if !m.UseRFC2307BISSchema {
 		groupAttributes = []ldap.Attribute{
-			{Type: "objectClass", Vals: []string{"top", "posixGroup"}},
-			{Type: "cn", Vals: []string{EscapeDN(name)}},
+			{Type: "objectClass", Vals: []string{
+				"top",
+				"posixGroup",
+			}},
+			{Type: "cn", Vals: []string{EscapeDN(groupName)}},
 			{Type: "gidNumber", Vals: []string{strconv.Itoa(GID)}},
 		}
 	} else {
 		if len(memberList) < 1 {
 			return &ldaperror.ValidationError{
-				Message: "when using RFC2307BIS (not NIS), you must specify at least one existing group member",
+				Message: "must specify at least one existing group member when using RFC2307BIS (not NIS)",
 			}
 		}
 		groupAttributes = []ldap.Attribute{
-			{Type: "objectClass", Vals: []string{"top", "groupOfUniqueNames", "posixGroup"}},
-			{Type: "cn", Vals: []string{EscapeDN(name)}},
+			{Type: "objectClass", Vals: []string{
+				"top",
+				"groupOfUniqueNames",
+				"posixGroup",
+			}},
+			{Type: "cn", Vals: []string{EscapeDN(groupName)}},
 			{Type: "gidNumber", Vals: []string{strconv.Itoa(GID)}},
 		}
 	}
@@ -123,7 +136,7 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 	})
 
 	addGroupRequest := &ldap.AddRequest{
-		DN:         m.GroupNamed(name),
+		DN:         m.GroupNamed(groupName),
 		Attributes: groupAttributes,
 		Controls:   []ldap.Control{},
 	}
@@ -134,6 +147,9 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 	if err := m.updateLastID("lastGID", GID+1); err != nil {
 		return err
 	}
-	log.Infof("added new group %q with %d members (gid=%d)", name, len(memberList), GID)
+	log.Infof(
+		"added new group %q with %d members (gid=%d)",
+		groupName, len(memberList), GID,
+	)
 	return nil
 }

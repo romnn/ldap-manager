@@ -18,7 +18,7 @@ func getUserListUsernames(users *pb.UserList) []string {
 
 // TestDeleteUser tests deleting users
 func TestDeleteUser(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	usernames := []string{"user1", "user2"}
@@ -52,7 +52,10 @@ func TestDeleteUser(t *testing.T) {
 	if err := test.Manager.DeleteUser(&pb.DeleteUserRequest{
 		Username: usernames[0],
 	}, keepGroups); err != nil {
-		t.Fatalf("failed to delete user %q: %v", usernames[0], err)
+		t.Fatalf(
+			"failed to delete user %q: %v",
+			usernames[0], err,
+		)
 	}
 
 	// assert we find only the second user

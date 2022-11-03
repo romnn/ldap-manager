@@ -49,7 +49,7 @@ func (m *LDAPManager) setupLastID(id int, cn string, desc string) error {
 		},
 		Controls: []ldap.Control{},
 	}
-	log.Debugf("addLastIDRequest=%v", req)
+	log.Debug(PrettyPrint(req))
 	return m.ldap.Add(&req)
 }
 
@@ -100,7 +100,10 @@ func (m *LDAPManager) setupAdmin() error {
 			Members: []string{admin.GetUsername()},
 		}, strict); err != nil {
 			if _, exists := err.(*GroupAlreadyExistsError); !exists {
-				return fmt.Errorf("failed to create admin group: %v", err)
+				return fmt.Errorf(
+					"failed to create admin group: %v",
+					err,
+				)
 			}
 		}
 	}
@@ -109,7 +112,10 @@ func (m *LDAPManager) setupAdmin() error {
 		// add the initial admin
 		if err := m.NewUser(&admin); err != nil {
 			if _, exists := err.(*UserAlreadyExistsError); !exists {
-				return fmt.Errorf("failed to create initial admin user: %v", err)
+				return fmt.Errorf(
+					"failed to create initial admin user: %v",
+					err,
+				)
 			}
 		}
 
@@ -120,19 +126,25 @@ func (m *LDAPManager) setupAdmin() error {
 			Group:    m.DefaultAdminGroup,
 		}, allowNonExistent); err != nil {
 			if _, exists := err.(*MemberAlreadyExistsError); !exists {
-				return fmt.Errorf("failed to add admin user to admins group: %v", err)
+				return fmt.Errorf(
+					"failed to add admin user to admins group: %v",
+					err,
+				)
 			}
 		}
 	}
 	return nil
 }
 
-// SetupLDAP ...
+// SetupLDAP sets up the LDAP server
 func (m *LDAPManager) SetupLDAP() error {
 	if err := m.setupGroupOU(); err != nil {
 		exists := ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists)
 		if !exists {
-			return fmt.Errorf("failed to setup group organizational unit (OU): %v", err)
+			return fmt.Errorf(
+				"failed to setup group organizational unit (OU): %v",
+				err,
+			)
 		}
 	} else {
 		log.Debug("completed group organizational unit (OU) setup")
@@ -141,7 +153,10 @@ func (m *LDAPManager) SetupLDAP() error {
 	if err := m.setupUserOU(); err != nil {
 		exists := ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists)
 		if !exists {
-			return fmt.Errorf("failed to setup user organizational unit (OU): %v", err)
+			return fmt.Errorf(
+				"failed to setup user organizational unit (OU): %v",
+				err,
+			)
 		}
 	} else {
 		log.Debug("completed user organizational unit (OU) setup")
@@ -151,7 +166,10 @@ func (m *LDAPManager) SetupLDAP() error {
 		exists := ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists)
 		notFound := ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject)
 		if !exists && !notFound {
-			return fmt.Errorf("failed to setup GID: %v", err)
+			return fmt.Errorf(
+				"failed to setup GID: %v",
+				err,
+			)
 		}
 	} else {
 		log.Info("completed GID setup")
@@ -161,7 +179,10 @@ func (m *LDAPManager) SetupLDAP() error {
 		exists := ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists)
 		notFound := ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject)
 		if !exists && !notFound {
-			return fmt.Errorf("failed to setup UID: %v", err)
+			return fmt.Errorf(
+				"failed to setup UID: %v",
+				err,
+			)
 		}
 	} else {
 		log.Info("completed UID setup")
@@ -173,10 +194,10 @@ func (m *LDAPManager) SetupLDAP() error {
 	return nil
 }
 
-// Setup sets up the LDAP server
-// func (m *LDAPManager) Setup(skipSetupLDAP bool) error {
-func (m *LDAPManager) Setup() error {
+// Connect connects to the LDAP server
+func (m *LDAPManager) Connect() error {
 	var err error
+
 	URI := m.OpenLDAPConfig.URI()
 	log.Debugf("connecting to OpenLDAP at %s", URI)
 	m.ldap, err = ldap.DialURL(URI)
@@ -186,7 +207,9 @@ func (m *LDAPManager) Setup() error {
 
 	// Check for TLS
 	if strings.HasPrefix(URI, "ldaps:") || m.OpenLDAPConfig.TLS {
-		if err := m.ldap.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
+		if err := m.ldap.StartTLS(&tls.Config{
+			InsecureSkipVerify: true,
+		}); err != nil {
 			log.Warnf("failed to connect via TLS: %v", err)
 			if m.OpenLDAPConfig.TLS {
 				return err
@@ -196,6 +219,14 @@ func (m *LDAPManager) Setup() error {
 
 	// Bind as the admin user
 	if err := m.BindAdmin(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Setup sets up the LDAP server
+func (m *LDAPManager) Setup() error {
+	if err := m.Connect(); err != nil {
 		return err
 	}
 	if err := m.SetupLDAP(); err != nil {

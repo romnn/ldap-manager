@@ -12,8 +12,7 @@ import (
 // LDAPManager implements the LDAP manager functionality
 type LDAPManager struct {
 	ldapconfig.OpenLDAPConfig
-	// this is the only thing to guard with a mutex?
-	ldap *ldap.Conn // Client
+	ldap *ldap.Conn
 
 	GroupsDN    string
 	UserGroupDN string

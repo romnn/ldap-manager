@@ -8,21 +8,6 @@ import (
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
 
-// // CountUsers counts the number of total users
-// func (m *LDAPManager) CountUsers() (int, error) {
-// 	result, err := m.ldap.Search(ldap.NewSearchRequest(
-// 		m.UserGroupDN,
-// 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-// 		fmt.Sprintf("(%s=*)", m.AccountAttribute),
-// 		[]string{"dn"},
-// 		[]ldap.Control{},
-// 	))
-// 	if err != nil {
-// 		return 0, err
-// 	}
-// 	return len(result.Entries), nil
-// }
-
 // GetUserList gets a list of all users
 func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, error) {
 	if req.GetSortKey() == "" {
@@ -39,13 +24,10 @@ func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, err
 	if err != nil {
 		return nil, err
 	}
-	// total, err := m.CountUsers()
-	// if err != nil {
-	// 	return nil, err
-	// }
 	users := make(map[string]*pb.User)
 	for _, entry := range result.Entries {
-		if entryKey := entry.GetAttributeValue(req.GetSortKey()); entryKey != "" {
+		sortKey := req.GetSortKey()
+		if entryKey := entry.GetAttributeValue(sortKey); entryKey != "" {
 			users[entryKey] = m.ParseUser(entry)
 		}
 	}

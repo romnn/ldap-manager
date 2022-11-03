@@ -16,7 +16,7 @@ func getGroupListGroupNames(groups *pb.GroupList) []string {
 
 // TestGetUser tests getting a user
 func TestGetUser(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	username := "felix"
@@ -40,17 +40,26 @@ func TestGetUser(t *testing.T) {
 	userGroupName := test.Manager.DefaultUserGroup
 	groupNames := getGroupListGroupNames(groups)
 	if !Contains(groupNames, userGroupName) {
-		t.Fatalf("expected the default user group %q to exist", userGroupName)
+		t.Fatalf(
+			"expected the default user group %q to exist",
+			userGroupName,
+		)
 	}
 
 	// assert that the new user is in the users group
 	group, err := test.Manager.GetGroupByName(userGroupName)
 	if err != nil {
-		t.Fatalf("failed to get members of group %q: %v", userGroupName, err)
+		t.Fatalf(
+			"failed to get members of group %q: %v",
+			userGroupName, err,
+		)
 	}
 	t.Log(PrettyPrint(group))
 	if !Contains(group.Members, test.Manager.UserNamed(username)) {
-		t.Fatalf("expected new user %q to be a member of the default user group %q", username, userGroupName)
+		t.Fatalf(
+			"expected new user %q to be a member of the default user group %q",
+			username, userGroupName,
+		)
 	}
 
 	// assert that the new user is member of the user group
@@ -59,11 +68,17 @@ func TestGetUser(t *testing.T) {
 		Group:    userGroupName,
 	})
 	if err != nil {
-		t.Fatalf("failed to check if user %q is member of group %q: %v", username, userGroupName, err)
+		t.Fatalf(
+			"failed to check if user %q is member of group %q: %v",
+			username, userGroupName, err,
+		)
 	}
 	t.Log(PrettyPrint(memberStatus))
 	if !memberStatus.GetIsMember() {
-		t.Fatalf("expected user %q to be member of group %q", username, userGroupName)
+		t.Fatalf(
+			"expected user %q to be member of group %q",
+			username, userGroupName,
+		)
 	}
 
 	// assert the user data matches

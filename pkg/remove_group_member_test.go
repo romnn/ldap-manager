@@ -3,7 +3,6 @@ package pkg
 import (
 	"testing"
 
-	// "github.com/romnn/go-recursive-sort"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
 
@@ -23,7 +22,7 @@ func (test *Test) isGroupMember(t *testing.T, username, group string) *pb.GroupM
 
 // TestRemoveGroupMember tests removing a group member
 func TestRemoveGroupMember(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	// assert removing from the default user group always fails
@@ -99,7 +98,7 @@ func TestRemoveGroupMember(t *testing.T) {
 // TestRemoveGroupMemberMissing tests removing a group member
 // when either the user or the group does not exist.
 func TestRemoveGroupMemberMissing(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	strict := false

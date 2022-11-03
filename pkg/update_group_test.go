@@ -3,13 +3,12 @@ package pkg
 import (
 	"testing"
 
-	// "github.com/romnn/go-recursive-sort"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
 
 // TestUpdateGroup tests that adding an empty group fails
 func TestUpdateGroup(t *testing.T) {
-	test := new(Test).Setup(t)
+	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
 	// add a user
@@ -31,12 +30,18 @@ func TestUpdateGroup(t *testing.T) {
 		Name:    groupName,
 		Members: []string{username},
 	}, strict); err != nil {
-		t.Fatalf("failed to add group %q with member %v: %v", groupName, username, err)
+		t.Fatalf(
+			"failed to add group %q with member %v: %v",
+			groupName, username, err,
+		)
 	}
 
 	before, err := test.Manager.GetGroupByName(groupName)
 	if err != nil {
-		t.Fatalf("failed to get group %q before rename: %v", groupName, err)
+		t.Fatalf(
+			"failed to get group %q before rename: %v",
+			groupName, err,
+		)
 	}
 	t.Log(PrettyPrint(before))
 
@@ -48,13 +53,19 @@ func TestUpdateGroup(t *testing.T) {
 		NewName: newGroupName,
 		GID:     newGID,
 	}); err != nil {
-		t.Fatalf("failed to update and rename group from %q to %q: %v", groupName, newGroupName, err)
+		t.Fatalf(
+			"failed to update and rename group from %q to %q: %v",
+			groupName, newGroupName, err,
+		)
 	}
 
 	// assert members are left untouched
 	after, err := test.Manager.GetGroupByName(newGroupName)
 	if err != nil {
-		t.Fatalf("failed to get the renamed group %q: %v", newGroupName, err)
+		t.Fatalf(
+			"failed to get the renamed group %q: %v",
+			newGroupName, err,
+		)
 	}
 	t.Log(PrettyPrint(after))
 
@@ -69,6 +80,9 @@ func TestUpdateGroup(t *testing.T) {
 
 	// assert old name is really gone
 	if _, err := test.Manager.GetGroupByName(groupName); err == nil {
-		t.Fatalf("expected error getting group by its old name %q", groupName)
+		t.Fatalf(
+			"expected error getting group by its old name %q",
+			groupName,
+		)
 	}
 }

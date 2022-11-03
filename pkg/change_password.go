@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	// "errors"
 	"fmt"
 
 	"github.com/go-ldap/ldap/v3"

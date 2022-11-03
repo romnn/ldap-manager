@@ -20,7 +20,10 @@ type RemoveLastGroupMemberError struct {
 }
 
 func (err *RemoveLastGroupMemberError) Error() string {
-	return fmt.Sprintf("cannot remove the only remaining group member from group %q, consider deleting the group first", err.Group)
+	return fmt.Sprintf(
+		"cannot remove the only remaining group member from group %q, consider deleting the group first",
+		err.Group,
+	)
 }
 
 func (err *RemoveLastGroupMemberError) StatusError() error {
@@ -32,15 +35,19 @@ func (m *LDAPManager) RemoveGroupMember(req *pb.GroupMember, allowRemoveFromDefa
 	username := req.GetUsername()
 	group := req.GetGroup()
 	if group == "" {
-		return &ldaperror.ValidationError{Message: "group must not be empty"}
+		return &ldaperror.ValidationError{
+			Message: "group must not be empty",
+		}
 	}
 	if username == "" {
-		return &ldaperror.ValidationError{Message: "username must not be empty"}
+		return &ldaperror.ValidationError{
+			Message: "username must not be empty",
+		}
 	}
 	protected := m.IsProtectedGroup(group)
 	if !allowRemoveFromDefaultGroups && protected {
 		return &ldaperror.ValidationError{
-			Message: "removing members from default user or admin groups not allowed"}
+			Message: "removing members from default group not allowed"}
 	}
 	username = EscapeDN(req.GetUsername())
 	if !m.GroupMembershipUsesUID {
@@ -51,7 +58,7 @@ func (m *LDAPManager) RemoveGroupMember(req *pb.GroupMember, allowRemoveFromDefa
 		[]ldap.Control{},
 	)
 	modifyRequest.Delete(m.GroupMembershipAttribute, []string{username})
-	log.Debugf("DeleteGroupMember: modifyRequest=%v", modifyRequest)
+	log.Debug(PrettyPrint(modifyRequest))
 
 	if err := m.ldap.Modify(modifyRequest); err != nil {
 		violation := ldap.IsErrorWithCode(err, ldap.LDAPResultObjectClassViolation)
@@ -70,6 +77,9 @@ func (m *LDAPManager) RemoveGroupMember(req *pb.GroupMember, allowRemoveFromDefa
 		}
 		return err
 	}
-	log.Infof("removed user %q from group %q", username, group)
+	log.Infof(
+		"removed user %q from group %q",
+		username, group,
+	)
 	return nil
 }
