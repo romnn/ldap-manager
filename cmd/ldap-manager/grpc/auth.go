@@ -28,16 +28,19 @@ type AuthClaims struct {
 	jwt.RegisteredClaims
 }
 
-// GetRegisteredClaims ...
+// GetRegisteredClaims returns the common registered claims
 func (claims *AuthClaims) GetRegisteredClaims() *jwt.RegisteredClaims {
 	return &claims.RegisteredClaims
 }
 
-// Checks if the GRPC method requires authentication
+// MethodRequiresAdmin checks if the GRPC method requires authentication
 func MethodRequiresAdmin(ctx context.Context) (bool, error) {
 	if info, ok := reflect.GetMethodInfo(ctx); ok {
 		methOptions := info.Method().Options()
-		if requiresAdmin, ok := proto.GetExtension(methOptions, pb.E_RequireAdmin).(bool); ok {
+		if requiresAdmin, ok := proto.GetExtension(
+			methOptions,
+			pb.E_RequireAdmin,
+		).(bool); ok {
 			return requiresAdmin, nil
 		}
 	}
@@ -45,12 +48,15 @@ func MethodRequiresAdmin(ctx context.Context) (bool, error) {
 	return true, errors.New("route has no or insufficient authentication policy")
 }
 
-// Signs an authentication claim and returns a user token
+// SignUserToken signs an authentication claim and returns it as a JWT token
 func (s *LDAPManagerService) SignUserToken(claims *AuthClaims) (*pb.Token, error) {
 	token, err := s.authenticator.SignJwtClaims(claims)
 	if err != nil {
 		log.Error(err)
-		return nil, status.Error(codes.Internal, "error while signing token")
+		return nil, status.Error(
+			codes.Internal,
+			"error while signing token",
+		)
 	}
 	expirationTime := time.Now().Add(s.authenticator.ExpiresAfter)
 	return &pb.Token{
@@ -72,24 +78,42 @@ func (s *LDAPManagerService) Authenticate(ctx context.Context) (*AuthClaims, err
 	}
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, status.Error(codes.Internal, "failed to extract authentication metadata")
+		return nil, status.Error(
+			codes.Internal,
+			"failed to extract authentication metadata",
+		)
 	}
 	tokens := md.Get("x-user-token")
 	if len(tokens) < 1 {
-		return nil, status.Error(codes.Unauthenticated, "missing authentication token")
+		return nil, status.Error(
+			codes.Unauthenticated,
+			"missing authentication token",
+		)
 	}
-	valid, token, err := s.authenticator.Validate(tokens[0], &AuthClaims{})
+	valid, token, err := s.authenticator.Validate(
+		tokens[0],
+		&AuthClaims{},
+	)
 	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, "token validation failed")
+		return nil, status.Error(
+			codes.Unauthenticated,
+			"token validation failed",
+		)
 	}
 	if claims, ok := token.Claims.(*AuthClaims); ok && valid {
 		if requireAdmin && !claims.IsAdmin {
-			return nil, status.Error(codes.PermissionDenied, "requires admin priviledges")
+			return nil, status.Error(
+				codes.PermissionDenied,
+				"requires admin priviledges",
+			)
 		}
 		// authenticated
 		return claims, nil
 	}
-	return nil, status.Error(codes.Unauthenticated, "invalid token")
+	return nil, status.Error(
+		codes.Unauthenticated,
+		"invalid token",
+	)
 }
 
 // Login logs in a user
@@ -100,26 +124,33 @@ func (s *LDAPManagerService) Login(ctx context.Context, req *pb.LoginRequest) (*
 		if appErr, ok := err.(ldaperror.Error); ok {
 			return &pb.Token{}, appErr.StatusError()
 		}
-		return nil, status.Error(codes.Unauthenticated, "unauthorized")
+		return nil, status.Error(
+			codes.Unauthenticated, "unauthorized")
 	}
 	username := user.GetUsername()
 	UID := user.GetUID()
 	if username == "" || UID == 0 {
-		return nil, status.Error(codes.NotFound, "user is invalid")
+		return nil, status.Error(
+			codes.NotFound,
+			"user is invalid",
+		)
 	}
 
-	adminMemberStatus, err := s.manager.IsGroupMember(&pb.IsGroupMemberRequest{
+	memberStatus, err := s.manager.IsGroupMember(&pb.IsGroupMemberRequest{
 		Username: username,
 		Group:    s.manager.DefaultAdminGroup,
 	})
 	if err != nil {
 		log.Error(err)
-		return nil, status.Error(codes.Internal, "error checking user member status")
+		return nil, status.Error(
+			codes.Internal,
+			"error checking user member status",
+		)
 	}
 	return s.SignUserToken(&AuthClaims{
 		Username:    username,
 		UID:         UID,
-		IsAdmin:     adminMemberStatus.GetIsMember(),
+		IsAdmin:     memberStatus.GetIsMember(),
 		DisplayName: user.GetDisplayName(),
 	})
 }

@@ -1,10 +1,6 @@
 package main
 
 import (
-	// "context"
-	// "io/ioutil"
-	// "net"
-	// "sync"
 	"testing"
 
 	ldapgrpc "github.com/romnn/ldap-manager/cmd/ldap-manager/grpc"
@@ -12,23 +8,19 @@ import (
 	ldapmanager "github.com/romnn/ldap-manager/pkg"
 	ldapconfig "github.com/romnn/ldap-manager/pkg/config"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
-	// log "github.com/sirupsen/logrus"
 
 	"github.com/testcontainers/testcontainers-go"
-
 	"google.golang.org/grpc"
-	// "google.golang.org/grpc/metadata"
-	// "google.golang.org/grpc/test/bufconn"
 )
 
 const (
 	bufSize = 1024 * 1024
 )
 
-// Test ...
+// Test holds a pre-configured
 type Test struct {
-	Container testcontainers.Container
-	Config    ldapconfig.OpenLDAPConfig
+	testcontainers.Container
+	ldapconfig.Config
 
 	Conn        *grpc.ClientConn
 	Client      pb.LDAPManagerClient

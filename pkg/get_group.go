@@ -39,6 +39,7 @@ func (e *ZeroOrMultipleGroupsError) Error() string {
 	)
 }
 
+// StatusError returns the GRPC status error for this error
 func (e *ZeroOrMultipleGroupsError) StatusError() error {
 	if e.Count > 1 {
 		return status.Errorf(codes.Internal, e.Error())

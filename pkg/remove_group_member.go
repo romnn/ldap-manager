@@ -27,11 +27,12 @@ func (err *RemoveLastGroupMemberError) Error() string {
 	)
 }
 
+// StatusError returns the GRPC status error for this error
 func (err *RemoveLastGroupMemberError) StatusError() error {
 	return status.Errorf(codes.FailedPrecondition, err.Error())
 }
 
-// IsProtectedGroup ...
+// IsProtectedGroup returns `true` if the group is the user or admin group
 func (m *LDAPManager) IsProtectedGroup(group string) bool {
 	isAdminGroup := strings.ToLower(group) == strings.ToLower(m.DefaultAdminGroup)
 	isUserGroup := strings.ToLower(group) == strings.ToLower(m.DefaultUserGroup)

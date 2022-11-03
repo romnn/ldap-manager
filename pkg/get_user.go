@@ -32,6 +32,7 @@ func (e *ZeroOrMultipleUsersError) Error() string {
 	)
 }
 
+// StatusError returns the GRPC status error for this error
 func (e *ZeroOrMultipleUsersError) StatusError() error {
 	if e.Count > 1 {
 		return status.Errorf(codes.Internal, e.Error())
@@ -40,8 +41,8 @@ func (e *ZeroOrMultipleUsersError) StatusError() error {
 }
 
 const (
-	userUidNumber     = "uidNumber"
-	userGidNumber     = "gidNumber"
+	userUIDNumber     = "uidNumber"
+	userGIDNumber     = "gidNumber"
 	userGivenName     = "givenName"
 	userDisplayName   = "displayName"
 	userLoginShell    = "loginShell"
@@ -53,16 +54,16 @@ const (
 
 // ParseUser parses an ldap entry as a User
 func (m *LDAPManager) ParseUser(entry *ldap.Entry) *pb.User {
-	uid, _ := strconv.Atoi(entry.GetAttributeValue(userUidNumber))
-	gid, _ := strconv.Atoi(entry.GetAttributeValue(userGidNumber))
+	UID, _ := strconv.Atoi(entry.GetAttributeValue(userUIDNumber))
+	GID, _ := strconv.Atoi(entry.GetAttributeValue(userGIDNumber))
 	return &pb.User{
 		Username:      entry.GetAttributeValue(m.AccountAttribute),
 		FirstName:     entry.GetAttributeValue(userGivenName),
 		LastName:      entry.GetAttributeValue(userSN),
 		CN:            entry.GetAttributeValue(userCN),
 		DisplayName:   entry.GetAttributeValue(userDisplayName),
-		UID:           int32(uid),
-		GID:           int64(gid),
+		UID:           int32(UID),
+		GID:           int64(GID),
 		LoginShell:    entry.GetAttributeValue(userLoginShell),
 		HomeDirectory: entry.GetAttributeValue(userHomeDirectory),
 		Email:         entry.GetAttributeValue(userMail),
@@ -76,8 +77,8 @@ func (m *LDAPManager) userFields() []string {
 		userSN,
 		userCN,
 		userDisplayName,
-		userUidNumber,
-		userGidNumber,
+		userUIDNumber,
+		userGIDNumber,
 		userLoginShell,
 		userHomeDirectory,
 		userMail,

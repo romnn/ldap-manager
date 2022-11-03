@@ -48,6 +48,54 @@ func buildModifyRequest(dn string, user *pb.User, update *pb.NewUserRequest) *ld
 	return req
 }
 
+// MigrateUserGroups migrates a user in each group it is a member of
+func (m *LDAPManager) MigrateUserGroups(username, newUsername string) error {
+	groups, err := m.GetUserGroups(&pb.GetUserGroupsRequest{
+		Username: username,
+	})
+	if err != nil {
+		return fmt.Errorf(
+			"failed to get list of groups: %v",
+			err,
+		)
+	}
+	for _, group := range groups.GetGroups() {
+		// add first, to avoid removing the only member of a group
+		allowMissing := false
+		if err := m.AddGroupMember(&pb.GroupMember{
+			Group:    group.GetName(),
+			Username: newUsername,
+		}, allowMissing); err != nil {
+			_, exists := err.(*MemberAlreadyExistsError)
+			if !exists {
+				return fmt.Errorf(
+					"failed to add renamed user (%q -> %q) to group %q: %v",
+					username, newUsername, group.GetName(), err,
+				)
+			}
+		}
+		// remove after
+		allowRemoveFromDefaultGroups := true
+		if err := m.RemoveGroupMember(&pb.GroupMember{
+			Group:    group.GetName(),
+			Username: username,
+		}, allowRemoveFromDefaultGroups); err != nil {
+			_, nomember := err.(*NoSuchMemberError)
+			if !nomember {
+				return fmt.Errorf(
+					"failed to remove renamed user (%q -> %q) from group %q: %v",
+					username, newUsername, group.GetName(), err,
+				)
+			}
+		}
+		log.Infof(
+			"Migrated member %q to %q in group %q",
+			username, newUsername, group.GetName(),
+		)
+	}
+	return nil
+}
+
 // UpdateUser updates a user
 func (m *LDAPManager) UpdateUser(req *pb.UpdateUserRequest, isAdmin bool) (string, error) {
 	username := req.GetUsername()
@@ -89,49 +137,8 @@ func (m *LDAPManager) UpdateUser(req *pb.UpdateUserRequest, isAdmin bool) (strin
 			username, newUsername,
 		)
 
-		// migrate user from all its groups
-		groups, err := m.GetUserGroups(&pb.GetUserGroupsRequest{
-			Username: username,
-		})
-		if err != nil {
-			return "", fmt.Errorf(
-				"failed to get list of groups: %v",
-				err,
-			)
-		}
-		for _, group := range groups.GetGroups() {
-			// add first, to avoid removing the only member of a group
-			allowMissing := false
-			if err := m.AddGroupMember(&pb.GroupMember{
-				Group:    group.GetName(),
-				Username: newUsername,
-			}, allowMissing); err != nil {
-				_, exists := err.(*MemberAlreadyExistsError)
-				if !exists {
-					return "", fmt.Errorf(
-						"failed to add renamed user (%q -> %q) to group %q: %v",
-						username, newUsername, group.GetName(), err,
-					)
-				}
-			}
-			// remove after
-			allowRemoveFromDefaultGroups := true
-			if err := m.RemoveGroupMember(&pb.GroupMember{
-				Group:    group.GetName(),
-				Username: username,
-			}, allowRemoveFromDefaultGroups); err != nil {
-				_, nomember := err.(*NoSuchMemberError)
-				if !nomember {
-					return "", fmt.Errorf(
-						"failed to remove renamed user (%q -> %q) from group %q: %v",
-						username, newUsername, group.GetName(), err,
-					)
-				}
-			}
-			log.Infof(
-				"Migrated member %q to %q in user group %q",
-				username, newUsername, group.GetName(),
-			)
+		if err := m.MigrateUserGroups(username, newUsername); err != nil {
+			return "", err
 		}
 	}
 

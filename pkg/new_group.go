@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// A GroupAlreadyExistsError is returned when a group already exists
+// GroupAlreadyExistsError is returned when a group already exists
 type GroupAlreadyExistsError struct {
 	error
 	Group string
@@ -26,6 +26,7 @@ func (e *GroupAlreadyExistsError) Error() string {
 	)
 }
 
+// StatusError returns the GRPC status error for this error
 func (e *GroupAlreadyExistsError) StatusError() error {
 	return status.Errorf(codes.AlreadyExists, e.Error())
 }

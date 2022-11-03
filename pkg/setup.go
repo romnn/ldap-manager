@@ -15,8 +15,8 @@ import (
 
 // BindAdmin binds as the admin user
 func (m *LDAPManager) BindAdmin() error {
-	adminUser := fmt.Sprintf("cn=%s,%s", "admin", m.OpenLDAPConfig.BaseDN)
-	adminPassword := m.OpenLDAPConfig.AdminPassword
+	adminUser := fmt.Sprintf("cn=%s,%s", "admin", m.Config.BaseDN)
+	adminPassword := m.Config.AdminPassword
 	return m.ldap.Bind(adminUser, adminPassword)
 }
 
@@ -198,7 +198,7 @@ func (m *LDAPManager) SetupLDAP() error {
 
 // Connect connects to the LDAP server
 func (m *LDAPManager) Connect() error {
-	URI := m.OpenLDAPConfig.URI()
+	URI := m.Config.URI()
 	log.Debugf("connecting to OpenLDAP at %s", URI)
 
 	b := backoff.WithMaxRetries(&backoff.ConstantBackOff{
@@ -220,7 +220,7 @@ func (m *LDAPManager) Connect() error {
 	}
 
 	// Check for TLS
-	if strings.HasPrefix(URI, "ldaps:") || m.OpenLDAPConfig.TLS {
+	if strings.HasPrefix(URI, "ldaps:") || m.Config.TLS {
 		if err := m.ldap.StartTLS(&tls.Config{
 			InsecureSkipVerify: true,
 		}); err != nil {

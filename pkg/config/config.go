@@ -4,8 +4,8 @@ import (
 	"fmt"
 )
 
-// OpenLDAPConfig ...
-type OpenLDAPConfig struct {
+// Config contains the configuration of the LDAP server
+type Config struct {
 	Host     string
 	Port     int
 	Protocol string
@@ -14,7 +14,6 @@ type OpenLDAPConfig struct {
 	Domain               string
 	BaseDN               string
 	AdminPassword        string
-	ConfigPassword       string
 	ReadonlyUser         bool
 	ReadonlyUserUsername string
 	ReadonlyUserPassword string
@@ -22,10 +21,9 @@ type OpenLDAPConfig struct {
 	UseRFC2307BISSchema  bool
 }
 
-// NewOpenLDAPConfig ...
-func NewOpenLDAPConfig() OpenLDAPConfig {
-	// populates default OpenLDAP config values
-	return OpenLDAPConfig{
+// NewConfig creates a default LDAP configuration
+func NewConfig() Config {
+	return Config{
 		Host:                 "localhost",
 		Port:                 389,
 		Protocol:             "ldap",
@@ -33,7 +31,6 @@ func NewOpenLDAPConfig() OpenLDAPConfig {
 		Domain:               "example.org",
 		BaseDN:               "dc=example,dc=org",
 		AdminPassword:        "admin",
-		ConfigPassword:       "config",
 		ReadonlyUser:         true,
 		ReadonlyUserUsername: "readonly",
 		ReadonlyUserPassword: "readonly",
@@ -42,7 +39,7 @@ func NewOpenLDAPConfig() OpenLDAPConfig {
 	}
 }
 
-// URI ...
-func (cfg *OpenLDAPConfig) URI() string {
+// URI returns the connection URI for the LDAP config
+func (cfg *Config) URI() string {
 	return fmt.Sprintf("%s://%s:%d", cfg.Protocol, cfg.Host, cfg.Port)
 }

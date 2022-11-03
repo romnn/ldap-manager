@@ -11,7 +11,7 @@ import (
 
 // LDAPManager implements the LDAP manager functionality
 type LDAPManager struct {
-	ldapconfig.OpenLDAPConfig
+	ldapconfig.Config
 	ldap *ldap.Conn
 
 	GroupsDN    string
@@ -36,7 +36,7 @@ type LDAPManager struct {
 }
 
 // NewLDAPManager creates a new LDAPManager
-func NewLDAPManager(config ldapconfig.OpenLDAPConfig) *LDAPManager {
+func NewLDAPManager(config ldapconfig.Config) *LDAPManager {
 	useColor := supportscolor.Stdout().SupportsColor
 	pp.Default.SetColoringEnabled(useColor)
 	pp.Default.SetExportedOnly(true)
@@ -46,7 +46,7 @@ func NewLDAPManager(config ldapconfig.OpenLDAPConfig) *LDAPManager {
 	})
 
 	return &LDAPManager{
-		OpenLDAPConfig:           config,
+		Config:                   config,
 		GroupsDN:                 "ou=groups," + config.BaseDN,
 		UserGroupDN:              "ou=users," + config.BaseDN,
 		GroupsOU:                 "groups",

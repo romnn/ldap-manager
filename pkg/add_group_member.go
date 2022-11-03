@@ -12,8 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// A MemberAlreadyExistsError is returned when a user is
-// already a member of a group
+// MemberAlreadyExistsError is returned when a user is already a group member
 type MemberAlreadyExistsError struct {
 	error
 	Group, Member string
@@ -26,6 +25,7 @@ func (e *MemberAlreadyExistsError) Error() string {
 	)
 }
 
+// StatusError returns the GRPC status error for this error
 func (e *MemberAlreadyExistsError) StatusError() error {
 	return status.Errorf(codes.AlreadyExists, e.Error())
 }

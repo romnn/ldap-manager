@@ -28,14 +28,14 @@ type Test struct {
 	Manager   *LDAPManager
 }
 
-// Starts starts the container
+// Start starts the container
 func (test *Test) Start(t *testing.T) *Test {
 	var err error
 	t.Parallel()
 
 	// start OpenLDAP container
 	options := ContainerOptions{
-		OpenLDAPConfig: ldapconfig.NewOpenLDAPConfig(),
+		Config: ldapconfig.NewConfig(),
 	}
 	container, err := StartOpenLDAP(context.Background(), options)
 	if err != nil {
@@ -44,7 +44,7 @@ func (test *Test) Start(t *testing.T) *Test {
 	test.Container = &container
 
 	// create and setup the LDAP Manager service
-	test.Manager = NewLDAPManager(test.Container.OpenLDAPConfig)
+	test.Manager = NewLDAPManager(test.Container.Config)
 	test.Manager.DefaultAdminUsername = "ldapadmin"
 	test.Manager.DefaultAdminPassword = "123456"
 	if err := test.Manager.Connect(); err != nil {

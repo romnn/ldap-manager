@@ -19,14 +19,14 @@ var (
 
 // ContainerOptions describes options for the container
 type ContainerOptions struct {
-	ldapconfig.OpenLDAPConfig
+	ldapconfig.Config
 	ImageTag string
 }
 
 // Container holds the LDAP container
 type Container struct {
+	ldapconfig.Config
 	Container testcontainers.Container
-	ldapconfig.OpenLDAPConfig
 }
 
 // Terminate terminates the container
@@ -50,7 +50,6 @@ func StartOpenLDAP(ctx context.Context, options ContainerOptions) (Container, er
 	env["LDAP_BASE_DN"] = options.BaseDN
 
 	env["LDAP_ADMIN_PASSWORD"] = options.AdminPassword
-	env["LDAP_CONFIG_PASSWORD"] = options.ConfigPassword
 
 	env["LDAP_READONLY_USER"] = strconv.FormatBool(options.ReadonlyUser)
 	env["LDAP_READONLY_USER_USERNAME"] = options.ReadonlyUserUsername
@@ -93,9 +92,9 @@ func StartOpenLDAP(ctx context.Context, options ContainerOptions) (Container, er
 		)
 	}
 
-	container.OpenLDAPConfig = options.OpenLDAPConfig
-	container.OpenLDAPConfig.Host = host
-	container.OpenLDAPConfig.Port = realPort.Int()
+	container.Config = options.Config
+	container.Config.Host = host
+	container.Config.Port = realPort.Int()
 
 	return container, nil
 }

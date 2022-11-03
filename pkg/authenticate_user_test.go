@@ -1,8 +1,9 @@
 package pkg
 
 import (
-	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	"testing"
+
+	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
 
 // TestAuthenticateUser tests authenticating as a user

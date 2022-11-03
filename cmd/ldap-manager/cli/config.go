@@ -5,90 +5,95 @@ import (
 )
 
 var (
+	// LdapHost configures the LDAP server host
 	LdapHost = cli.StringFlag{
-		Name:    "openldap-host",
+		Name:    "ldap-host",
 		Value:   "localhost",
-		EnvVars: []string{"OPENLDAP_HOST"},
-		Usage:   "openldap host",
+		EnvVars: []string{"LDAP_HOST"},
+		Usage:   "LDAP host",
 	}
+	// LdapPort configures the LDAP server port
 	LdapPort = cli.IntFlag{
-		Name:    "openldap-port",
+		Name:    "ldap-port",
 		Value:   389,
-		EnvVars: []string{"OPENLDAP_PORT"},
-		Usage:   "openldap port",
+		EnvVars: []string{"LDAP_PORT"},
+		Usage:   "LDAP port",
 	}
+	// LdapProtocol configures the LDAP server protocol
 	LdapProtocol = cli.StringFlag{
-		Name:    "openldap-protocol",
+		Name:    "ldap-protocol",
 		Value:   "ldap",
-		EnvVars: []string{"OPENLDAP_PROTOCOL"},
-		Usage:   "openldap protocol",
+		EnvVars: []string{"LDAP_PROTOCOL"},
+		Usage:   "LDAP protocol",
 	}
+	// LdapAdminPassword configures the LDAP admin password
 	LdapAdminPassword = cli.StringFlag{
-		Name:    "openldap-admin-password",
+		Name:    "ldap-admin-password",
 		Value:   "admin",
-		EnvVars: []string{"OPENLDAP_ADMIN_PASSWORD"},
-		Usage:   "openldap admin password",
+		EnvVars: []string{"LDAP_ADMIN_PASSWORD"},
+		Usage:   "LDAP admin password",
 	}
-	LdapConfigPassword = cli.StringFlag{
-		Name:    "openldap-config-password",
-		Value:   "config",
-		EnvVars: []string{"OPENLDAP_CONFIG_PASSWORD"},
-		Usage:   "openldap config password",
-	}
+	// LdapReadOnlyUser configures the LDAP read-only user
 	LdapReadOnlyUser = cli.StringFlag{
-		Name:    "openldap-readonly-user",
-		Value:   "", // no readonly user
-		EnvVars: []string{"OPENLDAP_READONLY_USER"},
-		Usage:   "openldap readonly user",
+		Name:    "ldap-readonly-user",
+		Value:   "", // no read-only user
+		EnvVars: []string{"LDAP_READONLY_USER"},
+		Usage:   "LDAP read-only user",
 	}
+	// LdapReadOnlyPassword configures the LDAP read-only user
 	LdapReadOnlyPassword = cli.StringFlag{
 		Name:    "openldap-readonly-password",
-		Value:   "", // no readonly user
+		Value:   "", // no read-only user
 		EnvVars: []string{"OPENLDAP_READONLY_PASSWORD"},
-		Usage:   "openldap readonly password",
+		Usage:   "LDAP read-only password",
 	}
+	// LdapOrganization configures the LDAP organization
 	LdapOrganization = cli.StringFlag{
-		Name:    "openldap-organization",
+		Name:    "ldap-organization",
 		Value:   "Example Inc.",
-		EnvVars: []string{"OPENLDAP_ORGANIZATION"},
-		Usage:   "openldap organization",
+		EnvVars: []string{"LDAP_ORGANIZATION"},
+		Usage:   "LDAP organization",
 	}
+	// LdapDomain configures the LDAP domain
 	LdapDomain = cli.StringFlag{
-		Name:    "openldap-domain",
+		Name:    "ldap-domain",
 		Value:   "example.org",
-		EnvVars: []string{"OPENLDAP_DOMAIN"},
-		Usage:   "openldap domain",
+		EnvVars: []string{"LDAP_DOMAIN"},
+		Usage:   "LDAP domain",
 	}
+	// LdapBaseDn configures the LDAP base DN
 	LdapBaseDn = cli.StringFlag{
-		Name:    "openldap-base-dn",
+		Name:    "ldap-base-dn",
 		Value:   "dc=example,dc=org",
-		EnvVars: []string{"OPENLDAP_BASE_DN"},
-		Usage:   "openldap base DN",
+		EnvVars: []string{"LDAP_BASE_DN"},
+		Usage:   "LDAP base DN",
 	}
-	LdapTls = cli.BoolFlag{
-		Name:    "openldap-tls",
+	// LdapTLS configures if TLS shoudld be used for LDAP
+	LdapTLS = cli.BoolFlag{
+		Name:    "ldap-tls",
 		Value:   false,
-		EnvVars: []string{"OPENLDAP_TLS"},
-		Usage:   "openldap tls",
+		EnvVars: []string{"LDAP_TLS"},
+		Usage:   "LDAP use TLS",
 	}
+	// LdapUseRfc2307Bis configures if the LDAP server uses the RFC2307BIS schema
 	LdapUseRfc2307Bis = cli.BoolFlag{
-		Name:    "openldap-use-rfc2307bis",
+		Name:    "ldap-use-rfc2307bis",
 		Value:   true,
-		EnvVars: []string{"OPENLDAP_USE_RFC2307BIS"},
-		Usage:   "openldap use RFC2307BIS schema",
+		EnvVars: []string{"LDAP_USE_RFC2307BIS"},
+		Usage:   "LDAP use RFC2307BIS schema",
 	}
+	// LdapConfigFlags is a set of all LDAP CLI flags
 	LdapConfigFlags = []cli.Flag{
 		&LdapHost,
 		&LdapPort,
 		&LdapProtocol,
 		&LdapAdminPassword,
-		&LdapConfigPassword,
 		&LdapReadOnlyUser,
 		&LdapReadOnlyPassword,
 		&LdapOrganization,
 		&LdapDomain,
 		&LdapBaseDn,
-		&LdapTls,
+		&LdapTLS,
 		&LdapUseRfc2307Bis,
 	}
 )

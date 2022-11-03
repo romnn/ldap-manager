@@ -45,7 +45,7 @@ func newLDAPManager(ctx *cli.Context) ldapmanager.LDAPManager {
 		userGroupDN = fmt.Sprintf("ou=%s,%s", usersOU, baseDN)
 	}
 
-	config := ldapconfig.OpenLDAPConfig{
+	config := ldapconfig.Config{
 		Host:                 ctx.String(flags.LdapHost.Name),
 		Port:                 ctx.Int(flags.LdapPort.Name),
 		Protocol:             ctx.String(flags.LdapProtocol.Name),
@@ -53,22 +53,21 @@ func newLDAPManager(ctx *cli.Context) ldapmanager.LDAPManager {
 		Domain:               ctx.String(flags.LdapDomain.Name),
 		BaseDN:               baseDN,
 		AdminPassword:        ctx.String(flags.LdapAdminPassword.Name),
-		ConfigPassword:       ctx.String(flags.LdapConfigPassword.Name),
 		ReadonlyUser:         hasReadonlyUser,
 		ReadonlyUserUsername: ctx.String(flags.LdapReadOnlyUser.Name),
 		ReadonlyUserPassword: ctx.String(flags.LdapReadOnlyPassword.Name),
-		TLS:                  ctx.Bool(flags.LdapTls.Name),
+		TLS:                  ctx.Bool(flags.LdapTLS.Name),
 		UseRFC2307BISSchema:  ctx.Bool(flags.LdapUseRfc2307Bis.Name),
 	}
 
 	return ldapmanager.LDAPManager{
-		OpenLDAPConfig:           config,
+		Config:                   config,
 		GroupsOU:                 groupsOU,
 		UsersOU:                  usersOU,
 		GroupsDN:                 groupsDN,
 		UserGroupDN:              userGroupDN,
 		GroupMembershipAttribute: ctx.String(flags.GroupMembershipAttribute.Name),
-		GroupMembershipUsesUID:   ctx.Bool(flags.GroupMembershipUsesUid.Name),
+		GroupMembershipUsesUID:   ctx.Bool(flags.GroupMembershipUsesUID.Name),
 		AccountAttribute:         ctx.String(flags.AccountAttribute.Name),
 		GroupAttribute:           ctx.String(flags.GroupAttribute.Name),
 		DefaultUserGroup:         ctx.String(flags.DefaultUserGroup.Name),
@@ -112,13 +111,13 @@ func serve(cliCtx *cli.Context) error {
 	shutdownChan := make(chan os.Signal, 1)
 	signal.Notify(shutdownChan, syscall.SIGINT, syscall.SIGTERM)
 
-	grpcAddr := fmt.Sprintf(":%d", cliCtx.Int(flags.GrpcPort.Name))
+	grpcAddr := fmt.Sprintf(":%d", cliCtx.Int(flags.GRPCPort.Name))
 	grpcListener, err := net.Listen("tcp", grpcAddr)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
 
-	httpAddr := fmt.Sprintf(":%d", cliCtx.Int(flags.HttpPort.Name))
+	httpAddr := fmt.Sprintf(":%d", cliCtx.Int(flags.HTTPPort.Name))
 	httpListener, err := net.Listen("tcp", httpAddr)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)

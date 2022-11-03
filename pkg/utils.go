@@ -95,7 +95,7 @@ func EscapeDN(dn string) string {
 	return builder.String()
 }
 
-// Build filter escapes and concatenates multiple filter expressions
+// BuildFilter escapes and concatenates multiple filter expressions
 func BuildFilter(filters []string) string {
 	var filter string
 	for _, f := range filters {

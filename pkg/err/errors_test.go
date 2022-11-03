@@ -1,8 +1,6 @@
 package err
 
-import (
-	// "testing"
-)
+// "testing"
 
 // var (
 // 	// Accounts

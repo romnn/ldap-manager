@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	PagingSize = 256
+	pagingSize = 256
 )
 
 // GetGroupList gets a list of all groups
@@ -24,7 +24,7 @@ func (m *LDAPManager) GetGroupList(req *pb.GetGroupListRequest) (*pb.GroupList, 
 		),
 		[]string{},
 		[]ldap.Control{},
-	), PagingSize)
+	), pagingSize)
 	if err != nil {
 		return nil, err
 	}

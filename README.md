@@ -67,7 +67,7 @@ $ python3 -m pip install pre-commit bump2version invoke
 $ go install github.com/kyoh86/richgo@latest
 $ go install golang.org/x/tools/cmd/goimports@latest
 $ go install golang.org/x/lint/golint@latest
-$ go install github.com/fzipp/gocyclo@latest
+$ go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
 ```
 
 Please always make sure code checks pass:

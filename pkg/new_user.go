@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// A UserAreadyExistsError error is returned when a username already exists
+// UserAlreadyExistsError is returned when a username already exists
 type UserAlreadyExistsError struct {
 	error
 	Username string
@@ -27,11 +27,12 @@ func (e *UserAlreadyExistsError) Error() string {
 	)
 }
 
+// StatusError returns the GRPC status error for this error
 func (e *UserAlreadyExistsError) StatusError() error {
 	return status.Errorf(codes.AlreadyExists, e.Error())
 }
 
-// An InvalidUserError is returned when the user contains invalid values
+// InvalidUserError is returned when the user contains invalid values
 type InvalidUserError struct {
 	error
 	Invalid map[string]error
@@ -44,6 +45,7 @@ func (e *InvalidUserError) Error() string {
 	)
 }
 
+// StatusError returns the GRPC status error for this error
 func (e *InvalidUserError) StatusError() error {
 	return status.Errorf(codes.InvalidArgument, e.Error())
 }
@@ -126,6 +128,10 @@ func ValidateNewUser(req *pb.NewUserRequest) *InvalidUserError {
 	return nil
 }
 
+// GetUserGroup gets or creates the user group
+//
+// If there exist no users yet, the default user groups is created with
+// the given user as the initial member
 func (m *LDAPManager) GetUserGroup(username string) (*pb.Group, error) {
 	// fast path: the user group already exists
 	groupName := m.DefaultUserGroup

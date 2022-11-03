@@ -3,7 +3,7 @@ package pkg
 import (
 	"testing"
 
-	"github.com/romnn/go-recursive-sort"
+	recursivesort "github.com/romnn/go-recursive-sort"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
 
