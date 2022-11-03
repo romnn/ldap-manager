@@ -15,11 +15,13 @@ const (
 
 // GetGroupList gets a list of all groups
 func (m *LDAPManager) GetGroupList(req *pb.GetGroupListRequest) (*pb.GroupList, error) {
-	filter := ParseFilter(req.Filter)
 	result, err := m.ldap.SearchWithPaging(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(&(objectClass=posixGroup)%s)", filter),
+		fmt.Sprintf(
+			"(&(objectClass=posixGroup)%s)",
+			BuildFilter(req.GetFilter()),
+		),
 		[]string{},
 		[]ldap.Control{},
 	), PagingSize)

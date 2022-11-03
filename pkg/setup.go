@@ -1,11 +1,13 @@
 package pkg
 
 import (
+	"crypto/tls"
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
-	"crypto/tls"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/go-ldap/ldap/v3"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
@@ -196,11 +198,17 @@ func (m *LDAPManager) SetupLDAP() error {
 
 // Connect connects to the LDAP server
 func (m *LDAPManager) Connect() error {
-	var err error
-
 	URI := m.OpenLDAPConfig.URI()
 	log.Debugf("connecting to OpenLDAP at %s", URI)
-	m.ldap, err = ldap.DialURL(URI)
+
+	exp := backoff.NewExponentialBackOff()
+	exp.MaxElapsedTime = 3 * time.Minute
+
+	err := backoff.Retry(func() error {
+		var err error
+		m.ldap, err = ldap.DialURL(URI)
+		return err
+	}, exp)
 	if err != nil {
 		return err
 	}

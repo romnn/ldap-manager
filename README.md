@@ -56,12 +56,15 @@ TODO
 
 #### Tools
 
-Before you get started, make sure you have installed the following tools::
+Before you get started, make sure you have installed the following tools:
 
-    $ python3 -m pip install pre-commit bump2version invoke
-    $ go install golang.org/x/tools/cmd/goimports@latest
-    $ go install golang.org/x/lint/golint@latest
-    $ go install github.com/fzipp/gocyclo@latest
+```bash
+$ python3 -m pip install pre-commit bump2version invoke
+$ go install github.com/kyoh86/richgo@latest
+$ go install golang.org/x/tools/cmd/goimports@latest
+$ go install golang.org/x/lint/golint@latest
+$ go install github.com/fzipp/gocyclo@latest
+```
 
 Please always make sure code checks pass:
 

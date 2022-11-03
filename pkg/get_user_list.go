@@ -13,11 +13,14 @@ func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, err
 	if req.GetSortKey() == "" {
 		req.SortKey = m.AccountAttribute
 	}
-	filter := ParseFilter(req.Filter)
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.UserGroupDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(&(%s=*)%s)", m.AccountAttribute, filter),
+		fmt.Sprintf(
+			"(&(%s=*)%s)",
+			m.AccountAttribute,
+			BuildFilter(req.GetFilter()),
+		),
 		m.userFields(),
 		[]ldap.Control{},
 	))
