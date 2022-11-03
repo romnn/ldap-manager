@@ -1,11 +1,31 @@
 package pkg
 
 import (
+	"fmt"
+
 	"github.com/go-ldap/ldap/v3"
 	ldaperror "github.com/romnn/ldap-manager/pkg/err"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
+
+// A RemoveLastGroupMemberError is returned when attempting
+// to remove the only member of a group
+type RemoveLastGroupMemberError struct {
+	error
+	Group string
+}
+
+func (err *RemoveLastGroupMemberError) Error() string {
+	return fmt.Sprintf("cannot remove the only remaining group member from group %q, consider deleting the group first", err.Group)
+}
+
+func (err *RemoveLastGroupMemberError) StatusError() error {
+	return status.Errorf(codes.FailedPrecondition, err.Error())
+}
 
 // RemoveGroupMember removes a group member from a group
 func (m *LDAPManager) RemoveGroupMember(req *pb.GroupMember, allowRemoveFromDefaultGroups bool) error {

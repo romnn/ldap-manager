@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-ldap/ldap/v3"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
+	log "github.com/sirupsen/logrus"
 )
 
 // GetUserGroups gets the groups a user is member of
@@ -18,21 +19,20 @@ func (m *LDAPManager) GetUserGroups(req *pb.GetUserGroupsRequest) (*pb.GroupList
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		filter,
-		[]string{"cn"},
+		m.groupFields(),
 		[]ldap.Control{},
 	))
 	if err != nil {
 		return nil, err
 	}
-	// groupList := &pb.GroupList{Total: int64(len(result.Entries))}
 	var groups []*pb.Group
 	for _, entry := range result.Entries {
-		if group, err := m.parseGroup(entry); err == nil {
+		group, err := m.parseGroup(entry)
+		if err != nil {
+			log.Warnf("failed to parse group %s: %v", PrettyPrint(entry), err)
+		} else {
 			groups = append(groups, group)
 		}
-		// if cn := group.GetAttributeValue("cn"); cn != "" {
-		// 	groupList.Groups = append(groupList.Groups, cn)
-		// }
 	}
 
 	// No sorting and clipping here

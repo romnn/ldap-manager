@@ -101,3 +101,52 @@ func TestAddGroupMember(t *testing.T) {
 		t.Fatalf("user %q should be a member of group %q", username2, groupName)
 	}
 }
+
+// TestAddGroupMemberMissing tests adding a group member
+// when either the user or the group does not exist.
+func TestAddGroupMemberMissing(t *testing.T) {
+	test := new(Test).Setup(t)
+	defer test.Teardown()
+
+	strict := false
+	groupName := "test-group"
+	if err := test.Manager.NewGroup(&pb.NewGroupRequest{
+		Name:    groupName,
+		Members: []string{"temp-user"},
+	}, strict); err != nil {
+		t.Fatalf("failed to add new group: %v", err)
+	}
+
+	// add a non-existent member to an existing group
+	// this will fail because the user is not present in the users group
+	// and strict checking is the default
+	// however, if we were adding to the users group this would succeed
+	username := "i-am-not-there"
+	allowNonExistent := false
+	if err := test.Manager.AddGroupMember(&pb.GroupMember{
+		Group:    groupName,
+		Username: username,
+	}, allowNonExistent); err == nil {
+		t.Errorf("expected error adding user %q to group %q", username, groupName)
+	}
+
+	// add an existing user to an non-existing group
+	username = "valid-user"
+	if err := test.Manager.NewUser(&pb.NewUserRequest{
+		Username:  username,
+		Password:  "Hallo Welt",
+		Email:     "a@b.de",
+		FirstName: "roman",
+		LastName:  "d",
+	}); err != nil {
+		t.Fatalf("failed to add new user: %v", err)
+	}
+
+	groupName = "group-that-is-ficticious"
+	if err := test.Manager.AddGroupMember(&pb.GroupMember{
+		Group:    groupName,
+		Username: username,
+	}, allowNonExistent); err == nil {
+		t.Fatalf("expected error adding user %q to a group %q", username, groupName)
+	}
+}

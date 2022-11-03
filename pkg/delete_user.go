@@ -28,21 +28,6 @@ func (err *NoSuchMemberError) StatusError() error {
 	return status.Errorf(codes.NotFound, err.Error())
 }
 
-// A RemoveLastGroupMemberError is returned when attempting
-// to remove the only member of a group
-type RemoveLastGroupMemberError struct {
-	error
-	Group string
-}
-
-func (err *RemoveLastGroupMemberError) Error() string {
-	return fmt.Sprintf("cannot remove the only remaining group member from group %q, consider deleting the group first", err.Group)
-}
-
-func (err *RemoveLastGroupMemberError) StatusError() error {
-	return status.Errorf(codes.FailedPrecondition, err.Error())
-}
-
 // DeleteUser deletes a user
 func (m *LDAPManager) DeleteUser(req *pb.DeleteUserRequest, keepGroups bool) error {
 	username := req.GetUsername()
@@ -57,12 +42,13 @@ func (m *LDAPManager) DeleteUser(req *pb.DeleteUserRequest, keepGroups bool) err
 		if err != nil {
 			return fmt.Errorf("failed to get list of groups: %v", err)
 		}
+		log.Info(PrettyPrint(groups))
 		for _, group := range groups.GetGroups() {
-			allowDeleteOfDefaultGroups := true
+			allowRemoveFromDefaultGroups := true
 			if err := m.RemoveGroupMember(&pb.GroupMember{
 				Group:    group.GetName(),
 				Username: username,
-			}, allowDeleteOfDefaultGroups); err != nil {
+			}, allowRemoveFromDefaultGroups); err != nil {
 				if _, ok := err.(*RemoveLastGroupMemberError); ok {
 					return err
 				}
