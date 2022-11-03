@@ -90,7 +90,7 @@ message DeleteGroupRequest {
 message UpdateGroupRequest {
   string name = 1;
   string new_name = 2;
-  int32 GID = 3;
+  int64 GID = 3;
 }
 
 message GetGroupListRequest {

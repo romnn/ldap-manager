@@ -27,7 +27,7 @@ func (m *LDAPManager) UpdateGroup(req *pb.UpdateGroupRequest) error {
 			DeleteOldRDN: true,
 			NewSuperior:  "",
 		}
-		log.Debugf("UpdateGroup modifyRequest=%v", modifyRequest)
+		log.Debug(PrettyPrint(modifyRequest))
 		if err := m.ldap.ModifyDN(modifyRequest); err != nil {
 			return fmt.Errorf("failed to rename group %q to %q", groupName, newGroupName)
 		}
@@ -39,6 +39,7 @@ func (m *LDAPManager) UpdateGroup(req *pb.UpdateGroupRequest) error {
 		m.GroupNamed(groupName),
 		[]ldap.Control{},
 	)
+  // update GID
 	if req.GetGID() >= MinGID {
 		GID := strconv.Itoa(int(req.GetGID()))
 		modifyGroupRequest.Replace("gidNumber", []string{GID})

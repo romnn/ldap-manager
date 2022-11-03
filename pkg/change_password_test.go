@@ -3,6 +3,7 @@ package pkg
 import (
 	"testing"
 
+	"github.com/romnn/go-recursive-sort"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
 
@@ -41,6 +42,11 @@ func TestChangeExistingUserPassword(t *testing.T) {
 		t.Fatalf("failed to add user: %v", err)
 	}
 
+	before, err := test.Manager.GetUserList(&pb.GetUserListRequest{})
+	if err != nil {
+		t.Fatalf("failed to get list of users: %v", err)
+	}
+
 	// check if we can authenticate the user using password
 	if _, err := test.Manager.AuthenticateUser(&pb.LoginRequest{
 		Username: username,
@@ -72,5 +78,19 @@ func TestChangeExistingUserPassword(t *testing.T) {
 		Password: oldPassword,
 	}); err == nil {
 		t.Fatalf("expected authenticating user %q with password %q to fail", username, oldPassword)
+	}
+
+	// assert users did not change during the process
+	after, err := test.Manager.GetUserList(&pb.GetUserListRequest{})
+	if err != nil {
+		t.Fatalf("failed to get list of users: %v", err)
+	}
+
+	sort := recursivesort.RecursiveSort{StructSortField: "GID"}
+	sort.Sort(&before)
+	sort.Sort(&after)
+
+	if equal, diff := EqualProto(before, after); !equal {
+		t.Fatalf("unexpected change in users: \n%s", diff)
 	}
 }
