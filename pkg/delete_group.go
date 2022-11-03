@@ -21,7 +21,7 @@ func (m *LDAPManager) DeleteGroup(req *pb.DeleteGroupRequest) error {
 		}
 	}
 	if err := m.ldap.Del(ldap.NewDelRequest(
-		m.GroupNamed(name),
+		m.GroupDN(name),
 		[]ldap.Control{},
 	)); err != nil {
 		if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {

@@ -25,7 +25,7 @@ func (m *LDAPManager) ChangePassword(req *pb.ChangePasswordRequest) error {
 	}
 
 	modifyReq := ldap.PasswordModifyRequest{
-		UserIdentity: m.UserNamed(username),
+		UserIdentity: m.UserDN(username),
 		NewPassword:  password,
 	}
 	log.Debug(PrettyPrint(modifyReq))

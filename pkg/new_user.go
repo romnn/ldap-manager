@@ -232,9 +232,8 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
 	}
 
 	// add user
-	userDN := m.UserNamed(username)
 	addUserRequest := &ldap.AddRequest{
-		DN:         userDN,
+		DN:         m.UserDN(username),
 		Attributes: userAttributes,
 		Controls:   []ldap.Control{},
 	}
@@ -248,13 +247,13 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
 		}
 		return fmt.Errorf(
 			"failed to add user %q: %v",
-			userDN, err,
+			username, err,
 		)
 	}
 
 	// change password of user
 	passwordModifyRequest := &ldap.PasswordModifyRequest{
-		UserIdentity: userDN,
+		UserIdentity: m.UserDN(username),
 		NewPassword:  req.GetPassword(),
 	}
 	log.Debug(PrettyPrint(passwordModifyRequest))
@@ -262,7 +261,7 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
 	if err != nil {
 		return fmt.Errorf(
 			"failed to set password of new user %q: %v",
-			userDN, err,
+			username, err,
 		)
 	}
 

@@ -54,7 +54,7 @@ func TestGetGroupList(t *testing.T) {
 			{
 				Name: groupName,
 				Members: []string{
-					test.Manager.UserNamed(username),
+					test.Manager.UserDN(username),
 				},
 				GID: 2002,
 			},
@@ -62,7 +62,7 @@ func TestGetGroupList(t *testing.T) {
 				Name: "users",
 				Members: []string{
 					"uid=ldapadmin,ou=users,dc=example,dc=org",
-					test.Manager.UserNamed(username),
+					test.Manager.UserDN(username),
 				},
 				GID: 2001,
 			},

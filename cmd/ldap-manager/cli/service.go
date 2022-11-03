@@ -23,7 +23,7 @@ var (
 	}
 	HttpPort = cli.IntFlag{
 		Name:    "http-port",
-		Value:   80,
+		Value:   8080,
 		Aliases: []string{"port"},
 		EnvVars: []string{"HTTP_PORT", "PORT"},
 		Usage:   "http service port",
@@ -37,7 +37,7 @@ var (
 	}
 	StaticRoot = cli.StringFlag{
 		Name:    "static-root",
-		Value:   "./frontend/dist",
+		Value:   "./web/dist",
 		EnvVars: []string{"STATIC_DIR", "STATIC_ROOT"},
 		Usage:   "root source directory of the static files to be served",
 	}

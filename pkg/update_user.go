@@ -71,7 +71,7 @@ func (m *LDAPManager) UpdateUser(req *pb.UpdateUserRequest, isAdmin bool) (strin
 		}
 
 		modifyRequest := &ldap.ModifyDNRequest{
-			DN: m.UserNamed(username),
+			DN: m.UserDN(username),
 			NewRDN: fmt.Sprintf(
 				"%s=%s",
 				m.AccountAttribute,
@@ -136,7 +136,7 @@ func (m *LDAPManager) UpdateUser(req *pb.UpdateUserRequest, isAdmin bool) (strin
 	}
 
 	modifyUserReq := buildModifyRequest(
-		m.UserNamed(newUsername),
+		m.UserDN(newUsername),
 		user,
 		update,
 	)

@@ -201,14 +201,20 @@ func (m *LDAPManager) Connect() error {
 	URI := m.OpenLDAPConfig.URI()
 	log.Debugf("connecting to OpenLDAP at %s", URI)
 
-	exp := backoff.NewExponentialBackOff()
-	exp.MaxElapsedTime = 3 * time.Minute
+	b := backoff.WithMaxRetries(&backoff.ConstantBackOff{
+		Interval: 30 * time.Second,
+	}, 5)
+	// exp := backoff.NewExponentialBackOff()
+	// exp.MaxElapsedTime = 3 * time.Minute
 
 	err := backoff.Retry(func() error {
 		var err error
 		m.ldap, err = ldap.DialURL(URI)
+		if err != nil {
+			log.Warnf("timeout dialing %s: %v", URI, err)
+		}
 		return err
-	}, exp)
+	}, b)
 	if err != nil {
 		return err
 	}
@@ -219,9 +225,7 @@ func (m *LDAPManager) Connect() error {
 			InsecureSkipVerify: true,
 		}); err != nil {
 			log.Warnf("failed to connect via TLS: %v", err)
-			if m.OpenLDAPConfig.TLS {
-				return err
-			}
+			return err
 		}
 	}
 

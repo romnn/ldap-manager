@@ -64,10 +64,10 @@ func (m *LDAPManager) AddGroupMember(req *pb.GroupMember, allowNonExistent bool)
 
 	member := EscapeDN(username)
 	if !m.GroupMembershipUsesUID {
-		member = m.UserNamed(username)
+		member = m.UserDN(username)
 	}
 	modifyRequest := ldap.NewModifyRequest(
-		m.GroupNamed(group),
+		m.GroupDN(group),
 		[]ldap.Control{},
 	)
 	modifyRequest.Add(m.GroupMembershipAttribute, []string{member})

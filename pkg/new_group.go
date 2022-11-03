@@ -3,7 +3,6 @@ package pkg
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/go-ldap/ldap/v3"
 	ldaperror "github.com/romnn/ldap-manager/pkg/err"
@@ -14,7 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// GroupAlreadyExistsError ...
+// A GroupAlreadyExistsError is returned when a group already exists
 type GroupAlreadyExistsError struct {
 	error
 	Group string
@@ -29,31 +28,6 @@ func (e *GroupAlreadyExistsError) Error() string {
 
 func (e *GroupAlreadyExistsError) StatusError() error {
 	return status.Errorf(codes.AlreadyExists, e.Error())
-}
-
-// IsProtectedGroup ...
-func (m *LDAPManager) IsProtectedGroup(group string) bool {
-	isAdminGroup := strings.ToLower(group) == strings.ToLower(m.DefaultAdminGroup)
-	isUserGroup := strings.ToLower(group) == strings.ToLower(m.DefaultUserGroup)
-	return isAdminGroup || isUserGroup
-}
-
-// GroupNamed ...
-func (m *LDAPManager) GroupNamed(name string) string {
-	return fmt.Sprintf(
-		"cn=%s,%s",
-		EscapeDN(name), m.GroupsDN,
-	)
-}
-
-// UserNamed ...
-func (m *LDAPManager) UserNamed(name string) string {
-	return fmt.Sprintf(
-		"%s=%s,%s",
-		m.AccountAttribute,
-		EscapeDN(name),
-		m.UserGroupDN,
-	)
 }
 
 // NewGroup creates a new group
@@ -98,7 +72,7 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 		}
 		member := EscapeDN(username)
 		if !m.GroupMembershipUsesUID {
-			member = m.UserNamed(username)
+			member = m.UserDN(username)
 		}
 		memberList = append(memberList, member)
 	}
@@ -136,7 +110,7 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 	})
 
 	addGroupRequest := &ldap.AddRequest{
-		DN:         m.GroupNamed(groupName),
+		DN:         m.GroupDN(groupName),
 		Attributes: groupAttributes,
 		Controls:   []ldap.Control{},
 	}

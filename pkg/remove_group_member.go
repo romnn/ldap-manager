@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/go-ldap/ldap/v3"
 	ldaperror "github.com/romnn/ldap-manager/pkg/err"
@@ -30,6 +31,13 @@ func (err *RemoveLastGroupMemberError) StatusError() error {
 	return status.Errorf(codes.FailedPrecondition, err.Error())
 }
 
+// IsProtectedGroup ...
+func (m *LDAPManager) IsProtectedGroup(group string) bool {
+	isAdminGroup := strings.ToLower(group) == strings.ToLower(m.DefaultAdminGroup)
+	isUserGroup := strings.ToLower(group) == strings.ToLower(m.DefaultUserGroup)
+	return isAdminGroup || isUserGroup
+}
+
 // RemoveGroupMember removes a group member from a group
 func (m *LDAPManager) RemoveGroupMember(req *pb.GroupMember, allowRemoveFromDefaultGroups bool) error {
 	username := req.GetUsername()
@@ -51,10 +59,10 @@ func (m *LDAPManager) RemoveGroupMember(req *pb.GroupMember, allowRemoveFromDefa
 	}
 	username = EscapeDN(req.GetUsername())
 	if !m.GroupMembershipUsesUID {
-		username = m.UserNamed(req.GetUsername())
+		username = m.UserDN(req.GetUsername())
 	}
 	modifyRequest := ldap.NewModifyRequest(
-		m.GroupNamed(group),
+		m.GroupDN(group),
 		[]ldap.Control{},
 	)
 	modifyRequest.Delete(m.GroupMembershipAttribute, []string{username})

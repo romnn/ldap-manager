@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"fmt"
-	// "regexp"
 	"strings"
 
 	"github.com/go-ldap/ldap/v3"
@@ -15,6 +14,25 @@ const (
 	// MinGID for POSIX accounts
 	MinGID = 2000
 )
+
+// GroupDN returns the full group DN for a group name
+func (m *LDAPManager) GroupDN(name string) string {
+	return fmt.Sprintf(
+		"cn=%s,%s",
+		EscapeDN(name),
+		m.GroupsDN,
+	)
+}
+
+// UserDN returns the full user DN for a user name
+func (m *LDAPManager) UserDN(name string) string {
+	return fmt.Sprintf(
+		"%s=%s,%s",
+		m.AccountAttribute,
+		EscapeDN(name),
+		m.UserGroupDN,
+	)
+}
 
 // PrettyPrint formats an interface into a human readable string
 func PrettyPrint(m interface{}) string {

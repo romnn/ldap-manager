@@ -39,7 +39,7 @@ func TestGetGroup(t *testing.T) {
 	expected := &pb.Group{
 		Name: groupName,
 		Members: []string{
-			test.Manager.UserNamed(username),
+			test.Manager.UserDN(username),
 		},
 		GID: 2002,
 	}

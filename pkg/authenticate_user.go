@@ -29,7 +29,7 @@ func (m *LDAPManager) AuthenticateUser(req *pb.LoginRequest) (*pb.User, error) {
 	// re-bind as admin afterwards
 	defer m.BindAdmin()
 
-	if err := m.ldap.Bind(m.UserNamed(username), password); err != nil {
+	if err := m.ldap.Bind(m.UserDN(username), password); err != nil {
 		return nil, fmt.Errorf("unable to bind as %q", username)
 	}
 	return user, nil

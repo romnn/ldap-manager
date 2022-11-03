@@ -55,7 +55,7 @@ func TestGetUser(t *testing.T) {
 		)
 	}
 	t.Log(PrettyPrint(group))
-	if !Contains(group.Members, test.Manager.UserNamed(username)) {
+	if !Contains(group.Members, test.Manager.UserDN(username)) {
 		t.Fatalf(
 			"expected new user %q to be a member of the default user group %q",
 			username, userGroupName,

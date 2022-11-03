@@ -22,7 +22,7 @@ func (m *LDAPManager) UpdateGroup(req *pb.UpdateGroupRequest) error {
 	newGroupName := req.GetNewName()
 	if newGroupName != "" && newGroupName != groupName {
 		modifyRequest := &ldap.ModifyDNRequest{
-			DN:           m.GroupNamed(groupName),
+			DN:           m.GroupDN(groupName),
 			NewRDN:       fmt.Sprintf("cn=%s", newGroupName),
 			DeleteOldRDN: true,
 			NewSuperior:  "",
@@ -42,7 +42,7 @@ func (m *LDAPManager) UpdateGroup(req *pb.UpdateGroupRequest) error {
 	}
 
 	modifyGroupRequest := ldap.NewModifyRequest(
-		m.GroupNamed(groupName),
+		m.GroupDN(groupName),
 		[]ldap.Control{},
 	)
 	// update GID
@@ -52,14 +52,14 @@ func (m *LDAPManager) UpdateGroup(req *pb.UpdateGroupRequest) error {
 	}
 	if err := m.ldap.Modify(modifyGroupRequest); err != nil {
 		return fmt.Errorf(
-      "failed to modify group %q: %v",
-      groupName, err,
-    )
+			"failed to modify group %q: %v",
+			groupName, err,
+		)
 	}
 	updated := len(modifyGroupRequest.Changes)
 	log.Infof(
-    "updated %d attributes of group %q",
-    updated, groupName,
-  )
+		"updated %d attributes of group %q",
+		updated, groupName,
+	)
 	return nil
 }

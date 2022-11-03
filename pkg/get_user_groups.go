@@ -12,7 +12,7 @@ import (
 func (m *LDAPManager) GetUserGroups(req *pb.GetUserGroupsRequest) (*pb.GroupList, error) {
 	username := EscapeDN(req.GetUsername())
 	if !m.GroupMembershipUsesUID {
-		username = m.UserNamed(req.GetUsername())
+		username = m.UserDN(req.GetUsername())
 	}
 	filter := fmt.Sprintf(
 		"(&(objectClass=posixGroup)(%s=%s))",

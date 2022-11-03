@@ -106,7 +106,7 @@ func TestUpdateUser(t *testing.T) {
 			{
 				Name: groupName,
 				Members: []string{
-					test.Manager.UserNamed(newUsername),
+					test.Manager.UserDN(newUsername),
 				},
 				GID: 2002,
 			},
@@ -114,7 +114,7 @@ func TestUpdateUser(t *testing.T) {
 				Name: "users",
 				Members: []string{
 					"uid=ldapadmin,ou=users,dc=example,dc=org",
-					test.Manager.UserNamed(newUsername),
+					test.Manager.UserDN(newUsername),
 				},
 				GID: 2001,
 			},
