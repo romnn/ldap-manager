@@ -32,7 +32,9 @@ func (err *NoSuchMemberError) StatusError() error {
 func (m *LDAPManager) DeleteUser(req *pb.DeleteUserRequest, keepGroups bool) error {
 	username := req.GetUsername()
 	if username == "" {
-		return &ldaperror.ValidationError{Message: "username must not be empty"}
+		return &ldaperror.ValidationError{
+			Message: "username must not be empty",
+		}
 	}
 	if !keepGroups {
 		// delete the account from all its groups
@@ -60,7 +62,10 @@ func (m *LDAPManager) DeleteUser(req *pb.DeleteUserRequest, keepGroups bool) err
 		}
 	}
 	if err := m.ldap.Del(ldap.NewDelRequest(
-		fmt.Sprintf("%s=%s,%s", m.AccountAttribute, EscapeDN(username), m.UserGroupDN),
+		fmt.Sprintf(
+			"%s=%s,%s",
+			m.AccountAttribute, EscapeDN(username), m.UserGroupDN,
+		),
 		[]ldap.Control{},
 	)); err != nil {
 		return err

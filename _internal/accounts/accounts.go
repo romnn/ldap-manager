@@ -456,7 +456,7 @@ func (m *ldapmanager.LDAPManager) UpdateAccount(req *pb.UpdateAccountRequest, al
 		log.Infof("renamed user from %q to %q", req.GetUsername(), username)
 		userDN = m.AccountNamed(username)
 
-		// migrate user from all his groups
+		// migrate user from all its groups
 		groups, err := m.GetUserGroups(&pb.GetUserGroupsRequest{Username: username})
 		if err != nil {
 			return "", 0, fmt.Errorf("failed to get list of groups: %v", err)

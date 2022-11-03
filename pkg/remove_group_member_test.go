@@ -13,7 +13,10 @@ func (test *Test) isGroupMember(t *testing.T, username, group string) *pb.GroupM
 		Group:    group,
 	})
 	if err != nil {
-		t.Fatalf("error getting member status of user %q of group %q: %v", username, group, err)
+		t.Fatalf(
+			"error getting member status of user %q of group %q: %v",
+			username, group, err,
+		)
 	}
 	return memberStatus
 }
@@ -55,7 +58,10 @@ func TestRemoveGroupMember(t *testing.T) {
 
 	memberStatus := test.isGroupMember(t, usernames[0], groupName)
 	if !memberStatus.GetIsMember() {
-		t.Fatalf("expected user %q to be a member of group %q", usernames[0], groupName)
+		t.Fatalf(
+			"expected user %q to be a member of group %q",
+			usernames[0], groupName,
+		)
 	}
 
 	// remove first member
@@ -63,11 +69,17 @@ func TestRemoveGroupMember(t *testing.T) {
 		Group:    groupName,
 		Username: usernames[0],
 	}, allowRemoveFromDefaultGroups); err != nil {
-		t.Fatalf("failed to remove member %q of group %q: %v", usernames[0], groupName, err)
+		t.Fatalf(
+			"failed to remove member %q of group %q: %v",
+			usernames[0], groupName, err,
+		)
 	}
 	memberStatus = test.isGroupMember(t, usernames[0], groupName)
 	if memberStatus.GetIsMember() {
-		t.Fatalf("expected user %q to be no longer a member of group %q", usernames[0], groupName)
+		t.Fatalf(
+			"expected user %q to be no longer a member of group %q",
+			usernames[0], groupName,
+		)
 	}
 
 	// assert username2 can not be removed
@@ -77,7 +89,10 @@ func TestRemoveGroupMember(t *testing.T) {
 	}, allowRemoveFromDefaultGroups)
 	_, lastMember := err.(*RemoveLastGroupMemberError)
 	if err == nil || !lastMember {
-		t.Fatalf("expected removing last member %q of group %q to fail", usernames[1], groupName)
+		t.Fatalf(
+			"expected removing last member %q of group %q to fail",
+			usernames[1], groupName,
+		)
 	}
 }
 
@@ -103,7 +118,10 @@ func TestRemoveGroupMemberMissing(t *testing.T) {
 		Group:    groupName,
 		Username: username,
 	}, allowRemoveFromDefaultGroups); err == nil {
-		t.Errorf("expected error removing user %q from group %q", username, groupName)
+		t.Errorf(
+			"expected error removing user %q from group %q",
+			username, groupName,
+		)
 	}
 
 	// add an existing user to an non-existing group
@@ -124,6 +142,9 @@ func TestRemoveGroupMemberMissing(t *testing.T) {
 		Group:    groupName,
 		Username: username,
 	}, allowRemoveFromDefaultGroups); err == nil {
-		t.Errorf("expected error removing user %q from group %q", username, groupName)
+		t.Errorf(
+			"expected error removing user %q from group %q",
+			username, groupName,
+		)
 	}
 }

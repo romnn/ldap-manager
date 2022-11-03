@@ -14,11 +14,15 @@ import (
 func (m *LDAPManager) ChangePassword(req *pb.ChangePasswordRequest) error {
 	username := req.GetUsername()
 	if username == "" {
-		return &ldaperror.ValidationError{Message: "username must not be empty"}
+		return &ldaperror.ValidationError{
+			Message: "username must not be empty",
+		}
 	}
 	password := req.GetPassword()
 	if password == "" {
-		return &ldaperror.ValidationError{Message: "password must not be empty"}
+		return &ldaperror.ValidationError{
+			Message: "password must not be empty",
+		}
 	}
 
 	modifyReq := ldap.PasswordModifyRequest{
@@ -34,7 +38,10 @@ func (m *LDAPManager) ChangePassword(req *pb.ChangePasswordRequest) error {
 				Count:    0,
 			}
 		}
-		return fmt.Errorf("failed to set password of user %q: %v", username, err)
+		return fmt.Errorf(
+			"failed to set password of user %q: %v",
+			username, err,
+		)
 	}
 	log.Infof("changed password for user %q", username)
 	return nil

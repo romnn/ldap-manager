@@ -34,12 +34,6 @@ func TestUpdateGroup(t *testing.T) {
 		t.Fatalf("failed to add group %q with member %v: %v", groupName, username, err)
 	}
 
-	// _, groupName, err := addSampleGroup(test.Manager, "my-group", []string{}, 3)
-	// if err != nil {
-	// 	t.Fatalf("failed to add sample group: %v", err)
-	// }
-	// assertHasGroups(t, test.Manager, []string{groupName})
-
 	before, err := test.Manager.GetGroupByName(groupName)
 	if err != nil {
 		t.Fatalf("failed to get group %q before rename: %v", groupName, err)

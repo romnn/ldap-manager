@@ -29,7 +29,10 @@ func TestAuthenticateUser(t *testing.T) {
 		Username: username,
 		Password: "wrong",
 	}); err == nil {
-		t.Fatalf("authenticating user %q with wrong password succeeded", username)
+		t.Fatalf(
+			"authenticating user %q with wrong password succeeded",
+			username,
+		)
 	}
 
 	// check if we can authenticate the user using correct password
@@ -37,6 +40,9 @@ func TestAuthenticateUser(t *testing.T) {
 		Username: username,
 		Password: password,
 	}); err != nil {
-		t.Fatalf("cannot authenticate user %q with password %q: %v", username, password, err)
+		t.Fatalf(
+			"cannot authenticate user %q with password %q: %v",
+			username, password, err,
+		)
 	}
 }

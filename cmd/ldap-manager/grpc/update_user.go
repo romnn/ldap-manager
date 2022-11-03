@@ -20,17 +20,26 @@ func (s *LDAPManagerService) UpdateUser(ctx context.Context, req *pb.UpdateUserR
 	if !claims.IsAdmin && claims.Username != req.GetUsername() {
 		return nil, status.Error(codes.PermissionDenied, "requires admin privileges")
 	}
-	username, uidNumber, err := s.manager.UpdateUser(req, claims.IsAdmin)
+	username, err := s.manager.UpdateUser(req, claims.IsAdmin)
 	if err != nil {
 		log.Error(err)
 		if appErr, ok := err.(ldaperror.Error); ok {
 			return nil, appErr.StatusError()
 		}
-		return nil, status.Error(codes.Internal, "error while updating account")
+		return nil, status.Error(codes.Internal, "error updating user")
 	}
+	user, err := s.manager.GetUser(username)
+	if err != nil {
+		log.Error(err)
+		if appErr, ok := err.(ldaperror.Error); ok {
+			return nil, appErr.StatusError()
+		}
+		return nil, status.Error(codes.Internal, "error getting user")
+	}
+
 	return s.SignUserToken(&AuthClaims{
-		Username:    username,
-		UID:         uidNumber,
+		Username:    user.GetUsername(),
+		UID:         user.GetUID(),
 		IsAdmin:     claims.IsAdmin,
 		DisplayName: claims.DisplayName,
 	})

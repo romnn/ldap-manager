@@ -29,19 +29,28 @@ func TestSetup(t *testing.T) {
 		Username: adminUsername,
 		Password: adminPassword,
 	}); err != nil {
-		t.Errorf("failed to authenticate admin user %q with password %q: %v", adminUsername, adminPassword, err)
+		t.Errorf(
+			"failed to authenticate admin user %q with password %q: %v",
+			adminUsername, adminPassword, err,
+		)
 	}
 
 	// assert the default admin user is in the admins group
 	memberStatus := test.isGroupMember(t, adminUsername, adminGroup)
 	if !memberStatus.GetIsMember() {
-		t.Fatalf("expected user %q to be a member of group %q", adminUsername, adminGroup)
+		t.Fatalf(
+			"expected user %q to be a member of group %q",
+			adminUsername, adminGroup,
+		)
 	}
 
 	// assert the default admin user is in the users group as well
 	memberStatus = test.isGroupMember(t, adminUsername, userGroup)
 	if !memberStatus.GetIsMember() {
-		t.Fatalf("expected user %q to be a member of group %q", adminUsername, userGroup)
+		t.Fatalf(
+			"expected user %q to be a member of group %q",
+			adminUsername, userGroup,
+		)
 	}
 }
 
@@ -90,7 +99,10 @@ func TestForceSetup(t *testing.T) {
 		Username: defaultAdminUsername,
 		Password: defaultAdminPassword,
 	}); err == nil {
-		t.Errorf("expected error authenticating as the default admin %q when another admin account already existed", defaultAdminUsername)
+		t.Errorf(
+			"expected error authenticating as the default admin %q when another admin account already existed",
+			defaultAdminUsername,
+		)
 	}
 
 	// assert the default admin is created when forced
@@ -102,6 +114,9 @@ func TestForceSetup(t *testing.T) {
 		Username: defaultAdminUsername,
 		Password: defaultAdminPassword,
 	}); err != nil {
-		t.Errorf("failed to authenticate as the default admin %q after forced creation: %v", defaultAdminUsername, err)
+		t.Errorf(
+			"failed to authenticate as the default admin %q after forced creation: %v",
+			defaultAdminUsername, err,
+		)
 	}
 }

@@ -35,7 +35,10 @@ type InvalidUserError struct {
 }
 
 func (e *InvalidUserError) Error() string {
-	return fmt.Sprintf("invalid account request. missing or invalid: %v", e.Invalid)
+	return fmt.Sprintf(
+		"invalid account request. missing or invalid: %v",
+		e.Invalid,
+	)
 }
 
 func (e *InvalidUserError) StatusError() error {
@@ -148,7 +151,10 @@ func (m *LDAPManager) GetUserGroup(username string) (*pb.Group, error) {
 
 	group, err := m.GetGroupByName(groupName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get GID for group %q: %v", groupName, err)
+		return nil, fmt.Errorf(
+			"failed to get GID for group %q: %v",
+			groupName, err,
+		)
 	}
 	return group, nil
 }
@@ -197,7 +203,10 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("failed to check for existing user %q: %v", username, err)
+		return fmt.Errorf(
+			"failed to check for existing user %q: %v",
+			username, err,
+		)
 	}
 	if len(result.Entries) > 0 {
 		return &UserAlreadyExistsError{
@@ -218,7 +227,10 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
 
 	UID, err := m.GetHighestUID()
 	if err != nil {
-		return fmt.Errorf("failed to get highest UID (%s): %v", m.AccountAttribute, err)
+		return fmt.Errorf(
+			"failed to get highest UID (%s): %v",
+			m.AccountAttribute, err,
+		)
 	}
 	// newUID := highestUID + 1
 	// if newUID < MinUID {
@@ -281,7 +293,9 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
 		{Type: "cn", Vals: []string{fullName}},
 		{Type: "displayName", Vals: []string{fullName}},
 		{Type: "uidNumber", Vals: []string{strconv.Itoa(UID)}},
-		{Type: "gidNumber", Vals: []string{strconv.Itoa(int(userGroup.GetGID()))}},
+		{Type: "gidNumber", Vals: []string{
+			strconv.Itoa(int(userGroup.GetGID())),
+		}},
 		{Type: "loginShell", Vals: []string{loginShell}},
 		{Type: "homeDirectory", Vals: []string{homeDirectory}},
 		{Type: "mail", Vals: []string{req.GetEmail()}},
@@ -315,7 +329,10 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
 		// if exists {
 		// 	return &UserAlreadyExistsError{Username: username}
 		// }
-		return fmt.Errorf("failed to set password of new user %q: %v", userDN, err)
+		return fmt.Errorf(
+			"failed to set password of new user %q: %v",
+			userDN, err,
+		)
 	}
 	log.Debug(PrettyPrint(resp))
 
@@ -325,12 +342,18 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
 		Username: username,
 	}, allowNonExistent); err != nil {
 		if _, exists := err.(*MemberAlreadyExistsError); !exists {
-			return fmt.Errorf("failed to add user %q to group %q: %v", username, userGroup.Name, err)
+			return fmt.Errorf(
+				"failed to add user %q to group %q: %v",
+				username, userGroup.Name, err,
+			)
 		}
 	}
 	if err := m.updateLastID("lastUID", UID+1); err != nil {
 		return err
 	}
-	log.Infof("added new user %q (member of group %q)", username, userGroup.Name)
+	log.Infof(
+		"added new user %q (member of group %q)",
+		username, userGroup.Name,
+	)
 	return nil
 }

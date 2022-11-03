@@ -14,7 +14,10 @@ func (m *LDAPManager) GetUserGroups(req *pb.GetUserGroupsRequest) (*pb.GroupList
 	if !m.GroupMembershipUsesUID {
 		username = m.UserNamed(req.GetUsername())
 	}
-	filter := fmt.Sprintf("(&(objectClass=posixGroup)(%s=%s))", m.GroupMembershipAttribute, username)
+	filter := fmt.Sprintf(
+    "(&(objectClass=posixGroup)(%s=%s))",
+    m.GroupMembershipAttribute, username,
+  )
 	result, err := m.ldap.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,

@@ -74,7 +74,6 @@ func StartOpenLDAP(ctx context.Context, options ContainerOptions) (Container, er
 			Image:        fmt.Sprintf("osixia/openldap:%s", imageTag),
 			Env:          env,
 			ExposedPorts: []string{string(port)},
-			// WaitingFor:   wait.ForLog("slapd starting").WithStartupTimeout(timeout),
 			WaitingFor:   wait.ForListeningPort(port).WithStartupTimeout(timeout),
 		},
 		Started: true,
@@ -92,7 +91,10 @@ func StartOpenLDAP(ctx context.Context, options ContainerOptions) (Container, er
 
 	realPort, err := openLDAPContainer.MappedPort(ctx, port)
 	if err != nil {
-		return container, fmt.Errorf("failed to get exposed container port: %v", err)
+		return container, fmt.Errorf(
+			"failed to get exposed container port: %v",
+			err,
+		)
 	}
 
 	container.OpenLDAPConfig = options.OpenLDAPConfig

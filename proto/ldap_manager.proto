@@ -59,7 +59,7 @@ message NewUserRequest {
   string first_name = 1;
   string last_name = 2;
 
-  int32 UID = 10;
+  int64 UID = 10;
   int64 GID = 11;
   string login_shell = 12;
   string home_directory = 13;

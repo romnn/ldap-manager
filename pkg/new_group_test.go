@@ -82,21 +82,21 @@ func TestNewGroup(t *testing.T) {
 	}
 
 	expected := []*pb.Group{
-		&pb.Group{
+		{
 			Name: "admins",
 			Members: []string{
 				"uid=ldapadmin,ou=users,dc=example,dc=org",
 			},
 			GID: 2000,
 		},
-		&pb.Group{
+		{
 			Name: "my-group",
 			Members: []string{
 				"uid=some-user,ou=users,dc=example,dc=org",
 			},
 			GID: 2002,
 		},
-		&pb.Group{
+		{
 			Name: "users",
 			Members: []string{
 				"uid=ldapadmin,ou=users,dc=example,dc=org",

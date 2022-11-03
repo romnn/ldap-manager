@@ -28,9 +28,10 @@ func TestGetGroupList(t *testing.T) {
 
 	// create a new group
 	strict := false
+	groupName := "test-group"
 	if err := test.Manager.NewGroup(&pb.NewGroupRequest{
-		Name:    "test-group",
-		Members: []string{"test-user"},
+		Name:    groupName,
+		Members: []string{username},
 	}, strict); err != nil {
 		t.Fatalf("failed to add new group: %v", err)
 	}
@@ -41,29 +42,32 @@ func TestGetGroupList(t *testing.T) {
 		t.Fatalf("failed to get list of groups: %v", err)
 	}
 
-	expected := []*pb.Group{
-		&pb.Group{
-			Name: "admins",
-			Members: []string{
-				"uid=ldapadmin,ou=users,dc=example,dc=org",
+	expected := &pb.GroupList{
+		Groups: []*pb.Group{
+			{
+				Name: "admins",
+				Members: []string{
+					"uid=ldapadmin,ou=users,dc=example,dc=org",
+				},
+				GID: 2000,
 			},
-			GID: 2000,
-		},
-		&pb.Group{
-			Name: "test-group",
-			Members: []string{
-				"uid=test-user,ou=users,dc=example,dc=org",
+			{
+				Name: groupName,
+				Members: []string{
+					test.Manager.UserNamed(username),
+				},
+				GID: 2002,
 			},
-			GID: 2002,
-		},
-		&pb.Group{
-			Name: "users",
-			Members: []string{
-				"uid=ldapadmin,ou=users,dc=example,dc=org",
-				"uid=test-user,ou=users,dc=example,dc=org",
+			{
+				Name: "users",
+				Members: []string{
+					"uid=ldapadmin,ou=users,dc=example,dc=org",
+					test.Manager.UserNamed(username),
+				},
+				GID: 2001,
 			},
-			GID: 2001,
 		},
+		Total: 3,
 	}
 
 	sort := recursivesort.RecursiveSort{StructSortField: "GID"}
@@ -73,9 +77,7 @@ func TestGetGroupList(t *testing.T) {
 	t.Log(PrettyPrint(groups))
 	t.Log(PrettyPrint(expected))
 
-	for i := range expected {
-		if equal, diff := EqualProto(expected[i], groups.GetGroups()[i]); !equal {
-			t.Fatalf("unexpected group at index %d: \n%s", i, diff)
-		}
+	if equal, diff := EqualProto(expected, groups); !equal {
+		t.Fatalf("unexpected groups: \n%s", diff)
 	}
 }
