@@ -32,14 +32,6 @@ func (m *LDAPManager) ReadOnlyUserDN() string {
 	)
 }
 
-// // BindAdmin binds as the admin user
-// func (m *LDAPManager) BindAdmin() error {
-// 	return m.ldap.Bind(
-// 		m.AdminUserDN(),
-// 		m.Config.AdminPassword,
-// 	)
-// }
-
 func (m *LDAPManager) setupOU(dn, ou string) error {
 	addOURequest := &ldap.AddRequest{
 		DN: dn,
@@ -111,16 +103,8 @@ prevents the re-use of a UID from a deleted user.`,
 	)
 }
 
-func (m *LDAPManager) SetupReadOnlyUser() error {
+func (m *LDAPManager) setupReadOnlyUser() error {
 	// see https://github.com/osixia/docker-openldap/tree/master/image/service/slapd/assets/config/bootstrap/ldif/readonly-user
-
-	// dn: cn={{ LDAP_READONLY_USER_USERNAME }},{{ LDAP_BASE_DN }}
-	// changetype: add
-	// cn: {{ LDAP_READONLY_USER_USERNAME }}
-	// objectClass: simpleSecurityObject
-	// objectClass: organizationalRole
-	// userPassword: {{ LDAP_READONLY_USER_PASSWORD_ENCRYPTED }}
-	// description: LDAP read only user
 
 	username := m.Config.ReadOnlyUsername
 	addUserReq := &ldap.AddRequest{
@@ -156,51 +140,28 @@ func (m *LDAPManager) SetupReadOnlyUser() error {
 		)
 	}
 
-	// dn: olcDatabase={1}{{ LDAP_BACKEND }},cn=config
-	// changetype: modify
-	// delete: olcAccess
-	// -
-	// add: olcAccess
-	// olcAccess: to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break
-	// olcAccess: to attrs=userPassword,shadowLastChange by self write by dn="cn=admin,{{ LDAP_BASE_DN }}" write by anonymous auth by * none
-	// olcAccess: to * by self read by dn="cn=admin,{{ LDAP_BASE_DN }}" write by dn="cn={{ LDAP_READONLY_USER_USERNAME }},{{ LDAP_BASE_DN }}" read by * none
-
-	// re-bind as admin afterwards
-	// defer m.BindAdmin()
-
 	// bind for the config CN to apply ACL rules
-	configDN := "cn=config"
-	configDN = "cn=admin,cn=config"
-	configDN = "cn=config,dc=example,dc=org"
-	// configDN := fmt.Sprintf(
-	// 	"cn=%s,cn=config",
-	// 	"cn=config",
-	// 	// m.Config.AdminUsername,
-	// )
-	password := "blabla123"
-	password = "config"
-	// password = m.Config.AdminPassword
-	// "config"
-	if err := conn.Bind(configDN, password); err != nil {
+	configDN := fmt.Sprintf(
+		"cn=%s,cn=config",
+		m.Config.AdminUsername,
+	)
+	configPassword := "config"
+	if err := conn.Bind(configDN, configPassword); err != nil {
 		return fmt.Errorf(
 			"unable to bind as %q with password %q: %v",
-			configDN, password, err,
+			configDN, configPassword, err,
 		)
 	}
 
-	// ldapBackend := "mdb"
-	// dn: olcDatabase={0}config,cn=config
+	ldapBackend := "mdb"
 	aclReq := ldap.NewModifyRequest(
 		fmt.Sprintf(
-			// "olcDatabase={1}%s,cn=config",
 			// "olcDatabase={0}config,cn=config",
-			"olcDatabase={0}config,cn=config",
-			// "olcDatabase={1}mdb,cn=config",
-			// ldapBackend,
+			"olcDatabase={1}%s,cn=config",
+			ldapBackend,
 		),
 		[]ldap.Control{},
 	)
-	// aclReq.Delete("olcAccess", []string{})
 	aclReq.Add("olcAccess", []string{
 		`to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break`,
 		fmt.Sprintf(
@@ -213,23 +174,7 @@ func (m *LDAPManager) SetupReadOnlyUser() error {
 			m.ReadOnlyUserDN(),
 		),
 	})
-	// })
-	// Attributes: []ldap.Attribute{
-	// 	{Type: "olcAccess", Vals: []string{
-	// 		`to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break`,
-	// 		fmt.Sprintf(
-	// 			`to attrs=userPassword,shadowLastChange by self write by dn="%s" write by anonymous auth by * none`,
-	// 			m.AdminUserDN(),
-	// 		),
-	// 		fmt.Sprintf(
-	// 			`to * by self read by dn="%s" write by dn="%s" read by * none`,
-	// 			m.AdminUserDN(),
-	// 			m.ReadOnlyUserDN(),
-	// 		),
-	// 	}},
-	// },
-	// Controls: []ldap.Control{},
-	// }
+
 	log.Debug(PrettyPrint(aclReq))
 	if err := conn.Modify(aclReq); err != nil {
 		exists := ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists)

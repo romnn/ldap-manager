@@ -72,7 +72,7 @@ func (c *Conn) withRetry(operation func() error) error {
 		if tempErr {
 			return err
 		}
-		return &backoff.PermanentError{err}
+		return backoff.Permanent(err)
 	}, b)
 
 	if err, ok := err.(*backoff.PermanentError); ok {
@@ -81,6 +81,7 @@ func (c *Conn) withRetry(operation func() error) error {
 	return err
 }
 
+// SimpleBind wraps the SimpleBind LDAP client method
 func (c *Conn) SimpleBind(simpleBindRequest *ldap.SimpleBindRequest) (*ldap.SimpleBindResult, error) {
 	c.needReset = true
 	var result *ldap.SimpleBindResult
@@ -92,6 +93,7 @@ func (c *Conn) SimpleBind(simpleBindRequest *ldap.SimpleBindRequest) (*ldap.Simp
 	return result, err
 }
 
+// Bind wraps the Bind LDAP client method
 func (c *Conn) Bind(username, password string) error {
 	c.needReset = true
 	return c.withRetry(func() error {
@@ -99,30 +101,35 @@ func (c *Conn) Bind(username, password string) error {
 	})
 }
 
+// Add wraps the Add LDAP client method
 func (c *Conn) Add(addRequest *ldap.AddRequest) error {
 	return c.withRetry(func() error {
 		return c.conn.Add(addRequest)
 	})
 }
 
+// Del wraps the Del LDAP client method
 func (c *Conn) Del(delRequest *ldap.DelRequest) error {
 	return c.withRetry(func() error {
 		return c.conn.Del(delRequest)
 	})
 }
 
+// Modify wraps the Modify LDAP client method
 func (c *Conn) Modify(modifyRequest *ldap.ModifyRequest) error {
 	return c.withRetry(func() error {
 		return c.conn.Modify(modifyRequest)
 	})
 }
 
+// ModifyDN wraps the ModifyDN LDAP client method
 func (c *Conn) ModifyDN(modifyDnRequest *ldap.ModifyDNRequest) error {
 	return c.withRetry(func() error {
 		return c.conn.ModifyDN(modifyDnRequest)
 	})
 }
 
+// Compare wraps the Compare LDAP client method
 func (c *Conn) Compare(dn, attribute, value string) (bool, error) {
 	var result bool
 	err := c.withRetry(func() error {
@@ -133,6 +140,7 @@ func (c *Conn) Compare(dn, attribute, value string) (bool, error) {
 	return result, err
 }
 
+// PasswordModify wraps the PasswordModify LDAP client method
 func (c *Conn) PasswordModify(passwordModifyRequest *ldap.PasswordModifyRequest) (*ldap.PasswordModifyResult, error) {
 	var result *ldap.PasswordModifyResult
 	err := c.withRetry(func() error {
@@ -143,6 +151,7 @@ func (c *Conn) PasswordModify(passwordModifyRequest *ldap.PasswordModifyRequest)
 	return result, err
 }
 
+// Search wraps the Search LDAP client method
 func (c *Conn) Search(searchRequest *ldap.SearchRequest) (*ldap.SearchResult, error) {
 	var result *ldap.SearchResult
 	err := c.withRetry(func() error {
@@ -153,6 +162,7 @@ func (c *Conn) Search(searchRequest *ldap.SearchRequest) (*ldap.SearchResult, er
 	return result, err
 }
 
+// SearchWithPaging wraps the SearchWithPaging LDAP client method
 func (c *Conn) SearchWithPaging(searchRequest *ldap.SearchRequest, pagingSize uint32) (*ldap.SearchResult, error) {
 	var result *ldap.SearchResult
 	err := c.withRetry(func() error {

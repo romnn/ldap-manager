@@ -161,13 +161,7 @@ func (m *LDAPManager) GetUserGroup(username string) (*pb.Group, error) {
 	return group, nil
 }
 
-// NewUser adds a new user
-func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
-	if err := ValidateNewUser(req); err != nil {
-		return err
-	}
-
-	username := req.GetUsername()
+func (m *LDAPManager) checkUserExists(username string) error {
 	_, err := m.GetUser(username)
 	if err != nil {
 		notFoundErr, notFound := err.(*ZeroOrMultipleUsersError)
@@ -187,6 +181,19 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
 		return &UserAlreadyExistsError{
 			Username: username,
 		}
+	}
+	return nil
+}
+
+// NewUser adds a new user
+func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
+	if err := ValidateNewUser(req); err != nil {
+		return err
+	}
+
+	username := req.GetUsername()
+	if err := m.checkUserExists(username); err != nil {
+		return err
 	}
 
 	// set default values

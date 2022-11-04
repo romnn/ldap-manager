@@ -11,8 +11,8 @@ var (
 	ErrClosed = errors.New("pool closed")
 )
 
-// PoolFactory is a function to create new connections.
-type PoolFactory func() (ldap.Client, error)
+// ConnectionFactory is a function to create new connections.
+type ConnectionFactory func() (ldap.Client, error)
 
 // ResetFunc is a function to reset connections.
 type ResetFunc func(conn ldap.Client) error

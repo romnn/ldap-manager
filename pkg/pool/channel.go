@@ -12,12 +12,12 @@ type channelPool struct {
 	mu       sync.Mutex
 	connChan chan *Conn
 
-	factory PoolFactory
+	factory ConnectionFactory
 	reset   ResetFunc
 }
 
 // NewChannelPool creates a new connection pool using a buffered channel
-func NewChannelPool(capacity, maxCapacity uint, factory PoolFactory, reset ResetFunc) (Pool, error) {
+func NewChannelPool(capacity, maxCapacity uint, factory ConnectionFactory, reset ResetFunc) (Pool, error) {
 	if maxCapacity == 0 {
 		return nil, errors.New(
 			"max pool capacity must be non zero",

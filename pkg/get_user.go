@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	// "time"
-
-	// "github.com/cenkalti/backoff/v4"
 	"github.com/go-ldap/ldap/v3"
 	ldaperror "github.com/romnn/ldap-manager/pkg/err"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
@@ -95,13 +92,6 @@ func (m *LDAPManager) GetUser(username string) (*pb.User, error) {
 			Message: "username must not be empty",
 		}
 	}
-	// var result *ldap.SearchResult
-	// b := backoff.WithMaxRetries(&backoff.ConstantBackOff{
-	// 	Interval: 1 * time.Second,
-	// }, 3)
-
-	// err := backoff.Retry(func() error {
-	// 	var err error
 	conn, err := m.Pool.Get()
 	if err != nil {
 		return nil, err
@@ -115,29 +105,13 @@ func (m *LDAPManager) GetUser(username string) (*pb.User, error) {
 		[]ldap.Control{},
 	))
 	if err != nil {
-		// connectErr := ldap.IsErrorWithCode(err, ldap.LDAPResultConnectError)
-		// tempErr := ldap.IsErrorAnyOf(err, ldap.LDAPResultConnectError)
-		// if
-		// return &backoff.PermanentError{fmt.Errorf(
-		// 	"failed to get user %q: %v",
-		// 	username, err,
-		// )}
 		return nil, err
 	}
 	if len(result.Entries) != 1 {
-		// return &backoff.PermanentError{&ZeroOrMultipleUsersError{
 		return nil, &ZeroOrMultipleUsersError{
 			Username: username,
 			Count:    len(result.Entries),
 		}
 	}
-	// return nil
-	// }, b)
-	// if err != nil {
-	// 	if err, ok := err.(*backoff.PermanentError); ok {
-	// 		return nil, err.Err
-	// 	}
-	// 	return nil, err
-	// }
 	return m.ParseUser(result.Entries[0]), nil
 }

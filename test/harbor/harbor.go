@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"testing"
 
 	"github.com/romnn/ldap-manager/pkg"
 )
@@ -18,10 +19,10 @@ type updateConfigurationRequest struct {
 	OidcExtraRedirectParms           string `json:"oidc_extra_redirect_parms,omitempty"`
 	AuthMode                         string `json:"auth_mode,omitempty"`
 	SelfRegistration                 bool   `json:"self_registration,omitempty"`
-	HttpAuthProxyTokenreviewEndpoint string `json:"http_authproxy_tokenreview_endpoint,omitempty"`
+	HTTPAuthProxyTokenreviewEndpoint string `json:"http_authproxy_tokenreview_endpoint,omitempty"`
 	LdapSearchDN                     string `json:"ldap_search_dn,omitempty"`
 	StoragePerProject                int    `json:"storage_per_project,omitempty"`
-	HttpAuthProxyVerifyCert          bool   `json:"http_authproxy_verify_cert,omitempty"`
+	HTTPAuthProxyVerifyCert          bool   `json:"http_authproxy_verify_cert,omitempty"`
 	EmailPassword                    string `json:"email_password,omitempty"`
 	LdapGroupSearchFilter            string `json:"ldap_group_search_filter,omitempty"`
 	UaaClientID                      string `json:"uaa_client_id,omitempty"`
@@ -31,7 +32,7 @@ type updateConfigurationRequest struct {
 	ReadOnly                         bool   `json:"read_only,omitempty"`
 	RobotTokenDuration               int    `json:"robot_token_duration,omitempty"`
 	OidcAutoOnboard                  bool   `json:"oidc_auto_onboard,omitempty"`
-	HttpAuthProxyServerCertificate   string `json:"http_authproxy_server_certificate,omitempty"`
+	HTTPAuthProxyServerCertificate   string `json:"http_authproxy_server_certificate,omitempty"`
 	OidcName                         string `json:"oidc_name,omitempty"`
 	QuotaPerProjectEnable            bool   `json:"quota_per_project_enable,omitempty"`
 	LdapURL                          string `json:"ldap_url,omitempty"`
@@ -45,16 +46,16 @@ type updateConfigurationRequest struct {
 	LdapGroupAttributeName           string `json:"ldap_group_attribute_name,omitempty"`
 	EmailInsecure                    bool   `json:"email_insecure,omitempty"`
 	LdapGroupAdminDN                 string `json:"ldap_group_admin_dn,omitempty"`
-	HttpAuthProxyAdminUsernames      string `json:"http_authproxy_admin_usernames,omitempty"`
+	HTTPAuthProxyAdminUsernames      string `json:"http_authproxy_admin_usernames,omitempty"`
 	EmailUsername                    string `json:"email_username,omitempty"`
-	HttpAuthProxyAdminGroups         string `json:"http_authproxy_admin_groups,omitempty"`
+	HTTPAuthProxyAdminGroups         string `json:"http_authproxy_admin_groups,omitempty"`
 	OidcEndpoint                     string `json:"oidc_endpoint,omitempty"`
-	HttpAuthProxyEndpoint            string `json:"http_authproxy_endpoint,omitempty"`
+	HTTPAuthProxyEndpoint            string `json:"http_authproxy_endpoint,omitempty"`
 	OidcClientSecret                 string `json:"oidc_client_secret,omitempty"`
 	OidcAdminGroup                   string `json:"oidc_admin_group,omitempty"`
 	LdapScope                        int    `json:"ldap_scope,omitempty"`
 	UaaEndpoint                      string `json:"uaa_endpoint,omitempty"`
-	HttpAuthProxySkipSearch          bool   `json:"http_authproxy_skip_search,omitempty"`
+	HTTPAuthProxySkipSearch          bool   `json:"http_authproxy_skip_search,omitempty"`
 	LdapGroupMembershipAttribute     string `json:"ldap_group_membership_attribute,omitempty"`
 	OidcScope                        string `json:"oidc_scope,omitempty"`
 	TokenExpiration                  int    `json:"token_expiration,omitempty"`
@@ -88,8 +89,8 @@ func newResponse(httpRes *http.Response) (*response, error) {
 		return nil, err
 	}
 	var res response
-	res.Status = res.Status
-	res.StatusCode = res.StatusCode
+	res.Status = httpRes.Status
+	res.StatusCode = httpRes.StatusCode
 
 	fmt.Print(string(body))
 	if len(body) > 0 {
@@ -109,11 +110,34 @@ func newResponse(httpRes *http.Response) (*response, error) {
 			res.Body = pkg.PrettyPrint(bodyJSON2)
 			return &res, nil
 		}
-		return &res, err
 	} else {
 		res.Body = "empty response"
 	}
-	return &res, nil
+
+	return &res, err
+}
+
+// Test wraps a pre-configured harbor and LDAP Manager setup
+type Test struct {
+	LMTest pkg.Test
+	Client http.Client
+}
+
+// Start starts the containers
+func (test *Test) Start(t *testing.T) *Test {
+	test.LMTest.Start(t)
+	return test
+}
+
+// Setup runs the setup
+func (test *Test) Setup(t *testing.T) *Test {
+	test.LMTest.Setup(t)
+	return test
+}
+
+// Teardown stops the container
+func (test *Test) Teardown() {
+	test.LMTest.Teardown()
 }
 
 func (test *Test) post(url string, body io.Reader, auth *auth) (*response, error) {
@@ -164,7 +188,7 @@ func (test *Test) get(url string, auth *auth) (*response, error) {
 	return newResponse(res)
 }
 
-func toJson(value interface{}) (string, error) {
+func toJSON(value interface{}) (string, error) {
 	jsonValue, err := json.MarshalIndent(value, "", "    ")
 	if err != nil {
 		return "", err

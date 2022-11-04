@@ -2,39 +2,14 @@ package harbor
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/romnn/ldap-manager/pkg"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
-
-// Test wraps a pre-configured harbor and LDAP Manager setup
-type Test struct {
-	LMTest pkg.Test
-	Client http.Client
-}
-
-// Start starts the containers
-func (test *Test) Start(t *testing.T) *Test {
-	test.LMTest.Start(t)
-	return test
-}
-
-// Setup runs the setup
-func (test *Test) Setup(t *testing.T) *Test {
-	test.LMTest.Setup(t)
-	return test
-}
-
-// Teardown stops the container
-func (test *Test) Teardown() {
-	test.LMTest.Teardown()
-}
 
 // TestHarborIntegration tests integration with the Harbor container registry
 func TestHarborIntegration(t *testing.T) {
@@ -113,7 +88,7 @@ func TestHarborIntegration(t *testing.T) {
 		SelfRegistration: false,
 	}
 
-	body, err := toJson(&req)
+	body, err := toJSON(&req)
 	if err != nil {
 		t.Fatal(err)
 	}
