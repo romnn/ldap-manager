@@ -5,18 +5,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	// "net/url"
 	"strings"
-	// "testing"
-	// "time"
 
-	// "github.com/cenkalti/backoff/v4"
-	// "github.com/go-ldap/ldap/v3"
 	"github.com/romnn/ldap-manager/pkg"
-	// pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
 
-type UpdateConfigurationRequest struct {
+type updateConfigurationRequest struct {
 	OidcVerifyCert                   bool   `json:"oidc_verify_cert,omitempty"`
 	LdapSearchPassword               string `json:"ldap_search_password,omitempty"`
 	EmailIdentity                    string `json:"email_identity,omitempty"`
@@ -76,53 +70,53 @@ type UpdateConfigurationRequest struct {
 	UaaVerifyCert                    bool   `json:"uaa_verify_cert,omitempty"`
 }
 
-type Auth struct {
+type auth struct {
 	Username string
 	Password string
 }
 
-type Response struct {
+type response struct {
 	Body       string
 	Status     string
 	StatusCode int
 }
 
-func NewResponse(res *http.Response) (*Response, error) {
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
+func newResponse(httpRes *http.Response) (*response, error) {
+	defer httpRes.Body.Close()
+	body, err := io.ReadAll(httpRes.Body)
 	if err != nil {
 		return nil, err
 	}
-	var response Response
-	response.Status = res.Status
-	response.StatusCode = res.StatusCode
+	var res response
+	res.Status = res.Status
+	res.StatusCode = res.StatusCode
 
 	fmt.Print(string(body))
 	if len(body) > 0 {
 
-    // interface 1
+		// interface 1
 		var bodyJSON map[string]interface{}
 		err = json.Unmarshal([]byte(body), &bodyJSON)
 		if err == nil {
-      response.Body = pkg.PrettyPrint(bodyJSON)
-			return &response, nil
+			res.Body = pkg.PrettyPrint(bodyJSON)
+			return &res, nil
 		}
 
-    // interface 2
+		// interface 2
 		var bodyJSON2 []map[string]interface{}
 		err = json.Unmarshal([]byte(body), &bodyJSON2)
-    if err == nil {
-      response.Body = pkg.PrettyPrint(bodyJSON2)
-			return &response, nil
+		if err == nil {
+			res.Body = pkg.PrettyPrint(bodyJSON2)
+			return &res, nil
 		}
-    return &response, err
+		return &res, err
 	} else {
-		response.Body = "empty response"
+		res.Body = "empty response"
 	}
-	return &response, nil
+	return &res, nil
 }
 
-func (test *Test) post(url string, body io.Reader, auth *Auth) (*Response, error) {
+func (test *Test) post(url string, body io.Reader, auth *auth) (*response, error) {
 	req, err := http.NewRequest(http.MethodPost, url, body)
 	if err != nil {
 		return nil, err
@@ -131,14 +125,14 @@ func (test *Test) post(url string, body io.Reader, auth *Auth) (*Response, error
 	if auth != nil {
 		req.SetBasicAuth(auth.Username, auth.Password)
 	}
-	response, err := test.Client.Do(req)
+	res, err := test.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	return NewResponse(response)
+	return newResponse(res)
 }
 
-func (test *Test) put(url string, body io.Reader, auth *Auth) (*Response, error) {
+func (test *Test) put(url string, body io.Reader, auth *auth) (*response, error) {
 	req, err := http.NewRequest(http.MethodPut, url, body)
 	if err != nil {
 		return nil, err
@@ -147,14 +141,14 @@ func (test *Test) put(url string, body io.Reader, auth *Auth) (*Response, error)
 	if auth != nil {
 		req.SetBasicAuth(auth.Username, auth.Password)
 	}
-	response, err := test.Client.Do(req)
+	res, err := test.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	return NewResponse(response)
+	return newResponse(res)
 }
 
-func (test *Test) get(url string, auth *Auth) (*Response, error) {
+func (test *Test) get(url string, auth *auth) (*response, error) {
 	req, err := http.NewRequest(http.MethodGet, url, strings.NewReader(""))
 	if err != nil {
 		return nil, err
@@ -163,14 +157,14 @@ func (test *Test) get(url string, auth *Auth) (*Response, error) {
 	if auth != nil {
 		req.SetBasicAuth(auth.Username, auth.Password)
 	}
-	response, err := test.Client.Do(req)
+	res, err := test.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	return NewResponse(response)
+	return newResponse(res)
 }
 
-func ToJson(value interface{}) (string, error) {
+func toJson(value interface{}) (string, error) {
 	jsonValue, err := json.MarshalIndent(value, "", "    ")
 	if err != nil {
 		return "", err
