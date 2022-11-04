@@ -26,7 +26,7 @@ def embed(c):
 def test(c):
     """Run tests"""
     cmd = [
-        "go",
+        "richgo",
         "test",
         "-race",
         "-coverpkg=all",

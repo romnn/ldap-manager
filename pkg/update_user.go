@@ -107,6 +107,13 @@ func (m *LDAPManager) UpdateUser(req *pb.UpdateUserRequest, isAdmin bool) (strin
 	if err != nil {
 		return "", err
 	}
+
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+
 	// check if the username should be changed
 	if update.GetUsername() != "" && update.GetUsername() != username {
 		newUsername = update.GetUsername()
@@ -129,7 +136,7 @@ func (m *LDAPManager) UpdateUser(req *pb.UpdateUserRequest, isAdmin bool) (strin
 			NewSuperior:  "",
 		}
 		log.Debug(PrettyPrint(modifyRequest))
-		if err := m.ldap.ModifyDN(modifyRequest); err != nil {
+		if err := conn.ModifyDN(modifyRequest); err != nil {
 			return "", err
 		}
 		log.Infof(
@@ -163,7 +170,7 @@ func (m *LDAPManager) UpdateUser(req *pb.UpdateUserRequest, isAdmin bool) (strin
 	}
 
 	log.Debug(PrettyPrint(modifyUserReq))
-	if err := m.ldap.Modify(modifyUserReq); err != nil {
+	if err := conn.Modify(modifyUserReq); err != nil {
 		return "", fmt.Errorf(
 			"failed to modify existing user: %v",
 			err,

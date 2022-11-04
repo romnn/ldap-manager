@@ -1,18 +1,18 @@
 package pkg
 
 import (
-	"github.com/go-ldap/ldap/v3"
 	"github.com/jwalton/go-supportscolor"
 	"github.com/k0kubun/pp/v3"
 	log "github.com/sirupsen/logrus"
 
 	ldapconfig "github.com/romnn/ldap-manager/pkg/config"
+	ldappool "github.com/romnn/ldap-manager/pkg/pool"
 )
 
 // LDAPManager implements the LDAP manager functionality
 type LDAPManager struct {
 	ldapconfig.Config
-	ldap *ldap.Conn
+	Pool ldappool.Pool
 
 	GroupsDN    string
 	UserGroupDN string
@@ -66,8 +66,7 @@ func NewLDAPManager(config ldapconfig.Config) *LDAPManager {
 
 // Close closes the LDAP connection
 func (m *LDAPManager) Close() {
-	if m.ldap != nil {
-		// FIXME: This will panic if the connection was not established
-		m.ldap.Close()
+	if m.Pool != nil {
+		m.Pool.Close()
 	}
 }

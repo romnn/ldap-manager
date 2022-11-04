@@ -38,7 +38,7 @@ func TestNewUser(t *testing.T) {
 		t.Fatalf("failed to add user: %v", err)
 	}
 
-	// check if we can authenticate as the user
+	// assert the new user is found
 	user, err := test.Manager.GetUser(username)
 	if err != nil {
 		t.Fatalf("failed to get user: %v", err)

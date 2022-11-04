@@ -20,7 +20,13 @@ func (m *LDAPManager) DeleteGroup(req *pb.DeleteGroupRequest) error {
 			Message: "deleting the default user or admin group is not allowed",
 		}
 	}
-	if err := m.ldap.Del(ldap.NewDelRequest(
+
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	if err := conn.Del(ldap.NewDelRequest(
 		m.GroupDN(name),
 		[]ldap.Control{},
 	)); err != nil {

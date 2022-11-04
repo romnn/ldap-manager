@@ -82,7 +82,12 @@ func (m *LDAPManager) groupFields() []string {
 
 // GetGroupByGID gets a group by its GID
 func (m *LDAPManager) GetGroupByGID(GID int) (*pb.Group, error) {
-	result, err := m.ldap.Search(ldap.NewSearchRequest(
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	result, err := conn.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		fmt.Sprintf("(gid=%d)", GID),
@@ -103,7 +108,12 @@ func (m *LDAPManager) GetGroupByGID(GID int) (*pb.Group, error) {
 
 // GetGroupByName gets a group by its name
 func (m *LDAPManager) GetGroupByName(name string) (*pb.Group, error) {
-	result, err := m.ldap.Search(ldap.NewSearchRequest(
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	result, err := conn.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		fmt.Sprintf("(cn=%s)", EscapeFilter(name)),

@@ -116,7 +116,13 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 		Controls:   []ldap.Control{},
 	}
 	log.Debug(PrettyPrint(addGroupRequest))
-	if err := m.ldap.Add(addGroupRequest); err != nil {
+
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	if err := conn.Add(addGroupRequest); err != nil {
 		return err
 	}
 	if err := m.updateLastID("lastGID", GID+1); err != nil {

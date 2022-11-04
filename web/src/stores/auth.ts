@@ -56,16 +56,16 @@ export const useAuthStore = defineStore("auth", () => {
         if (auth.is_admin) localStorage.setItem("x-user-admin", "true");
         localStorage.setItem("x-user-display-name", auth.display_name);
       }
-      token = auth.token;
-      isAdmin = auth.is_admin;
-      activeDisplayName = auth.display_name;
-      activeUsername = auth.username;
+      token.value = auth.token;
+      isAdmin.value = auth.is_admin;
+      activeDisplayName.value = auth.display_name;
+      activeUsername.value = auth.username;
     },
     logout: async () => {
-      token = null;
-      isAdmin = null;
-      activeDisplayName = null;
-      activeUsername = null;
+      token.value = null;
+      isAdmin.value = null;
+      activeDisplayName.value = null;
+      activeUsername.value = null;
       localStorage.removeItem("x-user-admin");
       localStorage.removeItem("x-user-token");
       localStorage.removeItem("x-user-name");

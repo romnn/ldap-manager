@@ -107,14 +107,16 @@ inv compile-proto
 
 - v2
 
+  - add a simple connection pool
+  - function that opens a new connection
+  - binds should always open new connections
   - add integration test with harbor
+
   - test the grpc and http servers as well
   - refactor to use manual ldap search only where necessary
   - fix the frontend
   - fix the docker container
-  - decide what goes into pkg and what goes into internal
   - use an interface for the main functions of the manager in GRPC server
-  - fix nil pointer errors
   - point out that the goal is user management only
 
   - documentation
@@ -130,6 +132,8 @@ inv compile-proto
     - verify?
 
 - done
+  - fix nil pointer errors
+  - decide what goes into pkg and what goes into internal
   - add tests for each file in pkg
   - Implement missing password hashing algorithms
   - Embed crypt(3) as vendored?

@@ -244,7 +244,13 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
 		Controls:   []ldap.Control{},
 	}
 	log.Debug(PrettyPrint(addUserRequest))
-	if err := m.ldap.Add(addUserRequest); err != nil {
+
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	if err := conn.Add(addUserRequest); err != nil {
 		exists := ldap.IsErrorWithCode(err, ldap.LDAPResultEntryAlreadyExists)
 		if exists {
 			return &UserAlreadyExistsError{
@@ -263,7 +269,7 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
 		NewPassword:  req.GetPassword(),
 	}
 	log.Debug(PrettyPrint(passwordModifyRequest))
-	_, err = m.ldap.PasswordModify(passwordModifyRequest)
+	_, err = conn.PasswordModify(passwordModifyRequest)
 	if err != nil {
 		return fmt.Errorf(
 			"failed to set password of new user %q: %v",

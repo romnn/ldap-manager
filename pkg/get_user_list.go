@@ -13,7 +13,12 @@ func (m *LDAPManager) GetUserList(req *pb.GetUserListRequest) (*pb.UserList, err
 	if req.GetSortKey() == "" {
 		req.SortKey = m.AccountAttribute
 	}
-	result, err := m.ldap.SearchWithPaging(ldap.NewSearchRequest(
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	result, err := conn.SearchWithPaging(ldap.NewSearchRequest(
 		m.UserGroupDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		fmt.Sprintf(

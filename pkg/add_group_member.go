@@ -73,7 +73,12 @@ func (m *LDAPManager) AddGroupMember(req *pb.GroupMember, allowNonExistent bool)
 	modifyRequest.Add(m.GroupMembershipAttribute, []string{member})
 	log.Debug(PrettyPrint(modifyRequest))
 
-	if err := m.ldap.Modify(modifyRequest); err != nil {
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	if err := conn.Modify(modifyRequest); err != nil {
 		if ldap.IsErrorWithCode(err, ldap.LDAPResultAttributeOrValueExists) {
 			return &MemberAlreadyExistsError{
 				Member: username,

@@ -31,7 +31,7 @@ var Rev = ""
 
 // newLDAPManager configures the LDAP manager based on the CLI config
 func newLDAPManager(ctx *cli.Context) ldapmanager.LDAPManager {
-	hasReadonlyUser := ctx.String(flags.LdapReadOnlyUser.Name) != ""
+	hasReadOnlyUser := ctx.String(flags.LdapReadOnlyUser.Name) != ""
 	baseDN := ctx.String(flags.LdapBaseDn.Name)
 	groupsOU := ctx.String(flags.GroupsOu.Name)
 	usersOU := ctx.String(flags.UsersOu.Name)
@@ -46,18 +46,19 @@ func newLDAPManager(ctx *cli.Context) ldapmanager.LDAPManager {
 	}
 
 	config := ldapconfig.Config{
-		Host:                 ctx.String(flags.LdapHost.Name),
-		Port:                 ctx.Int(flags.LdapPort.Name),
-		Protocol:             ctx.String(flags.LdapProtocol.Name),
-		Organization:         ctx.String(flags.LdapOrganization.Name),
-		Domain:               ctx.String(flags.LdapDomain.Name),
-		BaseDN:               baseDN,
-		AdminPassword:        ctx.String(flags.LdapAdminPassword.Name),
-		ReadonlyUser:         hasReadonlyUser,
-		ReadonlyUserUsername: ctx.String(flags.LdapReadOnlyUser.Name),
-		ReadonlyUserPassword: ctx.String(flags.LdapReadOnlyPassword.Name),
-		TLS:                  ctx.Bool(flags.LdapTLS.Name),
-		UseRFC2307BISSchema:  ctx.Bool(flags.LdapUseRfc2307Bis.Name),
+		Host:                ctx.String(flags.LdapHost.Name),
+		Port:                ctx.Int(flags.LdapPort.Name),
+		Protocol:            ctx.String(flags.LdapProtocol.Name),
+		Organization:        ctx.String(flags.LdapOrganization.Name),
+		Domain:              ctx.String(flags.LdapDomain.Name),
+		BaseDN:              baseDN,
+		AdminUsername:       ctx.String(flags.LdapAdminUsername.Name),
+		AdminPassword:       ctx.String(flags.LdapAdminPassword.Name),
+		ReadOnlyUser:        hasReadOnlyUser,
+		ReadOnlyUsername:    ctx.String(flags.LdapReadOnlyUser.Name),
+		ReadOnlyPassword:    ctx.String(flags.LdapReadOnlyPassword.Name),
+		TLS:                 ctx.Bool(flags.LdapTLS.Name),
+		UseRFC2307BISSchema: ctx.Bool(flags.LdapUseRfc2307Bis.Name),
 	}
 
 	return ldapmanager.LDAPManager{

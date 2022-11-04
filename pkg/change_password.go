@@ -29,7 +29,13 @@ func (m *LDAPManager) ChangePassword(req *pb.ChangePasswordRequest) error {
 		NewPassword:  password,
 	}
 	log.Debug(PrettyPrint(modifyReq))
-	if _, err := m.ldap.PasswordModify(&modifyReq); err != nil {
+
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	if _, err := conn.PasswordModify(&modifyReq); err != nil {
 		notFound := ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject)
 		if notFound {
 			return &ZeroOrMultipleUsersError{

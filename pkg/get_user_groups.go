@@ -18,7 +18,12 @@ func (m *LDAPManager) GetUserGroups(req *pb.GetUserGroupsRequest) (*pb.GroupList
 		"(&(objectClass=posixGroup)(%s=%s))",
 		m.GroupMembershipAttribute, username,
 	)
-	result, err := m.ldap.Search(ldap.NewSearchRequest(
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	result, err := conn.Search(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		filter,

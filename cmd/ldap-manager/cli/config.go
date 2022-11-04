@@ -26,6 +26,13 @@ var (
 		EnvVars: []string{"LDAP_PROTOCOL"},
 		Usage:   "LDAP protocol",
 	}
+	// LdapAdminUsername configures the LDAP admin username
+	LdapAdminUsername = cli.StringFlag{
+		Name:    "ldap-admin-username",
+		Value:   "admin",
+		EnvVars: []string{"LDAP_ADMIN_USERNAME"},
+		Usage:   "LDAP admin username",
+	}
 	// LdapAdminPassword configures the LDAP admin password
 	LdapAdminPassword = cli.StringFlag{
 		Name:    "ldap-admin-password",
@@ -87,6 +94,7 @@ var (
 		&LdapHost,
 		&LdapPort,
 		&LdapProtocol,
+		&LdapAdminUsername,
 		&LdapAdminPassword,
 		&LdapReadOnlyUser,
 		&LdapReadOnlyPassword,

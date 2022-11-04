@@ -15,7 +15,12 @@ const (
 
 // GetGroupList gets a list of all groups
 func (m *LDAPManager) GetGroupList(req *pb.GetGroupListRequest) (*pb.GroupList, error) {
-	result, err := m.ldap.SearchWithPaging(ldap.NewSearchRequest(
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	result, err := conn.SearchWithPaging(ldap.NewSearchRequest(
 		m.GroupsDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		fmt.Sprintf(

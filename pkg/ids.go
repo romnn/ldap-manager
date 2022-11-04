@@ -48,7 +48,13 @@ func (m *LDAPManager) getHighestID(req *highestIDRequest) (int, error) {
 		"(&(objectClass=device)(cn=last%s))",
 		attribute,
 	)
-	result, err := m.ldap.Search(ldap.NewSearchRequest(
+
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return 0, err
+	}
+	defer conn.Close()
+	result, err := conn.Search(ldap.NewSearchRequest(
 		m.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		filter,
@@ -67,7 +73,7 @@ func (m *LDAPManager) getHighestID(req *highestIDRequest) (int, error) {
 	}
 
 	// cache miss requires traversing all entries
-	result, err = m.ldap.Search(ldap.NewSearchRequest(
+	result, err = conn.Search(ldap.NewSearchRequest(
 		req.entryBaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		req.entryFilter,
@@ -101,7 +107,12 @@ func (m *LDAPManager) updateLastID(cn string, lastID int) error {
 	})
 	log.Debug(PrettyPrint(req))
 
-	if err := m.ldap.Modify(req); err != nil {
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	if err := conn.Modify(req); err != nil {
 		return fmt.Errorf(
 			"failed to update cn=%s: %v",
 			cn, err,

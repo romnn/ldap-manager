@@ -69,7 +69,12 @@ func (m *LDAPManager) RemoveGroupMember(req *pb.GroupMember, allowRemoveFromDefa
 	modifyRequest.Delete(m.GroupMembershipAttribute, []string{username})
 	log.Debug(PrettyPrint(modifyRequest))
 
-	if err := m.ldap.Modify(modifyRequest); err != nil {
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	if err := conn.Modify(modifyRequest); err != nil {
 		violation := ldap.IsErrorWithCode(err, ldap.LDAPResultObjectClassViolation)
 		if violation {
 			return &RemoveLastGroupMemberError{

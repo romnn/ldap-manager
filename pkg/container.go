@@ -51,10 +51,15 @@ func StartOpenLDAP(ctx context.Context, options ContainerOptions) (Container, er
 
 	env["LDAP_ADMIN_PASSWORD"] = options.AdminPassword
 
-	env["LDAP_READONLY_USER"] = strconv.FormatBool(options.ReadonlyUser)
-	env["LDAP_READONLY_USER_USERNAME"] = options.ReadonlyUserUsername
-	env["LDAP_READONLY_USER_PASSWORD"] = options.ReadonlyUserPassword
+	env["LDAP_READONLY_USER"] = "true" // strconv.FormatBool(options.ReadOnlyUser)
+	env["LDAP_READONLY_USER_USERNAME"] = options.ReadOnlyUsername
+	env["LDAP_READONLY_USER_PASSWORD"] = options.ReadOnlyPassword
+	// env["LDAP_CONFIG_PASSWORD"] = "blabla123"
 
+	env["CONTAINER_LOG_LEVEL"] = strconv.Itoa(16)
+
+	// https://www.openldap.org/doc/admin24/slapdconfig.html
+	env["LDAP_LOG_LEVEL"] = strconv.Itoa(-1) // 16
 	env["LDAP_TLS"] = strconv.FormatBool(options.TLS)
 	env["LDAP_RFC2307BIS_SCHEMA"] = strconv.FormatBool(options.UseRFC2307BISSchema)
 
@@ -63,7 +68,11 @@ func StartOpenLDAP(ctx context.Context, options ContainerOptions) (Container, er
 			Image:        fmt.Sprintf("osixia/openldap:%s", imageTag),
 			Env:          env,
 			ExposedPorts: []string{string(port)},
-			WaitingFor:   wait.ForListeningPort(port).WithStartupTimeout(timeout),
+			Cmd: []string{
+				"--loglevel",
+				"debug",
+			},
+			WaitingFor: wait.ForListeningPort(port).WithStartupTimeout(timeout),
 		},
 		Started: true,
 	}

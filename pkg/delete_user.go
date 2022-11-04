@@ -66,7 +66,13 @@ func (m *LDAPManager) DeleteUser(req *pb.DeleteUserRequest, keepGroups bool) err
 			}
 		}
 	}
-	if err := m.ldap.Del(ldap.NewDelRequest(
+
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	if err := conn.Del(ldap.NewDelRequest(
 		fmt.Sprintf(
 			"%s=%s,%s",
 			m.AccountAttribute, EscapeDN(username), m.UserGroupDN,
