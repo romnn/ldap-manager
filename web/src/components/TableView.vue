@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, defineEmits, computed, onMounted } from "vue";
+import { ref, defineProps, defineEmits, computed, onMounted } from "vue";
 
 const search = ref("");
 const emit = defineEmits(["search"]);

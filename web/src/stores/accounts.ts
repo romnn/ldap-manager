@@ -61,6 +61,7 @@ export const useAccountsStore = defineStore("accounts", () => {
         start: (page - 1) * perPage,
         end: page * perPage,
       };
+      console.log(request);
       if (search.length > 0) {
         request.filter = ["uid=" + search];
       }
@@ -69,6 +70,7 @@ export const useAccountsStore = defineStore("accounts", () => {
         const response = await axios.get(API_ENDPOINT + "/accounts", {
           params: request,
         });
+        console.log(response);
         return response.data;
       } catch (error) {
         return error.response;

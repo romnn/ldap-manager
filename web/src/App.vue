@@ -111,6 +111,12 @@ onMounted(() => {
     </div>
     <div class="app-content-container">
       <div class="app-content">
+        <b-container
+          :toast="{ root: true }"
+          fluid="sm"
+          position="position-fixed"
+          style="top: 50px; left: -200px"
+        ></b-container>
         <div v-if="pendingConfirmation !== null">
           <!--
           <confirmation-c

@@ -7,6 +7,9 @@ import { useAppStore } from "../../stores/app";
 import { useAccountsStore } from "../../stores/accounts";
 import { Codes } from "../../constants";
 
+const app = useAppStore();
+const accounts = useAccountsStore();
+
 const list: UserList = ref({ users: [] });
 const deleted: string[] = ref([]);
 const error: string | null = ref(null);
@@ -29,7 +32,6 @@ const count = computed(() => list?.users?.length ?? 0);
 /* }); */
 
 const pendingConfirmation = computed(() => {
-  const app = useAppStore();
   return app.pendingConfirmation;
 });
 
@@ -49,7 +51,6 @@ async function loadAccounts() {
   error.value = null;
   list.value = { users: [] };
   const auth = useAuthStore();
-  const accounts = useAccountsStore();
   try {
     list.value = await accounts.listAccounts({
       page: currentPage.value,
@@ -78,8 +79,6 @@ function errorAlert(message: string, append = true) {
 }
 
 async function deleteAccount(username: string) {
-  const app = useAppStore();
-  const accounts = useAccountsStore();
   try {
     await app.newConfirmation({ message: "Are you sure?", ack: "Yes, delete" });
     processing.value = true;
@@ -105,7 +104,7 @@ onMounted(() => {
 <template>
   <div class="list-account-container">
     <TableView
-      :inactive="pendingConfirmation !== null"
+      :inactive="pendingConfirmation === null"
       :error="error"
       :loading="loading"
       :processing="processing"
@@ -117,13 +116,11 @@ onMounted(() => {
         <div v-if="search.length < 1">
           <p>There are no accounts yet</p>
           <p>
-            <!--
-            <RouterLink :to="{ name: 'NewAccountRoute' }"
+            <RouterLink :to="{ name: 'NewUserRoute' }"
               ><b-button size="sm" variant="primary"
-                >Create an account</b-button
+                >Create a user</b-button
               ></RouterLink
             >
-            -->
           </p>
         </div>
         <div v-else>

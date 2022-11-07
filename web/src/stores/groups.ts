@@ -1,7 +1,7 @@
 import axios from "axios";
-import { defineStore } from "pinia";
-import { computed, ref } from "vue";
-import { API_ENDPOINT } from "../../constants";
+import {defineStore} from "pinia";
+import {computed, ref} from "vue";
+import {API_ENDPOINT} from "../constants";
 
 export interface Group {
   name: string;
@@ -17,55 +17,55 @@ export interface GroupList {
 
 export const useGroupsStore = defineStore("groups", () => {
   return {
-    newGroup: async (group: Group) => {
+    newGroup : async (group: Group) => {
+      console.log(group)
       try {
         const response = await axios.put(API_ENDPOINT + "/group", group);
+        console.log(response)
+        return null;
+      } catch (error) {
+        console.log(error)
+        // return error.response;
+        throw error.response;
+      }
+    },
+
+    deleteGroup : async (name: string) => {
+      try {
+        const response =
+            await axios.delete(API_ENDPOINT + "/group/" + name, {});
         return null;
       } catch (error) {
         return error.response;
       }
     },
 
-    deleteGroup: async (name: string) => {
+    updateGroup : async (name: string, new_name?: string, gid?: number) => {
       try {
-        const response = await axios.delete(
-          API_ENDPOINT + "/group/" + name,
-          {}
-        );
+        const response =
+            await axios.post(API_ENDPOINT + "/group/" + name + "/update", {
+              /* eslint-disable-next-line @typescript-eslint/camelcase */
+              new_name : new_name,
+              gid : gid,
+            });
         return null;
       } catch (error) {
         return error.response;
       }
     },
 
-    updateGroup: async (name: string, new_name?: string, gid?: number) => {
+    getGroups : async (page: number, perPage: number, search: string) => {
       try {
-        const response = await axios.post(
-          API_ENDPOINT + "/group/" + name + "/update",
-          {
-            /* eslint-disable-next-line @typescript-eslint/camelcase */
-            new_name: new_name,
-            gid: gid,
-          }
-        );
-        return null;
-      } catch (error) {
-        return error.response;
-      }
-    },
-
-    getGroups: async (page: number, perPage: number, search: string) => {
-      try {
-        const request: { start?: number; end?: number; filters?: string } = {
-          start: (req.page - 1) * req.perPage,
-          end: req.page * req.perPage,
+        const request: {start?: number; end?: number; filters?: string} = {
+          start : (req.page - 1) * req.perPage,
+          end : req.page * req.perPage,
         };
         if (req.search.length > 0) {
           request.filters = `(cn=*${req.search}*)`;
         }
 
         const response = await axios.get(API_ENDPOINT + "/groups", {
-          params: request,
+          params : request,
         });
         return response.data;
       } catch (error) {
@@ -73,12 +73,10 @@ export const useGroupsStore = defineStore("groups", () => {
       }
     },
 
-    getUserGroups: async (page: number, perPage: number, search: string) => {
+    getUserGroups : async (page: number, perPage: number, search: string) => {
       try {
         const response = await axios.get(
-          API_ENDPOINT + "/account/" + username + "/groups",
-          {}
-        );
+            API_ENDPOINT + "/account/" + username + "/groups", {});
         return response.data;
       } catch (error) {
         return error.response;
