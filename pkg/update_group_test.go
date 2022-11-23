@@ -11,11 +11,11 @@ func TestUpdateGroup(t *testing.T) {
 	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
-  // stop now to check if retries work
+	// stop now to check if retries work
 	// test.Container.Terminate(context.Background())
 
-  // mess up the port
-  // test.Container.Config.Port = 9000
+	// mess up the port
+	// test.Container.Config.Port = 9000
 
 	// add a user
 	username := "some-user"

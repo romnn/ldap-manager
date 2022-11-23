@@ -16,6 +16,11 @@ RUN go build \
 # NODE_BUILD
 FROM node:18 AS NODE_BUILD
 
+ENV STABLE_VERSION /web/dist
+
+ARG version=0.0.1
+ENV STABLE_VERSION=$version
+
 WORKDIR /app
 COPY ./ /app
 

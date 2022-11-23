@@ -8,13 +8,13 @@ jobs:
       fail-fast: false
       matrix:
         go-version:
-          - '1.19.x'
+          - "1.19.x"
 
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
         with:
-          python-version: '3.10' 
+          python-version: "3.10"
       - uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go-version }}
@@ -38,10 +38,10 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
         with:
-          python-version: '3.10' 
+          python-version: "3.10"
       - uses: actions/setup-node@v2
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Compile protos
         run: |
@@ -56,3 +56,24 @@ jobs:
           cd web/
           yarn install --dev
           yarn build
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/setup-qemu-action@v2
+      - uses: docker/setup-buildx-action@v2
+      - id: query
+        uses: romnn/query-git-action@master
+
+      - name: Build docker container
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: false
+          build-args: |
+            version=${{ steps.query.outputs.stable_semver_version }}
+          tags: |
+            romnn/film-borders-cli:latest

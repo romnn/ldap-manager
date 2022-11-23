@@ -14,7 +14,7 @@ type Conn struct {
 	conn      ldap.Client
 	pool      *channelPool
 	needReset bool
-  // todo: allow marking as closed
+	unuseable bool
 }
 
 // Start starts connection
@@ -29,10 +29,10 @@ func (c *Conn) StartTLS(config *tls.Config) error {
 
 // Close puts the connection back to the pool instead of closing it
 func (c *Conn) Close() {
-	// if c.conn != nil {
-	// 	c.conn.Close()
-	// 	return
-	// }
+	if c.unuseable {
+		c.conn.Close()
+		return
+	}
 	c.pool.put(c)
 }
 
@@ -60,8 +60,12 @@ func (c *Conn) withRetry(operation func() error) error {
 				ldap.LDAPResultTooLate,
 				ldap.LDAPResultSyncRefreshRequired,
 			)
+			if connectionErr {
+				// mark connection as unuseable
+				c.unuseable = true
+			}
 			if connectionErr || tempErr {
-        // log.Warnf("conn: operation failed: %v", err)
+				// log.Warnf("conn: operation failed: %v", err)
 				// we could lazily swap the connection here:
 				// panic("lazy reconnect")
 				// if conn, err := c.pool.NewConnection(); err == nil {
@@ -82,6 +86,7 @@ func (c *Conn) withRetry(operation func() error) error {
 		// return the underlying permanent error
 		return err.Err
 	}
+	// number of retries exceeded for temporary error
 	return err
 }
 
