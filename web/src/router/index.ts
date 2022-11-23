@@ -1,6 +1,14 @@
 import { createRouter, createWebHistory } from "vue-router";
+// see https://github.com/vuejs/router/blob/main/packages/router/src/types/index.ts
 import type { RouteLocationNormalized, NavigationGuardNext } from "vue-router";
+import type { BreadcrumbItem } from "bootstrap-vue-3";
 import { useAuthStore } from "../stores/auth";
+
+declare module "vue-router" {
+  interface RouteMeta {
+    base?: BreadcrumbItem[];
+  }
+}
 
 const checkNotAlreadyAuthenticated = (
   to: RouteLocationNormalized,
@@ -47,13 +55,13 @@ const router = createRouter({
       component: () => import("../views/LoginView.vue"),
     },
     {
-      path: "/accounts",
-      alias: "/account",
-      name: "AccountsRoute",
-      redirect: { name: "ListAccountsRoute" },
+      path: "/users",
+      alias: "/user",
+      name: "UsersRoute",
+      redirect: { name: "ListUsersRoute" },
       beforeEnter: requireAuth,
       meta: { base: [] },
-      component: () => import("../views/accounts/Base.vue"),
+      component: () => import("../views/users/BaseView.vue"),
       children: [
         {
           path: "new",
@@ -65,42 +73,42 @@ const router = createRouter({
             ],
           },
           beforeEnter: requireAuth,
-          component: () => import("../views/accounts/NewUserView.vue"),
+          component: () => import("../views/users/NewUserView.vue"),
         },
 
         {
           path: "list",
-          name: "ListAccountsRoute",
+          name: "ListUsersRoute",
           meta: {
             base: [
               {
-                text: "Accounts",
-                to: { name: "AccountsRoute" },
+                text: "Users",
+                to: { name: "UsersRoute" },
               },
               {
                 text: "List",
-                to: { name: "ListAccountsRoute" },
+                to: { name: "ListUsersRoute" },
                 active: true,
               },
             ],
           },
           beforeEnter: requireAuth,
-          component: () => import("../views/accounts/ListView.vue"),
+          component: () => import("../views/users/ListView.vue"),
         },
         {
           path: ":username",
-          name: "EditAccountRoute",
+          name: "EditUserRoute",
           props: true,
           meta: {
             base: [
               {
-                text: "Accounts",
-                to: { name: "AccountsRoute" },
+                text: "Users",
+                to: { name: "UsersRoute" },
               },
             ],
           },
           beforeEnter: requireAuth,
-          component: () => import("../views/accounts/EditView.vue"),
+          component: () => import("../views/users/EditView.vue"),
         },
       ],
     },
@@ -109,7 +117,7 @@ const router = createRouter({
       alias: "/group",
       redirect: { name: "ListGroupsRoute" },
       name: "GroupsRoute",
-      component: () => import("../views/groups/Base.vue"),
+      component: () => import("../views/groups/BaseView.vue"),
       beforeEnter: requireAuth,
       children: [
         {

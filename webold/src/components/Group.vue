@@ -94,7 +94,7 @@
                             pill
                             @click="removeAccount(member)"
                             size="sm"
-                            class="mr-2 float-right"
+                            class="mr-2 float-end"
                             variant="outline-danger"
                             >Remove</b-button
                           >
@@ -135,7 +135,7 @@
                               pill
                               @click="addAccount(user.data.uid)"
                               size="sm"
-                              class="mr-2 float-right"
+                              class="mr-2 float-end"
                               variant="outline-primary"
                               >Add</b-button
                             >
@@ -176,7 +176,7 @@
 
             <b-form-group>
               <b-button
-                class="float-right"
+                class="float-end"
                 size="sm"
                 variant="primary"
                 @click="create ? createGroup() : updateGroup()"

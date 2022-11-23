@@ -1,9 +1,6 @@
-import axios from "axios";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
-
-import { API_ENDPOINT } from "../constants";
 
 export interface PendingConfirmation {
   message: string;

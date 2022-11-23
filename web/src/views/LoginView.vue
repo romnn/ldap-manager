@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, defineProps, computed, onMounted } from "vue";
+import { ref } from "vue";
 import { GatewayError } from "../constants";
 import type { Login } from "../stores/auth";
 
@@ -30,7 +30,7 @@ async function onSubmit() {
     };
     await auth.login(request);
     router.push({
-      name: "EditAccountRoute",
+      name: "EditUserRoute",
       params: { username: form.value.username },
     });
   } catch (err: unknown) {
@@ -105,7 +105,7 @@ async function onSubmit() {
                 <b-col>
                   <b-button
                     size="sm"
-                    class="float-right"
+                    class="float-end"
                     @click="onSubmit"
                     type="submit"
                     variant="primary"
@@ -117,8 +117,7 @@ async function onSubmit() {
 
             <b-alert
               class="login-error"
-              dismissible
-              :show="error !== null"
+              :show="error !== undefined"
               variant="danger"
             >
               <h4>Login failed</h4>

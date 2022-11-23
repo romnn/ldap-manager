@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, defineProps, defineEmits, computed, onMounted } from "vue";
+import { ref } from "vue";
 
 const search = ref("");
 const emit = defineEmits(["search"]);
@@ -8,26 +8,8 @@ const props = defineProps<{
   searchLabel?: string;
   error?: string;
   loading?: boolean;
-  processing?: boolean;
   inactive?: boolean;
 }>();
-/* { */
-/*   searchLabel: { */
-/*     type: String, */
-/*   }, */
-/*   error: { */
-/*     type: String | null, */
-/*   }, */
-/*   loading: { */
-/*     type: Boolean, */
-/*   }, */
-/*   processing: { */
-/*     type: Boolean, */
-/*   }, */
-/*   inactive: { */
-/*     type: Boolean, */
-/*   }, */
-/* }); */
 
 function submitSearch() {
   emit("search", search.value);
@@ -36,14 +18,14 @@ function submitSearch() {
 
 <template>
   <div class="table-view-list-container">
-    <div class="table-view-list" :class="{ inactive: inactive }">
+    <div class="table-view-list" :class="{ inactive: props.inactive }">
       <b-card no-body>
         <!-- Header -->
         <template v-slot:header>
           <b-form-group
             label-size="sm"
             label-cols-sm="2"
-            :label="searchLabel"
+            :label="props.searchLabel"
             class="m-0"
             label-for="account-search-input"
           >
@@ -80,21 +62,21 @@ function submitSearch() {
 
         <!-- Body -->
         <b-card-body class="p-0">
-          <div v-if="loading" class="m-5">
+          <div v-if="props.loading" class="m-5">
             <b-spinner label="Loading..."></b-spinner>
           </div>
           <div v-else>
             <!-- Error -->
             <b-alert
               class="text-left m-5"
-              v-if="error !== null"
-              :show="error !== null"
+              v-if="props.error !== undefined"
+              :show="props.error !== undefined"
               variant="danger"
             >
               <h4 class="alert-heading">Error</h4>
               <hr />
               <p>
-                {{ error }}
+                {{ props.error }}
               </p>
             </b-alert>
 

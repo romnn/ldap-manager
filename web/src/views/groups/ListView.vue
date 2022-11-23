@@ -1,21 +1,16 @@
 <script setup lang="ts">
-import { ref, defineProps, watch, computed, onMounted } from "vue";
+import { ref, watch, computed, onMounted } from "vue";
 import TableView from "../../components/TableView.vue";
 import type { Group, GroupList } from "ldap-manager";
+import { GatewayError } from "../../constants";
 
 import { useToast } from "bootstrap-vue-3";
-import { useAuthStore } from "../../stores/auth";
 import { useGroupsStore } from "../../stores/groups";
-import { useMembersStore } from "../../stores/members";
 import { useAppStore } from "../../stores/app";
-import { useAccountsStore } from "../../stores/accounts";
 
 const toast = useToast();
 const appStore = useAppStore();
-const authStore = useAuthStore();
-const accountsStore = useAccountsStore();
 const groupsStore = useGroupsStore();
-const membersStore = useMembersStore();
 
 const groups = ref<Group[]>([]);
 const deleted = ref<string[]>([]);
@@ -31,9 +26,9 @@ const count = computed(() => groups.value.length);
 
 const pendingConfirmation = computed(() => appStore.pendingConfirmation);
 
-async function submitSearch() {
-  await loadGroups();
-}
+/* async function submitSearch() { */
+/*   await loadGroups(); */
+/* } */
 
 function startSearch(s: string) {
   search.value = s;
@@ -43,14 +38,17 @@ function isDeleted(username: string) {
   return deleted.value.includes(username);
 }
 
-function errorAlert(message: string, append = true) {
-  toast?.danger({
-    title: "Error",
-    body: message,
-  }, {
-    autoHide: true,
-    delay: 5000,
-  });
+function errorAlert(message: string) {
+  toast?.danger(
+    {
+      title: "Error",
+      body: message,
+    },
+    {
+      autoHide: true,
+      delay: 5000,
+    }
+  );
 }
 
 async function loadGroups() {
@@ -70,10 +68,11 @@ async function loadGroups() {
     }
     groups.value = list.groups;
   } catch (err: unknown) {
-    console.error(err);
-    /* if (err.response?.data?.code == Codes.Unauthenticated) */
-    /*   return authStore.logout(); */
-    /* error.value = `${err.response?.data?.message ?? err}`; */
+    if (err instanceof GatewayError) {
+      error.value = err.message;
+    } else {
+      throw err;
+    }
   } finally {
     loading.value = false;
   }
@@ -89,9 +88,11 @@ async function deleteGroup(name: string) {
     await groupsStore.deleteGroup(name);
     deleted.value.push(name);
   } catch (err: unknown) {
-    console.error(err);
-    /* if (err.code == Codes.Unauthenticated) return authStore.logout(); */
-    /* errorAlert(err.message); */
+    if (err instanceof GatewayError) {
+      errorAlert(err.message);
+    } else {
+      throw err;
+    }
   } finally {
     processing.value = false;
   }
@@ -108,7 +109,6 @@ onMounted(async () => {
 
 <template>
   <div class="list-group-container">
-
     <table-view
       :inactive="pendingConfirmation !== null"
       :error="error"
@@ -155,7 +155,7 @@ onMounted(async () => {
                   pill
                   @click="deleteGroup(group.name)"
                   size="sm"
-                  class="mr-2 float-right"
+                  class="mr-2 float-end"
                   variant="outline-danger"
                   >Delete</b-button
                 >
@@ -167,7 +167,7 @@ onMounted(async () => {
                   ><b-button
                     pill
                     size="sm"
-                    class="mr-2 float-right"
+                    class="mr-2 float-end"
                     variant="outline-info"
                     >Edit</b-button
                   ></router-link
@@ -186,7 +186,7 @@ onMounted(async () => {
                   ><b-button
                     pill
                     size="sm"
-                    class="mr-2 float-right"
+                    class="mr-2 float-end"
                     variant="outline-primary"
                     >Create</b-button
                   ></router-link

@@ -1,8 +1,7 @@
 import axios from "axios";
-import {defineStore} from "pinia";
-import {computed, ref} from "vue";
+import { defineStore } from "pinia";
 
-import {API_ENDPOINT, handleError} from "../constants";
+import { API_ENDPOINT, handleError } from "../constants";
 import {
   Token,
   SortOrder,
@@ -11,24 +10,27 @@ import {
   NewUserRequest,
   GetUserListRequest,
   User,
-  UserList
-} 
-from "ldap-manager";
+  UserList,
+} from "ldap-manager";
 
-import {useAuthStore} from "./auth";
+import { useAuthStore } from "./auth";
 
 export const useAccountsStore = defineStore("accounts", () => {
   async function listAccounts({
     page,
     perPage,
     search,
-  }: {page: number; perPage : number; search : string;}): Promise<UserList | undefined> {
+  }: {
+    page: number;
+    perPage: number;
+    search: string;
+  }): Promise<UserList | undefined> {
     const request: GetUserListRequest = {
-      start : (page - 1) * perPage,
-      end : page * perPage,
-      sortOrder : SortOrder.ASCENDING,
-      sortKey : "",
-      filter : [],
+      start: (page - 1) * perPage,
+      end: page * perPage,
+      sortOrder: SortOrder.ASCENDING,
+      sortKey: "",
+      filter: [],
     };
     if (search.length > 0) {
       request.filter.push(`uid=${search}`);
@@ -36,7 +38,7 @@ export const useAccountsStore = defineStore("accounts", () => {
 
     try {
       const response = await axios.get(API_ENDPOINT + "/users", {
-        params : request,
+        params: request,
       });
       const users = UserList.fromJSON(response.data);
       return users;
@@ -57,7 +59,7 @@ export const useAccountsStore = defineStore("accounts", () => {
 
   async function newAccount(request: NewUserRequest): Promise<void> {
     try {
-      await axios.post(API_ENDPOINT + "/user", request);
+      await axios.put(API_ENDPOINT + "/user", request);
     } catch (err: unknown) {
       handleError(err);
     }
@@ -66,10 +68,12 @@ export const useAccountsStore = defineStore("accounts", () => {
   async function updateAccount(request: UpdateUserRequest): Promise<void> {
     try {
       const response = await axios.post(
-          API_ENDPOINT + "/user/" + request.username + "/update", request);
+        API_ENDPOINT + "/user/" + request.username + "/update",
+        request
+      );
       const newToken = Token.fromJSON(response.data);
       const authStore = useAuthStore();
-      authStore.updateToken({newToken});
+      authStore.updateToken({ newToken });
     } catch (err: unknown) {
       handleError(err);
     }

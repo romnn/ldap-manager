@@ -1,7 +1,14 @@
 <script setup lang="ts">
-import { ref, defineProps, watch, computed, onMounted } from "vue";
+import { ref, watch, computed, onMounted } from "vue";
 import { GatewayError } from "../constants";
-import { User, Group, GroupList, NewUserRequest, UpdateUserRequest } from "ldap-manager";
+import * as EmailValidator from "email-validator";
+import {
+  User,
+  Group,
+  GroupList,
+  NewUserRequest,
+  UpdateUserRequest,
+} from "ldap-manager";
 
 import { useRouter } from "vue-router";
 import { useToast } from "bootstrap-vue-3";
@@ -19,23 +26,19 @@ const accountsStore = useAccountsStore();
 const groupsStore = useGroupsStore();
 const membersStore = useMembersStore();
 
-const props = defineProps({
-  account: {
-    type: String,
-  },
-  title: {
-    type: String,
-    default: "Account",
-  },
-  all: {
-    type: Boolean,
-    default: false,
-  },
-  create: {
-    type: Boolean,
-    default: false,
-  },
-});
+const props = withDefaults(
+  defineProps<{
+    account?: string;
+    title: string;
+    all: boolean;
+    create: boolean;
+  }>(),
+  {
+    title: "Account",
+    all: false,
+    create: false,
+  }
+);
 
 const invalidGroupText = ref<string>("no such group");
 const error = ref<string | undefined>(undefined);
@@ -52,9 +55,6 @@ const processing = ref<boolean>(false);
 const watchGroups = ref<boolean>(false);
 const checkingGroup = ref<boolean>(false);
 
-const emailRegex: RegExp =
-  new RegExp('^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$');
-
 const newUserRequest = ref<NewUserRequest>(NewUserRequest.fromJSON({}));
 
 const passwordConfirm = ref<string>("");
@@ -63,19 +63,19 @@ const activeIsAdmin = computed(() => authStore.isAdmin);
 
 watch(userGroupNames, async (after: string[], before: string[]) => {
   if (watchGroups.value) {
-    // lock
-    watchGroups.value = false;
-    userGroupInputDisabled.value = true;
-
-    console.log(before, after);
-    const b = new Set(before);
-    const a = new Set(after);
-    const added = new Set([...a].filter((x) => !b.has(x)));
-    const removed = new Set([...b].filter((x) => !a.has(x)));
-    console.log("added", added);
-    console.log("removed", removed);
     try {
+      // lock
+      watchGroups.value = false;
+      userGroupInputDisabled.value = true;
       processing.value = true;
+
+      const b = new Set(before);
+      const a = new Set(after);
+      const added = new Set([...a].filter((x) => !b.has(x)));
+      const removed = new Set([...b].filter((x) => !a.has(x)));
+      console.log("added", added);
+      console.log("removed", removed);
+
       for (let group of added) {
         if (props.account) {
           await addToGroup(props.account, group);
@@ -86,11 +86,10 @@ watch(userGroupNames, async (after: string[], before: string[]) => {
           await removeFromGroup(props.account, group);
         }
       }
-    } catch (err) {
-      throw err;
     } finally {
       watchGroups.value = true;
       userGroupInputDisabled.value = false;
+      processing.value = false;
     }
   }
 });
@@ -154,7 +153,7 @@ const passwordsMatch = computed(() => {
 });
 
 const validEmail = computed(() => {
-  return emailRegex.test(newUserRequest.value.email);
+  return EmailValidator.validate(newUserRequest.value.email);
 });
 
 const passwordStrengthLabel = computed(() => {
@@ -164,13 +163,16 @@ const passwordStrengthLabel = computed(() => {
 });
 
 function successAlert(message: string) {
-  toast?.success({
-    title: "Success",
-    body: message,
-  }, {
-    autoHide: true,
-    delay: 5000,
-  });
+  toast?.success(
+    {
+      title: "Success",
+      body: message,
+    },
+    {
+      autoHide: true,
+      delay: 5000,
+    }
+  );
 }
 
 async function deleteAccount(username: string) {
@@ -204,6 +206,11 @@ async function createAccount() {
 
     await accountsStore.newAccount(newUserRequest.value);
     successAlert(`${newUserRequest.value.username} was created`);
+    // edit the user
+    router.push({
+      name: "EditUserRoute",
+      params: { username: newUserRequest.value.username },
+    });
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       submissionError.value = err.message;
@@ -223,9 +230,7 @@ async function removeFromGroup(username: string, group: string) {
       username,
       group,
     });
-    userGroups.value = userGroups.value.filter(
-      (g: Group) => g.name !== group
-    );
+    userGroups.value = userGroups.value.filter((g: Group) => g.name !== group);
     successAlert(`${username} was removed from ${group}`);
   } catch (err: unknown) {
     // add group again
@@ -288,7 +293,9 @@ async function updateAccount(username: string | undefined = undefined) {
     await accountsStore.updateAccount(request);
     successAlert(`${oldUsername} was updated`);
 
-    const updatedUser: User | undefined = await accountsStore.getAccount(newUserRequest.value.username ?? oldUsername);
+    const updatedUser: User | undefined = await accountsStore.getAccount(
+      newUserRequest.value.username ?? oldUsername
+    );
     if (!updatedUser) {
       submissionError.value = "invalid user";
       return;
@@ -317,23 +324,20 @@ async function fetchAvailableGroups() {
     let total = null;
 
     while (total === null || availableGroups.value.length < total) {
-      console.log(`fetching groups (page ${page})`);
       const request = {
         page,
         perPage: 100,
         search: "",
       };
       const list: GroupList | undefined = await groupsStore.getGroups(request);
-      console.log(list);
       if (!list) {
-        error.value = "invalid group list"
+        error.value = "invalid group list";
         break;
       }
       availableGroups.value = [...availableGroups.value, ...list.groups];
       total = list.total;
       page++;
     }
-    console.log(availableGroups.value);
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       error.value = err.message;
@@ -351,9 +355,8 @@ async function loadAccountData(username: string | undefined = undefined) {
 
   try {
     error.value = undefined;
-    
+
     const remoteUser: User | undefined = await accountsStore.getAccount(user);
-    console.log(remoteUser);
 
     if (!remoteUser) {
       error.value = "invalid remote user";
@@ -369,17 +372,13 @@ async function loadAccountData(username: string | undefined = undefined) {
     newUserRequest.value.homeDirectory = remoteUser.homeDirectory;
     newUserRequest.value.username = remoteUser.username;
 
-    // user groups
     const list: GroupList | undefined = await groupsStore.getUserGroups(user);
     if (!list) {
       error.value = "invalid user list";
       return;
     }
-    console.log(list);
     userGroups.value = list.groups;
     userGroupNames.value = list.groups.map((group: Group) => group.name);
-    console.log(userGroups.value);
-    console.log(userGroupNames.value);
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       error.value = err.message;
@@ -392,7 +391,6 @@ async function loadAccountData(username: string | undefined = undefined) {
 onMounted(async () => {
   error.value = undefined;
 
-  console.log(authStore.isAdmin);
   if (!authStore.isAdmin && props.create) {
     error.value = "Log in as admin user to create users";
     return;
@@ -406,8 +404,6 @@ onMounted(async () => {
 
     await fetchAvailableGroups();
     if (!props.create) await loadAccountData(props.account);
-  } catch (err) {
-    throw err;
   } finally {
     processing.value = false;
     checkingGroup.value = false;
@@ -423,7 +419,9 @@ onMounted(async () => {
         <h4 class="alert-heading">Error</h4>
         <hr />
         <p class="mb-0">
-          {{ error }}
+          <span class="preserve-newlines">
+            {{ error }}
+          </span>
         </p>
       </b-alert>
     </div>
@@ -441,7 +439,7 @@ onMounted(async () => {
               <b-col>{{ title }}</b-col>
               <b-col sm="2"
                 ><b-button
-                  v-if="!create"
+                  v-if="!props.create"
                   @click="deleteAccount"
                   pill
                   variant="outline-danger"
@@ -640,7 +638,7 @@ onMounted(async () => {
                     size="sm"
                     v-model="newUserRequest.password"
                     type="password"
-                    :required="create"
+                    :required="props.create"
                     placeholder=""
                     aria-describedby="login-input-password-help-block"
                   ></b-form-input>
@@ -665,7 +663,7 @@ onMounted(async () => {
                     v-model="passwordConfirm"
                     :state="passwordsMatch"
                     type="password"
-                    :required="create"
+                    :required="props.create"
                     placeholder="Confirm password"
                   ></b-form-input>
                   <b-form-invalid-feedback :state="passwordsMatch">
@@ -699,6 +697,7 @@ onMounted(async () => {
                 :state="groupState"
               >
                 <b-form-tags
+                  v-if="!props.create"
                   autocomplete="off"
                   input-id="account-input-groups"
                   duplicate-tag-text="already in group"
@@ -715,6 +714,11 @@ onMounted(async () => {
                   placeholder="Enter group names separated by spaces"
                   class="mb-2"
                 ></b-form-tags>
+
+                <b-form-text v-if="props.create" id="account-input-groups-help">
+                  User groups can be edited after the user has been created
+                </b-form-text>
+
                 <template v-slot:invalid-feedback>
                   {{ invalidGroupText }}
                 </template>
@@ -723,31 +727,33 @@ onMounted(async () => {
                 </template>
                 <b-alert
                   class="text-left"
-                  dismissible
                   :show="groupMemberError !== undefined"
                   variant="danger"
                 >
-                  {{ groupMemberError }}
+                  <span class="preserve-newlines">
+                    {{ groupMemberError }}
+                  </span>
                 </b-alert>
               </b-form-group>
 
               <b-form-group class="mb-0">
                 <b-button
-                  class="float-right"
+                  class="float-end"
                   size="sm"
                   variant="primary"
-                  @click="create ? createAccount() : updateAccount()"
+                  @click="props.create ? createAccount() : updateAccount()"
                   >{{ create ? "Create account" : "Update" }}
                 </b-button>
               </b-form-group>
 
               <b-alert
                 class="text-left"
-                dismissible
                 :show="submissionError !== undefined"
                 variant="danger"
               >
-                {{ submissionError }}
+                <span class="preserve-newlines">
+                  {{ submissionError }}
+                </span>
               </b-alert>
             </b-form>
           </b-card-body>

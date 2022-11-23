@@ -1,10 +1,10 @@
 import axios from "axios";
-import type {AxiosError} from "axios";
-import {useAuthStore} from "./stores/auth";
+import type { AxiosError } from "axios";
+import { useAuthStore } from "./stores/auth";
 export const API_ENDPOINT = "/api/v1";
 
 export const Codes = {
-  Unauthenticated : 16
+  Unauthenticated: 16,
 };
 
 export interface GatewayErrorI {
@@ -13,16 +13,18 @@ export interface GatewayErrorI {
 }
 
 export function isGatewayError(error: any): error is GatewayErrorI {
-  return ("code" in error && "message" in error)
+  return "code" in error && "message" in error;
 }
 
 export class GatewayError {
   code: number;
   message: string;
 
-  unauthenticated() { return (this.code == Codes.Unauthenticated); }
+  unauthenticated() {
+    return this.code == Codes.Unauthenticated;
+  }
 
-  constructor({code, message}: GatewayErrorI) {
+  constructor({ code, message }: GatewayErrorI) {
     this.message = message;
     this.code = code;
   }

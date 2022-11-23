@@ -54,12 +54,13 @@ export interface User {
   firstName: string;
   lastName: string;
   displayName: string;
-  CN: string;
   email: string;
-  UID: number;
-  GID: number;
   loginShell: string;
   homeDirectory: string;
+  CN: string;
+  DN: string;
+  UID: number;
+  GID: number;
 }
 
 export interface UserList {
@@ -149,6 +150,7 @@ export interface GetUserGroupsRequest {
 export interface Group {
   name: string;
   members: string[];
+  /** repeated User members = 2; */
   GID: number;
 }
 
@@ -310,12 +312,13 @@ function createBaseUser(): User {
     firstName: "",
     lastName: "",
     displayName: "",
-    CN: "",
     email: "",
-    UID: 0,
-    GID: 0,
     loginShell: "",
     homeDirectory: "",
+    CN: "",
+    DN: "",
+    UID: 0,
+    GID: 0,
   };
 }
 
@@ -333,23 +336,26 @@ export const User = {
     if (message.displayName !== "") {
       writer.uint32(98).string(message.displayName);
     }
-    if (message.CN !== "") {
-      writer.uint32(106).string(message.CN);
-    }
     if (message.email !== "") {
-      writer.uint32(114).string(message.email);
-    }
-    if (message.UID !== 0) {
-      writer.uint32(160).int32(message.UID);
-    }
-    if (message.GID !== 0) {
-      writer.uint32(168).int64(message.GID);
+      writer.uint32(106).string(message.email);
     }
     if (message.loginShell !== "") {
-      writer.uint32(242).string(message.loginShell);
+      writer.uint32(162).string(message.loginShell);
     }
     if (message.homeDirectory !== "") {
-      writer.uint32(250).string(message.homeDirectory);
+      writer.uint32(170).string(message.homeDirectory);
+    }
+    if (message.CN !== "") {
+      writer.uint32(242).string(message.CN);
+    }
+    if (message.DN !== "") {
+      writer.uint32(250).string(message.DN);
+    }
+    if (message.UID !== 0) {
+      writer.uint32(256).int32(message.UID);
+    }
+    if (message.GID !== 0) {
+      writer.uint32(264).int64(message.GID);
     }
     return writer;
   },
@@ -374,22 +380,25 @@ export const User = {
           message.displayName = reader.string();
           break;
         case 13:
-          message.CN = reader.string();
-          break;
-        case 14:
           message.email = reader.string();
           break;
         case 20:
-          message.UID = reader.int32();
-          break;
-        case 21:
-          message.GID = longToNumber(reader.int64() as Long);
-          break;
-        case 30:
           message.loginShell = reader.string();
           break;
-        case 31:
+        case 21:
           message.homeDirectory = reader.string();
+          break;
+        case 30:
+          message.CN = reader.string();
+          break;
+        case 31:
+          message.DN = reader.string();
+          break;
+        case 32:
+          message.UID = reader.int32();
+          break;
+        case 33:
+          message.GID = longToNumber(reader.int64() as Long);
           break;
         default:
           reader.skipType(tag & 7);
@@ -405,12 +414,13 @@ export const User = {
       firstName: isSet(object.firstName) ? String(object.firstName) : "",
       lastName: isSet(object.lastName) ? String(object.lastName) : "",
       displayName: isSet(object.displayName) ? String(object.displayName) : "",
-      CN: isSet(object.CN) ? String(object.CN) : "",
       email: isSet(object.email) ? String(object.email) : "",
-      UID: isSet(object.UID) ? Number(object.UID) : 0,
-      GID: isSet(object.GID) ? Number(object.GID) : 0,
       loginShell: isSet(object.loginShell) ? String(object.loginShell) : "",
       homeDirectory: isSet(object.homeDirectory) ? String(object.homeDirectory) : "",
+      CN: isSet(object.CN) ? String(object.CN) : "",
+      DN: isSet(object.DN) ? String(object.DN) : "",
+      UID: isSet(object.UID) ? Number(object.UID) : 0,
+      GID: isSet(object.GID) ? Number(object.GID) : 0,
     };
   },
 
@@ -420,12 +430,13 @@ export const User = {
     message.firstName !== undefined && (obj.firstName = message.firstName);
     message.lastName !== undefined && (obj.lastName = message.lastName);
     message.displayName !== undefined && (obj.displayName = message.displayName);
-    message.CN !== undefined && (obj.CN = message.CN);
     message.email !== undefined && (obj.email = message.email);
-    message.UID !== undefined && (obj.UID = Math.round(message.UID));
-    message.GID !== undefined && (obj.GID = Math.round(message.GID));
     message.loginShell !== undefined && (obj.loginShell = message.loginShell);
     message.homeDirectory !== undefined && (obj.homeDirectory = message.homeDirectory);
+    message.CN !== undefined && (obj.CN = message.CN);
+    message.DN !== undefined && (obj.DN = message.DN);
+    message.UID !== undefined && (obj.UID = Math.round(message.UID));
+    message.GID !== undefined && (obj.GID = Math.round(message.GID));
     return obj;
   },
 
@@ -435,12 +446,13 @@ export const User = {
     message.firstName = object.firstName ?? "";
     message.lastName = object.lastName ?? "";
     message.displayName = object.displayName ?? "";
-    message.CN = object.CN ?? "";
     message.email = object.email ?? "";
-    message.UID = object.UID ?? 0;
-    message.GID = object.GID ?? 0;
     message.loginShell = object.loginShell ?? "";
     message.homeDirectory = object.homeDirectory ?? "";
+    message.CN = object.CN ?? "";
+    message.DN = object.DN ?? "";
+    message.UID = object.UID ?? 0;
+    message.GID = object.GID ?? 0;
     return message;
   },
 };

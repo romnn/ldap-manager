@@ -150,6 +150,13 @@ def compile_ts_protos(c):
             pprint(cmd)
         c.run(" ".join(cmd))
 
+    if False:
+        # rebuild the ldap manager package
+        # this should no longer be required
+        package_dir = WEB_DIR / "generated"
+        c.run(f"cd {package_dir} && yarn build")
+        c.run(f"cd {WEB_DIR} && yarn upgrade ldap-manager --force --latest")
+
 
 @task(pre=[compile_go_protos, compile_ts_protos])
 def compile_protos(c):

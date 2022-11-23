@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, defineProps, computed, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { GatewayError } from "../constants";
-import type { Group, UserList } from "ldap-manager";
+import MemberListComponent from "./MemberListComponent.vue";
+import type { Group, User, UserList } from "ldap-manager";
 
 import { useRouter } from "vue-router";
 import { useToast } from "bootstrap-vue-3";
-import { useAuthStore } from "../stores/auth";
 import { useGroupsStore } from "../stores/groups";
 import { useMembersStore } from "../stores/members";
 import { useAppStore } from "../stores/app";
@@ -18,7 +18,6 @@ const accountStore = useAccountsStore();
 const groupStore = useGroupsStore();
 const memberStore = useMembersStore();
 
-const search = ref("");
 const processing = ref(false);
 const loadingMembers = ref(false);
 const loadingAvailableAccounts = ref(false);
@@ -28,12 +27,12 @@ const loadingGroupError = ref<string | undefined>(undefined);
 const groupMemberOperationError = ref<string | undefined>(undefined);
 const submissionError = ref<string | undefined>(undefined);
 
-const available = ref<UserList>({ users: [], total: 0 });
+const availableMap = ref<Map<string, User>>(new Map());
 
-const membersSearch = ref<string>("");
+const memberSearch = ref<string>("");
 const availableSearch = ref<string>("");
 
-const form = ref< {
+const form = ref<{
   members: string[];
   name: string;
   GID: number;
@@ -43,20 +42,36 @@ const form = ref< {
   GID: 0,
 });
 
-const props = withDefaults(defineProps<{
-   name?: string
-   title: string,
-   all: boolean,
-   create: boolean,
- }>(), {
-     title: 'Group',
-     all: false,
-     create: false,
- });
+const props = withDefaults(
+  defineProps<{
+    name?: string;
+    title?: string;
+    internal?: boolean;
+    create?: boolean;
+  }>(),
+  {
+    title: "Group",
+    internal: false,
+    create: false,
+  }
+);
 
-const filteredMembers = computed(() =>
-  form.value.members.filter((member) => {
-    return member.includes(membersSearch.value);
+const available = computed((): User[] =>
+  Array.from(availableMap.value.values())
+);
+
+const members = computed((): User[] =>
+  form.value.members
+    .map((member) => {
+      // matching DN from available users
+      return availableMap.value.get(member);
+    })
+    .filter((member): member is User => !!member)
+);
+
+const filteredMembers = computed((): User[] =>
+  members.value.filter((member) => {
+    return member.username.includes(memberSearch.value);
   })
 );
 
@@ -65,18 +80,25 @@ async function updateAvailableSearch(search: string) {
   await loadAvailableAccounts();
 }
 
+function updateMemberSearch(search: string) {
+  memberSearch.value = search;
+}
+
 function isMember(username: string) {
   return form.value.members.includes(username);
 }
 
 function successAlert(message: string) {
-  toast?.success({
-    title: "Success",
-    body: message,
-  }, {
-    autoHide: true,
-    delay: 5000,
-  });
+  toast?.success(
+    {
+      title: "Success",
+      body: message,
+    },
+    {
+      autoHide: true,
+      delay: 5000,
+    }
+  );
 }
 
 async function deleteGroup(name: string | undefined) {
@@ -85,15 +107,18 @@ async function deleteGroup(name: string | undefined) {
     return;
   }
   try {
-    await appStore.newConfirmation({ message: "Are you sure?", ack: "Yes, delete" });
+    await appStore.newConfirmation({
+      message: "Are you sure?",
+      ack: "Yes, delete",
+    });
   } catch (err: unknown) {
     return;
   }
   try {
     processing.value = true;
     await groupStore.deleteGroup(groupName);
-    /* this.$router.push({ name: "GroupsRoute" }); */
     successAlert(`${groupName} was deleted`);
+    router.push({ name: "GroupsRoute" });
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       submissionError.value = err.message;
@@ -109,14 +134,12 @@ async function createGroup() {
   processing.value = true;
   try {
     const newGroupRequest = form.value;
-    console.log(newGroupRequest );
     await groupStore.newGroup(newGroupRequest);
     successAlert(`${newGroupRequest.name} was created`);
-    router
-      .push({
-        name: "EditGroupRoute",
-        params: { name: newGroupRequest.name }
-      });
+    router.push({
+      name: "EditGroupRoute",
+      params: { name: newGroupRequest.name },
+    });
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       submissionError.value = err.message;
@@ -128,7 +151,10 @@ async function createGroup() {
   }
 }
 
-async function removeAccount(username: string, group: string | undefined = undefined) {
+async function removeAccount(
+  username: string,
+  group: string | undefined = undefined
+) {
   if (props.create) {
     form.value.members = form.value.members.filter(
       (member) => member !== username
@@ -150,7 +176,7 @@ async function removeAccount(username: string, group: string | undefined = undef
     });
     successAlert(`${username} was removed from ${groupName}`);
     form.value.members = form.value.members.filter(
-      member => member !== username
+      (member) => member !== username
     );
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
@@ -163,7 +189,10 @@ async function removeAccount(username: string, group: string | undefined = undef
   }
 }
 
-async function addAccount(username: string, group: string | undefined = undefined) {
+async function addAccount(
+  username: string,
+  group: string | undefined = undefined
+) {
   const groupName = group ?? props.name;
   if (!groupName) {
     return;
@@ -206,11 +235,10 @@ async function updateGroup(group: string | undefined = undefined) {
       GID: form.value.GID,
     });
     successAlert(`${oldGroupName} was updated`);
-    router
-      .push({
-        name: "EditGroupRoute",
-        params: { name: form.value.name }
-      });
+    router.push({
+      name: "EditGroupRoute",
+      params: { name: form.value.name },
+    });
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       submissionError.value = err.message;
@@ -226,7 +254,7 @@ async function loadAvailableAccounts() {
   try {
     loadingAvailableAccounts.value = true;
     loadingAvailableError.value = undefined;
-    available.value = { users: [], total: 0 };
+    availableMap.value = new Map();
 
     const list: UserList | undefined = await accountStore.listAccounts({
       search: availableSearch.value,
@@ -237,8 +265,9 @@ async function loadAvailableAccounts() {
       loadingAvailableError.value = "invalid user list";
       return;
     }
-    available.value.users = list?.users ?? [];
-    available.value.total = list?.total ?? "0";
+    for (const user of list.users) {
+      availableMap.value.set(user.DN, user);
+    }
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       loadingAvailableError.value = err.message;
@@ -266,7 +295,7 @@ async function loadGroupData(name: string | undefined = undefined) {
     }
     form.value.GID = group.GID;
     form.value.name = group.name;
-    form.value.members = group.members;
+    form.value.members = group.members; // .map((m) => m.username);
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       loadingGroupError.value = err.message;
@@ -299,7 +328,7 @@ onMounted(async () => {
             <b-col cols="8">{{ title }}</b-col>
             <b-col
               ><b-button
-                v-if="!create"
+                v-if="!props.create"
                 @click="deleteGroup"
                 pill
                 variant="outline-danger"
@@ -330,7 +359,7 @@ onMounted(async () => {
             </b-form-group>
 
             <b-form-group
-              v-if="all"
+              v-if="props.internal"
               label-size="sm"
               label-cols-sm="3"
               label="GID:"
@@ -353,16 +382,14 @@ onMounted(async () => {
 
             <b-form-group>
               <b-row>
-                <b-col>
-                  <!--
-                  <member-list-c
+                <b-col :style="{ overflow: 'hidden' }">
+                  <member-list-component
+                    class="member-list"
                     title="Members"
                     :loading="loadingMembers"
                     v-on:search="updateMemberSearch"
                   >
-                    <div v-if="form.members.length < 1">
-                      No members yet
-                    </div>
+                    <div v-if="form.members.length < 1">No members yet</div>
                     <table v-else class="striped-table">
                       <thead>
                         <td>Username</td>
@@ -370,61 +397,57 @@ onMounted(async () => {
                       </thead>
                       <tr
                         v-for="(member, idx) in filteredMembers"
-                        v-bind:key="member"
+                        v-bind:key="member.UID"
                         :class="{
-                          even: idx % 2 == 0
+                          even: idx % 2 == 0,
                         }"
                       >
-                        <td>{{ member }}</td>
+                        <td>{{ member.username }}</td>
                         <td>
                           <b-button
                             pill
-                            @click="removeAccount(member)"
+                            @click="removeAccount(member.username)"
                             size="sm"
-                            class="mr-2 float-right"
+                            class="mr-2 float-end"
                             variant="outline-danger"
                             >Remove</b-button
                           >
                         </td>
                       </tr>
                     </table>
-                  </member-list-c>
-                  -->
+                  </member-list-component>
                 </b-col>
                 <b-col>
-                  <!--
-                  <member-list-c
+                  <member-list-component
                     title="All users"
                     :loading="loadingAvailableAccounts"
                     v-on:search="updateAvailableSearch"
                   >
-                    <div v-if="available.users.length < 1">
-                      No users available
-                    </div>
+                    <div v-if="available.length < 1">No users available</div>
                     <table v-else class="striped-table">
                       <thead>
                         <td>Username</td>
                         <td></td>
                       </thead>
                       <tr
-                        v-for="(user, idx) in available.users"
-                        v-bind:key="user.data.uid"
+                        v-for="(user, idx) in available"
+                        v-bind:key="user.UID"
                         :class="{
                           even: idx % 2 == 0,
-                          isMember: isMember(user.data.uid)
+                          isMember: isMember(user.username),
                         }"
                       >
-                        <td>{{ user.data.uid }}</td>
+                        <td>{{ user.username }}</td>
                         <td>
-                          <span v-if="isMember(user.data.uid)">
+                          <span v-if="isMember(user.username)">
                             <i>member already</i>
                           </span>
                           <div v-else>
                             <b-button
                               pill
-                              @click="addAccount(user.data.uid)"
+                              @click="addAccount(user.username)"
                               size="sm"
-                              class="mr-2 float-right"
+                              class="mr-2 float-end"
                               variant="outline-primary"
                               >Add</b-button
                             >
@@ -432,11 +455,9 @@ onMounted(async () => {
                         </td>
                       </tr>
                     </table>
-                  </member-list-c>
-                  -->
+                  </member-list-component>
                   <b-alert
                     class="text-left"
-                    dismissible
                     :show="loadingAvailableError !== undefined"
                     variant="danger"
                   >
@@ -448,7 +469,6 @@ onMounted(async () => {
 
             <b-alert
               class="text-left"
-              dismissible
               :show="loadingGroupError !== undefined"
               variant="danger"
             >
@@ -457,7 +477,6 @@ onMounted(async () => {
 
             <b-alert
               class="text-left"
-              dismissible
               :show="groupMemberOperationError !== undefined"
               variant="danger"
             >
@@ -466,7 +485,7 @@ onMounted(async () => {
 
             <b-form-group>
               <b-button
-                class="float-right"
+                class="float-end"
                 size="sm"
                 variant="primary"
                 @click="props.create ? createGroup() : updateGroup()"
@@ -476,7 +495,6 @@ onMounted(async () => {
 
             <b-alert
               class="text-left"
-              dismissible
               :show="submissionError !== undefined"
               variant="danger"
             >

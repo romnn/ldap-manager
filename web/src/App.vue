@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import axios from "axios";
 import { ref, computed, onMounted } from "vue";
+import { RouterLink, RouterView } from "vue-router";
+import type { RouteParams, RouteParamValue } from "vue-router";
+import type { BreadcrumbItem } from "bootstrap-vue-3";
+import ConfirmationComponent from "./components/ConfirmationComponent.vue";
+
 import { useAuthStore } from "./stores/auth";
 import { useAppStore } from "./stores/app";
-import { RouterLink, RouterView } from "vue-router";
+import { useRoute } from "vue-router";
 
+const route = useRoute();
 const authStore = useAuthStore();
 const appStore = useAppStore();
 
-const isLoggingOut = ref(false);
+const isLoggingOut = ref<boolean>(false);
 
 function logout() {
   isLoggingOut.value = true;
@@ -17,6 +22,35 @@ function logout() {
     isLoggingOut.value = false;
   }, 1000);
 }
+
+const items = computed((): BreadcrumbItem[] => {
+  if (route.meta?.showBreadcrumb === false) return [] as BreadcrumbItem[];
+
+  const baseItems = route.meta?.base ?? [];
+  const params: RouteParams = route.params ?? {};
+
+  const paramItems = Object.values(params).reduce(
+    (acc: BreadcrumbItem[], param: RouteParamValue | RouteParamValue[]) => {
+      const name = route.name;
+      const paramList: RouteParamValue[] = Array.isArray(param)
+        ? param
+        : [param];
+      if (name) {
+        for (const p of paramList) {
+          acc.push({
+            text: p,
+            to: { name: name, params: route.params },
+            active: true,
+          });
+        }
+      }
+      return acc;
+    },
+    [] as BreadcrumbItem[]
+  );
+
+  return baseItems.concat(paramItems);
+});
 
 const isAdmin = computed(() => {
   return authStore.isAdmin;
@@ -65,13 +99,13 @@ onMounted(() => {
           <b-navbar-nav v-if="username !== null">
             <b-nav-item
               :to="{
-                name: 'EditAccountRoute',
+                name: 'EditUserRoute',
                 params: { username: username },
               }"
               >My account</b-nav-item
             >
-            <b-nav-item v-if="isAdmin" :to="{ name: 'AccountsRoute' }"
-              >Accounts</b-nav-item
+            <b-nav-item v-if="isAdmin" :to="{ name: 'UsersRoute' }"
+              >Users</b-nav-item
             >
             <b-nav-item v-if="isAdmin" :to="{ name: 'GroupsRoute' }"
               >Groups</b-nav-item
@@ -87,15 +121,13 @@ onMounted(() => {
               <template v-slot:button-content>
                 <em>{{ displayName }} </em>
               </template>
-              <!--
               <b-dropdown-item
                 :to="{
-                  name: 'EditAccountRoute',
+                  name: 'EditUserRoute',
                   params: { username: username },
                 }"
                 >My account</b-dropdown-item
               >
-              -->
               <b-dropdown-item @click="logout">Logout</b-dropdown-item>
             </b-nav-item-dropdown>
           </b-navbar-nav>
@@ -108,26 +140,22 @@ onMounted(() => {
           :toast="{ root: true }"
           fluid="sm"
           position="position-fixed"
-          style="top: 50px; left: -200px"
+          style="z-index: 99999; top: 50px; left: -200px"
         ></b-container>
         <div v-if="pendingConfirmation !== null">
-          <!--
-          <confirmation-c
+          <confirmation-component
             :message="pendingConfirmation.message"
             :ackMessage="pendingConfirmation.ack"
             v-on:cancel="cancelConfirmation"
             v-on:confirm="confirmConfirmation"
-          ></confirmation-c>
-          -->
+          ></confirmation-component>
         </div>
         <div class="logout-container" v-if="isLoggingOut">
           <p>You are being logged out...</p>
           <p><b-spinner label="Logging out..."></b-spinner></p>
         </div>
         <div v-else>
-          <!--
           <b-breadcrumb v-if="items.length > 0" :items="items"></b-breadcrumb>
-          -->
           <RouterView />
         </div>
       </div>

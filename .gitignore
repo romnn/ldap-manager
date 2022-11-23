@@ -9,3 +9,4 @@ website/charts
 **/node_modules
 **/debug.yaml
 **/index.yaml
+ldap-manager

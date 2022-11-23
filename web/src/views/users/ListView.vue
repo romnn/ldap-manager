@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import TableView from "../../components/TableView.vue";
-import { RouterLink, RouterView } from "vue-router";
+import { RouterLink } from "vue-router";
 import type { UserList } from "ldap-manager";
+import { GatewayError } from "../../constants";
 
 import { useToast } from "bootstrap-vue-3";
-import { useAuthStore } from "../../stores/auth";
 import { useAppStore } from "../../stores/app";
 import { useAccountsStore } from "../../stores/accounts";
 
@@ -30,9 +30,9 @@ const pendingConfirmation = computed(() => {
   return appStore.pendingConfirmation;
 });
 
-function submitSearch() {
-  loadAccounts();
-}
+/* function submitSearch() { */
+/*   loadAccounts(); */
+/* } */
 
 function startSearch(s: string) {
   search.value = s;
@@ -42,10 +42,9 @@ function isDeleted(username: string) {
   return deleted.value.includes(username);
 }
 
-async function loadAccounts() {
+async function loadUsers() {
   error.value = undefined;
   list.value = { users: [], total: 0 };
-  const auth = useAuthStore();
   try {
     const users: UserList | undefined = await accountStore.listAccounts({
       page: currentPage.value,
@@ -58,28 +57,35 @@ async function loadAccounts() {
     }
     list.value = users;
   } catch (err: unknown) {
-    console.error(err);
-    /* if (error.response?.data?.code == Codes.Unauthenticated) */
-    /*   return auth.logout(); */
-    /* error.value = `${error.response?.data?.message ?? error}`; */
+    if (err instanceof GatewayError) {
+      error.value = err.message;
+    } else {
+      throw err;
+    }
   } finally {
     loading.value = false;
   }
 }
 
 function errorAlert(message: string) {
-  toast?.danger({
-    title: "Error",
-    body: message,
-  }, {
-    autoHide: true,
-    delay: 5000,
-  });
+  toast?.danger(
+    {
+      title: "Error",
+      body: message,
+    },
+    {
+      autoHide: true,
+      delay: 5000,
+    }
+  );
 }
 
-async function deleteAccount(username: string) {
+async function deleteUser(username: string) {
   try {
-    await appStore.newConfirmation({ message: "Are you sure?", ack: "Yes, delete" });
+    await appStore.newConfirmation({
+      message: "Are you sure?",
+      ack: "Yes, delete",
+    });
   } catch (err: unknown) {
     return;
   }
@@ -89,23 +95,25 @@ async function deleteAccount(username: string) {
     await accountStore.deleteAccount(username);
     deleted.value.push(username);
   } catch (err: unknown) {
-    console.error(err);
-    /* if (error.code == Codes.Unauthenticated) return auth.logout(); */
-    /* errorAlert(error.message); */
+    if (err instanceof GatewayError) {
+      errorAlert(err.message);
+    } else {
+      throw err;
+    }
   } finally {
     processing.value = false;
   }
 }
 
 onMounted(() => {
-  loadAccounts();
+  loadUsers();
 });
 </script>
 
 <template>
-  <div class="list-account-container">
+  <div class="list-users-container">
     <TableView
-      :inactive="pendingConfirmation === null"
+      :inactive="pendingConfirmation !== null"
       :error="error"
       :loading="loading"
       :processing="processing"
@@ -113,9 +121,9 @@ onMounted(() => {
       searchLabel="Username:"
     >
       <!-- No results -->
-      <div class="setup-account m-5" v-if="count < 1">
+      <div class="setup-user m-5" v-if="count < 1">
         <div v-if="search.length < 1">
-          <p>There are no accounts yet</p>
+          <p>There are no users yet</p>
           <p>
             <RouterLink :to="{ name: 'NewUserRoute' }"
               ><b-button size="sm" variant="primary"
@@ -125,11 +133,11 @@ onMounted(() => {
           </p>
         </div>
         <div v-else>
-          <p>Did not find any accounts</p>
+          <p>Did not find any users</p>
         </div>
       </div>
       <div v-else>
-        <table class="accounts-table striped-table">
+        <table class="users-table striped-table">
           <thead>
             <td>Username</td>
             <td>First Name</td>
@@ -154,21 +162,21 @@ onMounted(() => {
               <div v-else>
                 <b-button
                   pill
-                  @click="deleteAccount(user.username)"
+                  @click="deleteUser(user.username)"
                   size="sm"
-                  class="mr-2 float-right"
+                  class="mr-2 float-end"
                   variant="outline-danger"
                   >Delete</b-button
                 >
                 <RouterLink
                   :to="{
-                    name: 'EditAccountRoute',
+                    name: 'EditUserRoute',
                     params: { username: user.username },
                   }"
                   ><b-button
                     pill
                     size="sm"
-                    class="mr-2 float-right"
+                    class="mr-2 float-end"
                     variant="outline-info"
                     >Edit</b-button
                   ></RouterLink
@@ -185,12 +193,12 @@ onMounted(() => {
               <div>
                 <RouterLink
                   :to="{
-                    name: 'NewAccountRoute',
+                    name: 'NewUserRoute',
                   }"
                   ><b-button
                     pill
                     size="sm"
-                    class="mr-2 float-right"
+                    class="mr-2 float-end"
                     variant="outline-primary"
                     >Create</b-button
                   ></RouterLink
@@ -201,12 +209,12 @@ onMounted(() => {
         </table>
 
         <b-pagination
-          class="account-pagination"
+          class="users-pagination"
           size="sm"
           v-model="currentPage"
           :total-rows="total"
           :per-page="perPage"
-          aria-controls="accounts-table"
+          aria-controls="users-table"
         ></b-pagination>
       </div>
     </TableView>
@@ -214,21 +222,22 @@ onMounted(() => {
 </template>
 
 <style lang="sass" scoped>
-.accounts-table
+.users-table
   table-layout: fixed
   width: 100%
   td
     word-wrap: break-word
 
-.account-list
+/* is this used? */
+.users-list
   z-index: 100
   &.inactive
     opacity: 0.2
 
-  .setup-account
+  .setup-user
     padding: 30px
 
-.account-pagination
+.users-pagination
   margin: 20px
   float: right
 </style>

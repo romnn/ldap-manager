@@ -1,10 +1,10 @@
 import axios from "axios";
-import {LoginRequest, Token, User} from "ldap-manager";
-import {defineStore} from "pinia";
-import {computed, ref} from "vue";
-import {useRouter} from "vue-router";
+import { LoginRequest, Token, User } from "ldap-manager";
+import { defineStore } from "pinia";
+import { computed, ref } from "vue";
+import { useRouter } from "vue-router";
 
-import {API_ENDPOINT, handleError} from "../constants";
+import { API_ENDPOINT, handleError } from "../constants";
 
 const AUTH_TOKEN_KEY = "auth/token";
 const AUTH_IS_ADMIN_KEY = "auth/admin";
@@ -17,15 +17,16 @@ export interface Login {
   remember?: boolean;
 }
 export const useAuthStore = defineStore("auth", () => {
-  const token = ref<string|null>(null);
-  const isAdmin = ref<boolean|null>(null);
-  const username = ref<string|null>(null);
-  const displayName = ref<string|null>(null);
+  const token = ref<string | null>(null);
+  const isAdmin = ref<boolean | null>(null);
+  const username = ref<string | null>(null);
+  const displayName = ref<string | null>(null);
 
   const router = useRouter();
 
-  const isAuthenticated =
-      computed(() => token.value != null && token.value.length > 0);
+  const isAuthenticated = computed(
+    () => token.value != null && token.value.length > 0
+  );
 
   function init() {
     // read from local storage
@@ -35,7 +36,6 @@ export const useAuthStore = defineStore("auth", () => {
     displayName.value = localStorage.getItem(AUTH_DISPLAY_NAME_KEY);
 
     axios.defaults.headers.common["x-user-token"] = token.value;
-    console.log("initialized");
   }
 
   async function logout() {
@@ -47,7 +47,7 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.removeItem(AUTH_IS_ADMIN_KEY);
     localStorage.removeItem(AUTH_USERNAME_KEY);
     localStorage.removeItem(AUTH_DISPLAY_NAME_KEY);
-    router.push({name : "LoginRoute"});
+    router.push({ name: "LoginRoute" });
   }
 
   function updateUser(user: User) {
@@ -55,8 +55,13 @@ export const useAuthStore = defineStore("auth", () => {
     username.value = user.username;
   }
 
-  function updateToken(
-      {newToken, remember}: {newToken: Token, remember?: boolean}) {
+  function updateToken({
+    newToken,
+    remember,
+  }: {
+    newToken: Token;
+    remember?: boolean;
+  }) {
     token.value = newToken.token;
     isAdmin.value = newToken.isAdmin;
     displayName.value = newToken.displayName;
@@ -77,7 +82,7 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
-  async function login({username, password, remember}: Login) {
+  async function login({ username, password, remember }: Login) {
     try {
       const request: LoginRequest = {
         username,
@@ -85,7 +90,7 @@ export const useAuthStore = defineStore("auth", () => {
       };
       const response = await axios.post(API_ENDPOINT + "/login", request);
       const newToken = Token.fromJSON(response.data);
-      updateToken({newToken, remember});
+      updateToken({ newToken, remember });
       return newToken;
     } catch (err: unknown) {
       handleError(err, false);

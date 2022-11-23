@@ -31,14 +31,16 @@ message User {
   string first_name = 10;
   string last_name = 11;
   string display_name = 12;
-  string CN = 13;
-  string email = 14;
+  string email = 13;
 
-  int32 UID = 20;
-  int64 GID = 21;
+  string login_shell = 20;
+  string home_directory = 21;
 
-  string login_shell = 30;
-  string home_directory = 31;
+  string CN = 30;
+  string DN = 31;
+
+  int32 UID = 32;
+  int64 GID = 33;
 }
 
 message UserList {
@@ -130,6 +132,7 @@ message GetUserGroupsRequest {
 message Group {
   string name = 1;
   repeated string members = 2;
+  /* repeated User members = 2; */
   int64 GID = 3;
 }
 

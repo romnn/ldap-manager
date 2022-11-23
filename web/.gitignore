@@ -7,9 +7,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
 .DS_Store
-dist
+**/node_modules
+**/dist
+**/lib
 dist-ssr
 coverage
 *.local
