@@ -43,15 +43,16 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies
+      - name: Compile protos
         run: |
           pip install invoke
           sudo apt-get install -y protobuf-compiler
           inv compile-ts-protos
-          cd web/generated && yarn build
-
-          cd web/ && yarn install --dev
+          cd web/generated
+          yarn build
 
       - name: Build web frontend
         run: |
-          cd web/ && yarn build
+          cd web/
+          yarn install --dev
+          yarn build

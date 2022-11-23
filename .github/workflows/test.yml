@@ -34,15 +34,12 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies
+      - name: Build dependencies
         run: |
-          cd web/generated
+          cd web
           yarn install --dev
           yarn build
 
-          cd web/
-          yarn install --dev
-          
       - name: Run type checks
         run: |
           cd web/
