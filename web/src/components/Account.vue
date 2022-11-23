@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, defineProps, watch, computed, onMounted } from "vue";
+import { GatewayError } from "../constants";
+import { User, Group, GroupList, NewUserRequest, UpdateUserRequest } from "ldap-manager";
 
 import { useRouter } from "vue-router";
 import { useToast } from "bootstrap-vue-3";
@@ -8,7 +10,6 @@ import { useGroupsStore } from "../stores/groups";
 import { useMembersStore } from "../stores/members";
 import { useAppStore } from "../stores/app";
 import { useAccountsStore } from "../stores/accounts";
-import { User, Group, GroupList, NewUserRequest, UpdateUserRequest } from "ldap-manager";
 
 const router = useRouter();
 const toast = useToast();
@@ -37,19 +38,18 @@ const props = defineProps({
 });
 
 const invalidGroupText = ref<string>("no such group");
-const error = ref<string | null>(null);
-const groupMemberError = ref<string | null>(null);
-const submissionError = ref<string | null>(null);
-const watchGroups = ref<boolean>(false);
+const error = ref<string | undefined>(undefined);
+const groupMemberError = ref<string | undefined>(undefined);
+const submissionError = ref<string | undefined>(undefined);
 
 const availableGroups = ref<Group[]>([]);
 const userGroups = ref<Group[]>([]);
 const userGroupNames = ref<string[]>([]);
 const userGroupInputDisabled = ref<boolean>(false);
-
 const groupState = computed(() => true);
 
 const processing = ref<boolean>(false);
+const watchGroups = ref<boolean>(false);
 const checkingGroup = ref<boolean>(false);
 
 const emailRegex: RegExp =
@@ -87,7 +87,7 @@ watch(userGroupNames, async (after: string[], before: string[]) => {
         }
       }
     } catch (err) {
-      console.error(err);
+      throw err;
     } finally {
       watchGroups.value = true;
       userGroupInputDisabled.value = false;
@@ -179,15 +179,18 @@ async function deleteAccount(username: string) {
     ack: "Yes, delete",
   });
   try {
+    submissionError.value = undefined;
     processing.value = true;
-    submissionError.value = null;
+
     await accountsStore.deleteAccount(username);
     successAlert(`${username} was successfully deleted`);
     router.push({ name: "LoginRoute" });
   } catch (err: unknown) {
-    /* console.error(err); */
-    /* if (err.code == Codes.Unauthenticated) return authStore.logout(); */
-    /* submissionError.value = err.message; */
+    if (err instanceof GatewayError) {
+      submissionError.value = err.message;
+    } else {
+      throw err;
+    }
   } finally {
     processing.value = false;
   }
@@ -196,15 +199,17 @@ async function deleteAccount(username: string) {
 async function createAccount() {
   if (newUserRequest.value.password !== passwordConfirm.value) return;
   try {
+    submissionError.value = undefined;
     processing.value = true;
-    submissionError.value = null;
 
     await accountsStore.newAccount(newUserRequest.value);
     successAlert(`${newUserRequest.value.username} was created`);
   } catch (err: unknown) {
-  /*   console.error(err); */
-  /*   if (err.code == Codes.Unauthenticated) return authStore.logout(); */
-  /*   submissionError.value = err.message; */
+    if (err instanceof GatewayError) {
+      submissionError.value = err.message;
+    } else {
+      throw err;
+    }
   } finally {
     processing.value = false;
   }
@@ -212,38 +217,30 @@ async function createAccount() {
 
 async function removeFromGroup(username: string, group: string) {
   try {
-    groupMemberError.value = null;
+    groupMemberError.value = undefined;
 
     await membersStore.removeGroupMember({
       username,
       group,
     });
-
-    // remove from userGroups, the group is still in availableGroups
-    /* if (addedGroup) { */
     userGroups.value = userGroups.value.filter(
       (g: Group) => g.name !== group
     );
-    /* } */
     successAlert(`${username} was removed from ${group}`);
   } catch (err: unknown) {
-    console.error(err);
-    /* groupMemberError.value = err.message; */
-    // failure: add group again
+    // add group again
     userGroupNames.value.push(group);
+    if (err instanceof GatewayError) {
+      groupMemberError.value = err.message;
+    } else {
+      throw err;
+    }
   }
-  /* } catch (err: GatewayError) { */
-  /*   console.error(err); */
-  /*   if (err.code == Codes.Unauthenticated) return authStore.logout(); */
-  /*   groupMemberError.value = err.message; */
-  /*   // failure: add group again */
-  /*   userGroupNames.value.push(group); */
-  /* } */
 }
 
 async function addToGroup(username: string, group: string) {
   try {
-    groupMemberError.value = null;
+    groupMemberError.value = undefined;
 
     await membersStore.addGroupMember({
       username: username,
@@ -259,13 +256,15 @@ async function addToGroup(username: string, group: string) {
     }
     successAlert(`${username} was added to ${group}`);
   } catch (err: unknown) {
-    /* console.error(err); */
-    /* if (err.code == Codes.Unauthenticated) return authStore.logout(); */
-    /* groupMemberError.value = err.message; */
-    /* // failure: remove group again */
-    /* userGroupNames.value = userGroupNames.value.filter( */
-    /*   (g: string) => g !== group */
-    /* ); */
+    // remove group again
+    userGroupNames.value = userGroupNames.value.filter(
+      (g: string) => g !== group
+    );
+    if (err instanceof GatewayError) {
+      groupMemberError.value = err.message;
+    } else {
+      throw err;
+    }
   }
 }
 
@@ -279,7 +278,7 @@ async function updateAccount(username: string | undefined = undefined) {
 
   try {
     processing.value = true;
-    submissionError.value = null;
+    submissionError.value = undefined;
 
     const request: UpdateUserRequest = {
       update: newUserRequest.value,
@@ -296,9 +295,11 @@ async function updateAccount(username: string | undefined = undefined) {
     }
     authStore.updateUser(updatedUser);
   } catch (err: unknown) {
-    console.error(err);
-    /* if (err.code == Codes.Unauthenticated) return authStore.logout(); */
-    /* submissionError.value = err.message; */
+    if (err instanceof GatewayError) {
+      submissionError.value = err.message;
+    } else {
+      throw err;
+    }
   } finally {
     processing.value = false;
   }
@@ -310,7 +311,7 @@ async function onSubmit() {
 
 async function fetchAvailableGroups() {
   try {
-    error.value = null;
+    error.value = undefined;
 
     let page = 1;
     let total = null;
@@ -334,10 +335,11 @@ async function fetchAvailableGroups() {
     }
     console.log(availableGroups.value);
   } catch (err: unknown) {
-    console.error(err);
-    /* if (err.response?.data?.code == Codes.Unauthenticated) */
-      /* return authStore.logout(); */
-    /* error.value = `${err.response?.data?.message ?? err}`; */
+    if (err instanceof GatewayError) {
+      error.value = err.message;
+    } else {
+      throw err;
+    }
   }
 }
 
@@ -348,7 +350,7 @@ async function loadAccountData(username: string | undefined = undefined) {
   }
 
   try {
-    error.value = null;
+    error.value = undefined;
     
     const remoteUser: User | undefined = await accountsStore.getAccount(user);
     console.log(remoteUser);
@@ -379,15 +381,16 @@ async function loadAccountData(username: string | undefined = undefined) {
     console.log(userGroups.value);
     console.log(userGroupNames.value);
   } catch (err: unknown) {
-    console.error(err);
-    /* if (err.response?.data?.code == Codes.Unauthenticated) */
-    /*   return authStore.logout(); */
-    /* error.value = `${err.response?.data?.message ?? err}`; */
+    if (err instanceof GatewayError) {
+      error.value = err.message;
+    } else {
+      throw err;
+    }
   }
 }
 
 onMounted(async () => {
-  error.value = null;
+  error.value = undefined;
 
   console.log(authStore.isAdmin);
   if (!authStore.isAdmin && props.create) {
@@ -404,7 +407,7 @@ onMounted(async () => {
     await fetchAvailableGroups();
     if (!props.create) await loadAccountData(props.account);
   } catch (err) {
-    console.error(err);
+    throw err;
   } finally {
     processing.value = false;
     checkingGroup.value = false;
@@ -415,7 +418,7 @@ onMounted(async () => {
 
 <template>
   <div class="account-container">
-    <div v-if="error !== null">
+    <div v-if="error !== undefined">
       <b-alert show variant="danger">
         <h4 class="alert-heading">Error</h4>
         <hr />
@@ -721,7 +724,7 @@ onMounted(async () => {
                 <b-alert
                   class="text-left"
                   dismissible
-                  :show="groupMemberError !== null"
+                  :show="groupMemberError !== undefined"
                   variant="danger"
                 >
                   {{ groupMemberError }}
@@ -741,7 +744,7 @@ onMounted(async () => {
               <b-alert
                 class="text-left"
                 dismissible
-                :show="submissionError !== null"
+                :show="submissionError !== undefined"
                 variant="danger"
               >
                 {{ submissionError }}

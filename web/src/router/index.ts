@@ -1,13 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import type { RouteLocationNormalized, NavigationGuardNext } from "vue-router";
-import HomeView from "../views/HomeView.vue";
 import { useAuthStore } from "../stores/auth";
-
-const checkAuthenticated = (): boolean => {
-  return false;
-  //
-  // return AuthModule.isAuthenticated;
-};
 
 const checkNotAlreadyAuthenticated = (
   to: RouteLocationNormalized,
@@ -34,7 +27,6 @@ const requireAuth = (
   }
   authStore.logout();
   next({ name: "LoginRoute" });
-  // next({name : "HomeRoute"});
 };
 
 const router = createRouter({
@@ -61,7 +53,7 @@ const router = createRouter({
       redirect: { name: "ListAccountsRoute" },
       beforeEnter: requireAuth,
       meta: { base: [] },
-      component: () => import("../views/accounts/BaseView.vue"),
+      component: () => import("../views/accounts/Base.vue"),
       children: [
         {
           path: "new",

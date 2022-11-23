@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { ref, defineProps, computed, onMounted } from "vue";
-import { useAuthStore } from "../stores/auth";
 import { GatewayError } from "../constants";
 import type { Login } from "../stores/auth";
+
+import { useAuthStore } from "../stores/auth";
 import { useRouter } from "vue-router";
 
 const auth = useAuthStore();
 const router = useRouter();
 
-const error = ref<string | null>(null);
+const error = ref<string | undefined>(undefined);
 const processing = ref<boolean>(false);
 
 const form = ref<Login>({
@@ -19,7 +20,9 @@ const form = ref<Login>({
 
 async function onSubmit() {
   try {
+    error.value = undefined;
     processing.value = true;
+
     const request = {
       username: form.value.username,
       password: form.value.password,
