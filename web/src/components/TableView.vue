@@ -4,13 +4,30 @@ import { ref, defineProps, defineEmits, computed, onMounted } from "vue";
 const search = ref("");
 const emit = defineEmits(["search"]);
 
-const props = defineProps({
-  searchLabel: String,
-  error: String | null,
-  loading: Boolean,
-  processing: Boolean,
-  inactive: Boolean,
-});
+const props = defineProps<{
+  searchLabel?: string;
+  error?: string;
+  loading?: boolean;
+  processing?: boolean;
+  inactive?: boolean;
+}>();
+/* { */
+/*   searchLabel: { */
+/*     type: String, */
+/*   }, */
+/*   error: { */
+/*     type: String | null, */
+/*   }, */
+/*   loading: { */
+/*     type: Boolean, */
+/*   }, */
+/*   processing: { */
+/*     type: Boolean, */
+/*   }, */
+/*   inactive: { */
+/*     type: Boolean, */
+/*   }, */
+/* }); */
 
 function submitSearch() {
   emit("search", search.value);

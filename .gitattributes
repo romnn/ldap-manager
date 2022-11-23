@@ -1,3 +1,4 @@
 tasks.py linguist-vendored
-proto/google linguist-vendored
-pkg/grpc/gen linguist-generated
+proto/google/** linguist-vendored
+pkg/grpc/gen/** linguist-generated
+web/generated/src/** linguist-generated

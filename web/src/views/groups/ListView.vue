@@ -1,37 +1,38 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, defineProps, watch, computed, onMounted } from "vue";
 import TableView from "../../components/TableView.vue";
-import { RouterLink, RouterView } from "vue-router";
-import type { UserList } from "ldap-manager";
+import type { Group, GroupList } from "ldap-manager";
 
 import { useToast } from "bootstrap-vue-3";
 import { useAuthStore } from "../../stores/auth";
+import { useGroupsStore } from "../../stores/groups";
+import { useMembersStore } from "../../stores/members";
 import { useAppStore } from "../../stores/app";
 import { useAccountsStore } from "../../stores/accounts";
 
 const toast = useToast();
 const appStore = useAppStore();
-const accountStore = useAccountsStore();
+const authStore = useAuthStore();
+const accountsStore = useAccountsStore();
+const groupsStore = useGroupsStore();
+const membersStore = useMembersStore();
 
-const list = ref<UserList>({ users: [], total: 0 });
+const groups = ref<Group[]>([]);
 const deleted = ref<string[]>([]);
 const error = ref<string | undefined>(undefined);
 const search = ref<string>("");
 const loading = ref<boolean>(true);
 const processing = ref<boolean>(false);
-
 const currentPage = ref<number>(1);
 const total = ref<number>(100);
 const perPage = ref<number>(40);
 
-const count = computed(() => list.value.users?.length ?? 0);
+const count = computed(() => groups.value.length);
 
-const pendingConfirmation = computed(() => {
-  return appStore.pendingConfirmation;
-});
+const pendingConfirmation = computed(() => appStore.pendingConfirmation);
 
-function submitSearch() {
-  loadAccounts();
+async function submitSearch() {
+  await loadGroups();
 }
 
 function startSearch(s: string) {
@@ -42,32 +43,7 @@ function isDeleted(username: string) {
   return deleted.value.includes(username);
 }
 
-async function loadAccounts() {
-  error.value = undefined;
-  list.value = { users: [], total: 0 };
-  const auth = useAuthStore();
-  try {
-    const users: UserList | undefined = await accountStore.listAccounts({
-      page: currentPage.value,
-      perPage: perPage.value,
-      search: search.value,
-    });
-    if (!users) {
-      error.value = "invalid user list";
-      return;
-    }
-    list.value = users;
-  } catch (err: unknown) {
-    console.error(err);
-    /* if (error.response?.data?.code == Codes.Unauthenticated) */
-    /*   return auth.logout(); */
-    /* error.value = `${error.response?.data?.message ?? error}`; */
-  } finally {
-    loading.value = false;
-  }
-}
-
-function errorAlert(message: string) {
+function errorAlert(message: string, append = true) {
   toast?.danger({
     title: "Error",
     body: message,
@@ -77,93 +53,116 @@ function errorAlert(message: string) {
   });
 }
 
-async function deleteAccount(username: string) {
+async function loadGroups() {
   try {
-    await appStore.newConfirmation({ message: "Are you sure?", ack: "Yes, delete" });
-  } catch (err: unknown) {
-    return;
-  }
-
-  try {
-    processing.value = true;
-    await accountStore.deleteAccount(username);
-    deleted.value.push(username);
+    loading.value = true;
+    error.value = undefined;
+    groups.value = [];
+    const request = {
+      page: currentPage.value,
+      perPage: perPage.value,
+      search: search.value,
+    };
+    const list: GroupList | undefined = await groupsStore.getGroups(request);
+    if (!list) {
+      error.value = "invalid group list";
+      return;
+    }
+    groups.value = list.groups;
   } catch (err: unknown) {
     console.error(err);
-    /* if (error.code == Codes.Unauthenticated) return auth.logout(); */
-    /* errorAlert(error.message); */
+    /* if (err.response?.data?.code == Codes.Unauthenticated) */
+    /*   return authStore.logout(); */
+    /* error.value = `${err.response?.data?.message ?? err}`; */
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function deleteGroup(name: string) {
+  await appStore.newConfirmation({
+    message: "Are you sure?",
+    ack: "Yes, delete",
+  });
+  try {
+    processing.value = true;
+    await groupsStore.deleteGroup(name);
+    deleted.value.push(name);
+  } catch (err: unknown) {
+    console.error(err);
+    /* if (err.code == Codes.Unauthenticated) return authStore.logout(); */
+    /* errorAlert(err.message); */
   } finally {
     processing.value = false;
   }
 }
 
-onMounted(() => {
-  loadAccounts();
+watch(currentPage, async () => {
+  await loadGroups();
+});
+
+onMounted(async () => {
+  await loadGroups();
 });
 </script>
 
 <template>
-  <div class="list-account-container">
-    <TableView
-      :inactive="pendingConfirmation === null"
+  <div class="list-group-container">
+
+    <table-view
+      :inactive="pendingConfirmation !== null"
       :error="error"
       :loading="loading"
       :processing="processing"
       v-on:search="startSearch"
-      searchLabel="Username:"
+      searchLabel="Name:"
     >
       <!-- No results -->
-      <div class="setup-account m-5" v-if="count < 1">
+      <div class="setup-group m-5" v-if="count < 1">
         <div v-if="search.length < 1">
-          <p>There are no accounts yet</p>
+          <p>There are no groups yet</p>
           <p>
-            <RouterLink :to="{ name: 'NewUserRoute' }"
+            <router-link :to="{ name: 'NewGroupRoute' }"
               ><b-button size="sm" variant="primary"
-                >Create a user</b-button
-              ></RouterLink
+                >Create a new group</b-button
+              ></router-link
             >
           </p>
         </div>
         <div v-else>
-          <p>Did not find any accounts</p>
+          <p>Did not find any groups</p>
         </div>
       </div>
       <div v-else>
-        <table class="accounts-table striped-table">
+        <table class="groups-table striped-table">
           <thead>
-            <td>Username</td>
-            <td>First Name</td>
-            <td>Last Name</td>
-            <td>E-Mail</td>
+            <td>Name</td>
             <td></td>
           </thead>
           <tr
-            v-for="(user, idx) in list.users"
-            v-bind:key="user.UID"
+            v-for="(group, idx) in groups"
+            v-bind:key="group.GID"
             :class="{
               even: idx % 2 == 0,
-              deleted: isDeleted(user.username),
+              deleted: isDeleted(group.name),
             }"
           >
-            <td>{{ user.username }}</td>
-            <td>{{ user.firstName }}</td>
-            <td>{{ user.lastName }}</td>
-            <td>{{ user.email }}</td>
+            <td>{{ group.name }}</td>
             <td>
-              <span v-if="isDeleted(user.username)">Deleted</span>
+              <span v-if="isDeleted(group.name)">Deleted</span>
               <div v-else>
                 <b-button
                   pill
-                  @click="deleteAccount(user.username)"
+                  @click="deleteGroup(group.name)"
                   size="sm"
                   class="mr-2 float-right"
                   variant="outline-danger"
                   >Delete</b-button
                 >
-                <RouterLink
+                <router-link
                   :to="{
-                    name: 'EditAccountRoute',
-                    params: { username: user.username },
+                    name: 'EditGroupRoute',
+                    params: { name: group.name },
                   }"
                   ><b-button
                     pill
@@ -171,21 +170,18 @@ onMounted(() => {
                     class="mr-2 float-right"
                     variant="outline-info"
                     >Edit</b-button
-                  ></RouterLink
+                  ></router-link
                 >
               </div>
             </td>
           </tr>
           <tr>
             <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
             <td>
               <div>
-                <RouterLink
+                <router-link
                   :to="{
-                    name: 'NewAccountRoute',
+                    name: 'NewGroupRoute',
                   }"
                   ><b-button
                     pill
@@ -193,7 +189,7 @@ onMounted(() => {
                     class="mr-2 float-right"
                     variant="outline-primary"
                     >Create</b-button
-                  ></RouterLink
+                  ></router-link
                 >
               </div>
             </td>
@@ -201,26 +197,37 @@ onMounted(() => {
         </table>
 
         <b-pagination
-          class="account-pagination"
+          class="group-pagination"
           size="sm"
           v-model="currentPage"
           :total-rows="total"
           :per-page="perPage"
-          aria-controls="accounts-table"
+          aria-controls="group-table"
         ></b-pagination>
       </div>
-    </TableView>
+    </table-view>
   </div>
 </template>
 
 <style lang="sass" scoped>
-.accounts-table
+.groups-table
   table-layout: fixed
   width: 100%
   td
     word-wrap: break-word
 
-.account-list
+.confirmation
+  border: 2px #e9ecef solid
+  border-radius: 15px
+  padding: 15px
+  background-color: #ffffff
+  z-index: 999999
+  position: fixed
+  top: 50%
+  left: 50%
+  transform: translate(-50%, -50%)
+
+.group-list
   z-index: 100
   &.inactive
     opacity: 0.2
@@ -228,7 +235,7 @@ onMounted(() => {
   .setup-account
     padding: 30px
 
-.account-pagination
+.group-pagination
   margin: 20px
   float: right
 </style>

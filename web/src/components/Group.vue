@@ -1,72 +1,75 @@
 <script setup lang="ts">
 import { ref, defineProps, computed, onMounted } from "vue";
-import { Codes } from "../constants";
 
+import { useRouter } from "vue-router";
 import { useToast } from "bootstrap-vue-3";
 import { useAuthStore } from "../stores/auth";
 import { useGroupsStore } from "../stores/groups";
 import { useMembersStore } from "../stores/members";
 import { useAppStore } from "../stores/app";
 import { useAccountsStore } from "../stores/accounts";
+import type { Group, UserList } from "ldap-manager";
 
-/* import { Component, Prop, Vue } from "vue-property-decorator"; */
-/* import { GatewayError } from "../types"; */
-/* import { GroupModule, Group } from "../store/modules/groups"; */
-/* import { AppModule } from "../store/modules/app"; */
-/* import { AccountModule, UserList } from "../store/modules/accounts"; */
-/* import MemberListC from "./MemberList.vue"; */
-/* import { Codes } from "../constants"; */
-/* import { AuthModule } from "../store/modules/auth"; */
-/* import { GroupMemberModule } from "../store/modules/members"; */
-
+const router = useRouter();
 const toast = useToast();
-const app = useAppStore();
-const accounts = useAccountsStore();
-const groups = useGroupsStore();
-const members = useMembersStore();
+const appStore = useAppStore();
+const accountStore = useAccountsStore();
+const groupStore = useGroupsStore();
+const memberStore = useMembersStore();
 
 const search = ref("");
 const processing = ref(false);
 const loadingMembers = ref(false);
 const loadingAvailableAccounts = ref(false);
 
-const loadingAvailableError: string | null = ref(null);
-const loadingGroupError: string | null = ref(null);
-const groupMemberOperationError: string | null = ref(null);
-const submissionError: string | null = ref(null);
+const loadingAvailableError = ref<string | null>(null);
+const loadingGroupError = ref<string | null>(null);
+const groupMemberOperationError = ref<string | null>(null);
+const submissionError = ref<string | null>(null);
 
-const available: UserList = ref({ users: [], total: "0" });
+const available = ref<UserList>({ users: [], total: 0 });
 
-const membersSearch = ref("");
-const availableSearch = ref("");
+const membersSearch = ref<string>("");
+const availableSearch = ref<string>("");
 
-const form: {
+const form = ref< {
   members: string[];
   name: string;
-  gid: number;
-} = ref({
+  GID: number;
+}>({
   members: [],
   name: "",
-  gid: 0,
+  GID: 0,
 });
 
-const props = defineProps({
-  name: {
-    type: String,
-  },
-  title: {
-    type: String,
-    default: "Group",
-  },
-  all: {
-    type: Boolean,
-    default: false,
-  },
-  create: {
-    type: Boolean,
-    default: false,
-  },
-});
+const props = withDefaults(defineProps<{
+   name?: string
+   title: string,
+   all: boolean,
+   create: boolean,
+ }>(), {
+     title: 'Group',
+     all: false,
+     create: false,
+ });
+
+/* defineProps({ */
+/*   name: { */
+/*     type: String, */
+/*   }, */
+/*   title: { */
+/*     type: String, */
+/*     default: "Group", */
+/*   }, */
+/*   all: { */
+/*     type: Boolean, */
+/*     default: false, */
+/*   }, */
+/*   create: { */
+/*     type: Boolean, */
+/*     default: false, */
+/*   }, */
+/* }); */
 
 const filteredMembers = computed(() =>
   form.value.members.filter((member) => {
@@ -83,122 +86,143 @@ function isMember(username: string) {
   return form.value.members.includes(username);
 }
 
-function successAlert(message: string, append = true) {
-  toast.show({
+function successAlert(message: string) {
+  toast?.success({
     title: "Success",
     body: message,
-    autoHideDelay: 5000,
-    appendToast: append,
-    variant: "success",
-    solid: true,
+  }, {
+    autoHide: true,
+    delay: 5000,
   });
 }
 
-async function deleteGroup() {
+async function deleteGroup(name: string | undefined) {
+  const groupName = name ?? props.name;
+  if (!groupName) {
+    return;
+  }
   try {
-    await app.newConfirmation({ message: "Are you sure?", ack: "Yes, delete" });
+    await appStore.newConfirmation({ message: "Are you sure?", ack: "Yes, delete" });
+  } catch (err: unknown) {
+    return;
+  }
+  try {
     processing.value = true;
-    try {
-      await groups.deleteGroup(name.value);
-      /* this.$router.push({ name: "GroupsRoute" }); */
-      successAlert(`${this.name} was deleted`);
-    } catch (error: GatewayError) {
-      if (error.code == Codes.Unauthenticated) return auth.logout();
-      submissionError.value = error.message;
-    } finally {
-      processing.value = false;
-    }
-  } catch (_) {
-    // Ignore
+    await groupStore.deleteGroup(groupName);
+    /* this.$router.push({ name: "GroupsRoute" }); */
+    successAlert(`${groupName} was deleted`);
+  } catch (err: unknown) {
+    console.error(err);
+    /* if (error.code == Codes.Unauthenticated) return auth.logout(); */
+    /* submissionError.value = error.message; */
+  } finally {
+    processing.value = false;
   }
 }
 
 async function createGroup() {
   processing.value = true;
   try {
-    console.log(form.value);
-    await groups.newGroup(form.value);
-    successAlert(`${form.value.name} was created`);
-    /* this.$router */
-    /*   .push({ */
-    /*     name: "EditGroupRoute", */
-    /*     params: { name: this.form.name } */
-    /*   }) */
-  } catch (error: GatewayError) {
-    console.log(error);
-    if (error.code == Codes.Unauthenticated) return auth.logout();
-    submissionError.value = error.message;
+    const newGroupRequest = form.value;
+    console.log(newGroupRequest );
+    await groupStore.newGroup(newGroupRequest);
+    successAlert(`${newGroupRequest.name} was created`);
+    router
+      .push({
+        name: "EditGroupRoute",
+        params: { name: newGroupRequest.name }
+      });
+  } catch (err: unknown) {
+    console.error(err);
+    /* if (error.code == Codes.Unauthenticated) return auth.logout(); */
+    /* submissionError.value = error.message; */
   } finally {
     processing.value = false;
   }
 }
 
-async function removeAccount(username: string) {
-  if (props.create.value) {
+async function removeAccount(username: string, group: string | undefined = undefined) {
+  if (props.create) {
     form.value.members = form.value.members.filter(
       (member) => member !== username
     );
     return;
   }
+  const groupName = group ?? props.name;
+  if (!groupName) {
+    return;
+  }
+
   processing.value = true;
   groupMemberOperationError.value = null;
 
   try {
-    await members.removeGroupMember({
+    await memberStore.removeGroupMember({
       username: username,
-      group: name.value,
+      group: groupName,
     });
-    successAlert(`${username} was removed from ${name.value}`);
-    /* this.form.members = this.form.members.filter( */
-    /*   member => member !== username */
-    /* ); */
-  } catch (error: GatewayError) {
-    if (error.code == Codes.Unauthenticated) return auth.logout();
-    groupMemberOperationError.value = error.message;
+    successAlert(`${username} was removed from ${groupName}`);
+    form.value.members = form.value.members.filter(
+      member => member !== username
+    );
+  } catch (err: unknown) {
+    console.error(err);
+    /* if (error.code == Codes.Unauthenticated) return auth.logout(); */
+    /* groupMemberOperationError.value = error.message; */
   } finally {
     processing.value = false;
   }
 }
 
-async function addAccount(username: string) {
-  if (props.create.value) {
+async function addAccount(username: string, group: string | undefined = undefined) {
+  const groupName = group ?? props.name;
+  if (!groupName) {
+    return;
+  }
+  if (props.create) {
     form.value.members.push(username);
     return;
   }
   processing.value = true;
   groupMemberOperationError.value = null;
   try {
-    await members.addGroupMember({
+    await memberStore.addGroupMember({
       username: username,
-      group: name.value,
+      group: groupName,
     });
-    successAlert(`${username} was added to ${name.value}`);
-    /* form.members.push(username); */
-  } catch (error: GatewayError) {
-    if (error.code == Codes.Unauthenticated) return auth.logout();
-    groupMemberOperationError.value = error.message;
+    successAlert(`${username} was added to ${groupName}`);
+    form.value.members.push(username);
+  } catch (err: unknown) {
+    console.error(err);
+    /* if (error.code == Codes.Unauthenticated) return auth.logout(); */
+    /* groupMemberOperationError.value = error.message; */
   } finally {
     processing.value = false;
   }
 }
 
-async function updateGroup() {
+async function updateGroup(group: string | undefined = undefined) {
+  const oldGroupName = group ?? props.name;
+  if (!oldGroupName) {
+    return;
+  }
+
   processing.value = true;
   try {
-    await groups.updateGroup({
-      name: name.value,
-      /* eslint-disable-next-line @typescript-eslint/camelcase */
-      new_name: form.value.name,
-      gid: form.value.gid,
+    await groupStore.updateGroup({
+      name: oldGroupName,
+      newName: form.value.name,
+      GID: form.value.GID,
     });
-    successAlert(`${form.value.name} was updated`);
-    /* this.$router */
-    /*   .push({ */
-    /*     name: "EditGroupRoute", */
-    /*     params: { name: this.form.name } */
-    /*   }) */
-  } catch (error: GatewayError) {
-    submissionError.value = error.message;
+    successAlert(`${oldGroupName} was updated`);
+    router
+      .push({
+        name: "EditGroupRoute",
+        params: { name: form.value.name }
+      });
+  } catch (err: unknown) {
+    console.error(err);
+    /* submissionError.value = error.message; */
   } finally {
     processing.value = false;
   }
@@ -207,34 +231,48 @@ async function updateGroup() {
 async function loadAvailableAccounts() {
   loadingAvailableAccounts.value = true;
   loadingAvailableError.value = null;
-  available.value = { users: [], total: "0" };
+  available.value = { users: [], total: 0 };
   try {
-    const list: UserList = await accounts.listAccounts({
+    const list: UserList | undefined = await accountStore.listAccounts({
       search: availableSearch.value,
       page: 1,
       perPage: 50,
     });
+    if (!list) {
+      loadingAvailableError.value = "invalid user list";
+      return;
+    }
     available.value.users = list?.users ?? [];
     available.value.total = list?.total ?? "0";
-  } catch (error: GatewayError) {
-    if (error.code == Codes.Unauthenticated) return auth.logout();
-    loadingAvailableError.value = error.message;
+  } catch (err: unknown) {
+    console.error(err);
+    /* if (error.code == Codes.Unauthenticated) return auth.logout(); */
+    /* loadingAvailableError.value = error.message; */
   } finally {
     loadingAvailableAccounts.value = false;
   }
 }
 
-async function loadGroupData() {
+async function loadGroupData(name: string | undefined = undefined) {
+  const groupName = name ?? props.name;
+  if (!groupName) {
+    return;
+  }
   loadingMembers.value = true;
   loadingGroupError.value = null;
   try {
-    const group: Group = await members.getGroup(name.value);
-    form.value.gid = group.gid;
+    const group: Group | undefined = await groupStore.getGroup(groupName);
+    if (!group) {
+      loadingGroupError.value = "invalid group data";
+      return;
+    }
+    form.value.GID = group.GID;
     form.value.name = group.name;
     form.value.members = group.members;
-  } catch (error: GatewayError) {
-    if (error.code == Codes.Unauthenticated) return auth.logout();
-    loadingGroupError.value = error.message;
+  } catch (err: unknown) {
+    console.error(err);
+    /* if (error.code == Codes.Unauthenticated) return auth.logout(); */
+    /* loadingGroupError.value = error.message; */
   } finally {
     loadingMembers.value = false;
   }
@@ -242,7 +280,7 @@ async function loadGroupData() {
 
 onMounted(async () => {
   await loadAvailableAccounts();
-  if (!props.create.value) await loadGroupData();
+  if (!props.create) await loadGroupData();
 });
 
 /* @Component({ */
@@ -376,8 +414,8 @@ onMounted(async () => {
 /*     GroupModule.updateGroup({ */
 /*       name: this.name, */
 /*       /1* eslint-disable-next-line @typescript-eslint/camelcase *1/ */
-/*       new_name: this.form.name, */
-/*       gid: this.form.gid */
+/*       newName: this.form.name, */
+/*       GID: this.form.GID */
 /*     }) */
 /*       .then(() => { */
 /*         this.successAlert(`${this.name} was updated`); */
@@ -495,7 +533,7 @@ onMounted(async () => {
                 autocomplete="off"
                 id="group-input-gid"
                 size="sm"
-                v-model="form.gid"
+                v-model="form.GID"
                 type="number"
                 placeholder="2001"
                 aria-describedby="group-input-gid-help-block"

@@ -5,6 +5,7 @@ import (
 
 	ldaperror "github.com/romnn/ldap-manager/pkg/err"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
+	log "github.com/sirupsen/logrus"
 )
 
 // AuthenticateUser authenticates a user
@@ -33,6 +34,7 @@ func (m *LDAPManager) AuthenticateUser(req *pb.LoginRequest) (*pb.User, error) {
 	}
 	defer conn.Close()
 	if err := conn.Bind(m.UserDN(username), password); err != nil {
+		log.Errorf("unable to bind as %q: %v", username, err)
 		return nil, fmt.Errorf("unable to bind as %q", username)
 	}
 	return user, nil

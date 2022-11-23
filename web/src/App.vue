@@ -5,45 +5,41 @@ import { useAuthStore } from "./stores/auth";
 import { useAppStore } from "./stores/app";
 import { RouterLink, RouterView } from "vue-router";
 
+const authStore = useAuthStore();
+const appStore = useAppStore();
+
 const isLoggingOut = ref(false);
 
 function logout() {
   isLoggingOut.value = true;
-  const auth = useAuthStore();
-  auth.logout();
+  authStore.logout();
   setTimeout(() => {
     isLoggingOut.value = false;
   }, 1000);
 }
 
-const activeIsAdmin = computed(() => {
-  const auth = useAuthStore();
-  return auth.activeIsAdmin;
+const isAdmin = computed(() => {
+  return authStore.isAdmin;
 });
 
-const activeUsername = computed(() => {
-  const auth = useAuthStore();
-  return auth.activeUsername;
+const username = computed(() => {
+  return authStore.username;
 });
 
-const activeDisplayName = computed(() => {
-  const auth = useAuthStore();
-  return auth.activeDisplayName;
+const displayName = computed(() => {
+  return authStore.displayName;
 });
 
 const pendingConfirmation = computed(() => {
-  const app = useAppStore();
-  return app.pendingConfirmation;
+  return appStore.pendingConfirmation;
 });
 
 function cancelConfirmation() {
-  const app = useAppStore();
-  app.cancelConfirmation();
+  appStore.cancelConfirmation();
 }
 
 function confirmConfirmation() {
-  const app = useAppStore();
-  app.confirmConfirmation();
+  appStore.confirmConfirmation();
 }
 
 const version = computed(() => {
@@ -51,8 +47,7 @@ const version = computed(() => {
 });
 
 onMounted(() => {
-  const auth = useAuthStore();
-  axios.defaults.headers.common["x-user-token"] = auth.authToken;
+  authStore.init();
 });
 </script>
 
@@ -67,22 +62,20 @@ onMounted(() => {
         <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
         <b-collapse class="navbar" id="nav-collapse" is-nav>
-          <b-navbar-nav v-if="activeUsername !== null">
-            <!--
+          <b-navbar-nav v-if="username !== null">
             <b-nav-item
               :to="{
                 name: 'EditAccountRoute',
-                params: { username: activeUsername },
+                params: { username: username },
               }"
               >My account</b-nav-item
             >
-            <b-nav-item v-if="activeIsAdmin" :to="{ name: 'AccountsRoute' }"
+            <b-nav-item v-if="isAdmin" :to="{ name: 'AccountsRoute' }"
               >Accounts</b-nav-item
             >
-            <b-nav-item v-if="activeIsAdmin" :to="{ name: 'GroupsRoute' }"
+            <b-nav-item v-if="isAdmin" :to="{ name: 'GroupsRoute' }"
               >Groups</b-nav-item
             >
-            -->
           </b-navbar-nav>
 
           <b-navbar-nav>
@@ -90,15 +83,15 @@ onMounted(() => {
               version
             }}</b-nav-item>
 
-            <b-nav-item-dropdown right v-if="activeUsername !== null">
+            <b-nav-item-dropdown right v-if="username !== null">
               <template v-slot:button-content>
-                <em>{{ activeDisplayName }} </em>
+                <em>{{ displayName }} </em>
               </template>
               <!--
               <b-dropdown-item
                 :to="{
                   name: 'EditAccountRoute',
-                  params: { username: activeUsername },
+                  params: { username: username },
                 }"
                 >My account</b-dropdown-item
               >

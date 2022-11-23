@@ -1,111 +1,94 @@
 import axios from "axios";
+import {LoginRequest, Token, User} from "ldap-manager";
 import {defineStore} from "pinia";
 import {computed, ref} from "vue";
+import {useRouter} from "vue-router";
 
-import {API_ENDPOINT} from "../constants";
+import {API_ENDPOINT, handleError} from "../constants";
 
 const AUTH_TOKEN_KEY = "auth/token";
 const AUTH_IS_ADMIN_KEY = "auth/admin";
 const AUTH_USERNAME_KEY = "auth/username";
 const AUTH_DISPLAY_NAME_KEY = "auth/displayname";
 
+export interface Login {
+  username: string;
+  password: string;
+  remember?: boolean;
+}
 export const useAuthStore = defineStore("auth", () => {
-  const token = ref(null);
-  const isAdmin = ref(null);
-  const username = ref(null);
-  const displayName = ref(null);
+  const token = ref<string|null>(null);
+  const isAdmin = ref<boolean|null>(null);
+  const username = ref<string|null>(null);
+  const displayName = ref<string|null>(null);
 
-  // todo: only if you want to remember
-  // token = useLocalStorage('auth/token', null);
-  // isAdmin = useLocalStorage('auth/admin', null);
-  // username = useLocalStorage('auth/username', null);
-  // displayName = useLocalStorage('auth/displayname', null);
-
-  // const authToken = computed(
-  //   () => token ?? localStorage.getItem("x-user-token")
-  // );
-
-  // const activeIsAdmin = computed(
-  //   () => isAdmin ?? localStorage.getItem("x-user-admin") !== null
-  // );
-
-  // const activeUsername = computed(
-  //   () => username ?? localStorage.getItem("x-user-name")
-  // );
-
-  // const activeDisplayName = computed(
-  //   () => displayName ?? localStorage.getItem("x-user-display-name")
-  // );
+  const router = useRouter();
 
   const isAuthenticated =
-      computed(() => token.value != undefined && token.value != null &&
-                     token.value.length > 0);
+      computed(() => token.value != null && token.value.length > 0);
 
-  // async function handleTokenResponse(auth: TokenResponse) {
-  //   console.log(auth);
-  //   // if (remember ?? false) {
-  //   //   localStorage.setItem("x-user-token", auth.token);
-  //   //   localStorage.setItem("x-user-name", auth.username);
-  //   //   if (auth.is_admin)
-  //   //     localStorage.setItem(IS_ADMIN_KEY, "true");
-  //   //   localStorage.setItem("x-user-display-name", auth.display_name);
-  //   // }
-  //   token.value = auth.token;
-  //   isAdmin.value = auth.is_admin;
-  //   displayName.value = auth.display_name;
-  //   username.value = auth.username;
-  // }
+  function init() {
+    // read from local storage
+    token.value = localStorage.getItem(AUTH_TOKEN_KEY);
+    isAdmin.value = localStorage.getItem(AUTH_IS_ADMIN_KEY) !== null;
+    username.value = localStorage.getItem(AUTH_USERNAME_KEY);
+    displayName.value = localStorage.getItem(AUTH_DISPLAY_NAME_KEY);
+
+    axios.defaults.headers.common["x-user-token"] = token.value;
+    console.log("initialized");
+  }
 
   async function logout() {
     token.value = null;
     isAdmin.value = null;
     displayName.value = null;
     username.value = null;
-
-    localStorage.removeItem(IS_ADMIN_KEY);
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USERNAME_KEY);
-    localStorage.removeItem(DISPLAY_NAME_KEY);
-    // router.push({name : "LoginRoute"}).catch(() => {
-    //   // Ignore
-    // });
-    // Vue.nextTick(function() {
-    //   router.push({ name: "LoginRoute" }).catch(() => {
-    //     // Ignore
-    //   });
-    // });
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_IS_ADMIN_KEY);
+    localStorage.removeItem(AUTH_USERNAME_KEY);
+    localStorage.removeItem(AUTH_DISPLAY_NAME_KEY);
+    router.push({name : "LoginRoute"});
   }
 
-  async function login(
-      request: {username: string; password : string; remember?: boolean;}) {
-    const {username, password, remember} = request;
+  function updateUser(user: User) {
+    displayName.value = user.displayName;
+    username.value = user.username;
+  }
 
-    try {
-      console.log(request);
-      const response = await axios.post(API_ENDPOINT + "/login", request)
+  function updateToken(
+      {newToken, remember}: {newToken: Token, remember?: boolean}) {
+    token.value = newToken.token;
+    isAdmin.value = newToken.isAdmin;
+    displayName.value = newToken.displayName;
+    username.value = newToken.username;
 
-      console.log(response);
-      token.value = response.data.token;
-      isAdmin.value = response.data.is_admin;
-      displayName.value = response.data.display_name;
-      username.value = response.data.username;
+    axios.defaults.headers.common["x-user-token"] = token.value;
 
-    if (remember ?? false) {
-      localStorage.setItem(TOKEN_KEY, auth.token);
-      localStorage.setItem(USERNAME_KEY, auth.username);
-      if (auth.is_admin)
-        localStorage.setItem(IS_ADMIN_KEY, "true");
-      localStorage.setItem(DISPLAY_NAME_KEY, auth.display_name);
+    const defaultRemember = localStorage.getItem(AUTH_TOKEN_KEY) !== null;
+    if (remember ?? defaultRemember) {
+      localStorage.setItem(AUTH_TOKEN_KEY, newToken.token);
+      localStorage.setItem(AUTH_USERNAME_KEY, newToken.username);
+      if (isAdmin.value) {
+        localStorage.setItem(AUTH_IS_ADMIN_KEY, "yes");
+      } else {
+        localStorage.removeItem(AUTH_IS_ADMIN_KEY);
+      }
+      localStorage.setItem(AUTH_DISPLAY_NAME_KEY, newToken.displayName);
     }
+  }
 
-    // await handleTokenResponse({
-    //   auth: response.data,
-    //   remember: remember ?? false,
-    // });
-    return response.data;
-    } catch (err) {
-      console.log(err);
-      return err;
+  async function login({username, password, remember}: Login) {
+    try {
+      const request: LoginRequest = {
+        username,
+        password,
+      };
+      const response = await axios.post(API_ENDPOINT + "/login", request);
+      const newToken = Token.fromJSON(response.data);
+      updateToken({newToken, remember});
+      return newToken;
+    } catch (err: unknown) {
+      handleError(err, false);
     }
   }
 
@@ -114,11 +97,11 @@ export const useAuthStore = defineStore("auth", () => {
     displayName,
     username,
     isAdmin,
-    // activeIsAdmin,
-    // activeUsername,
-    // activeDisplayName,
     isAuthenticated,
     logout,
     login,
+    updateUser,
+    updateToken,
+    init,
   };
 });

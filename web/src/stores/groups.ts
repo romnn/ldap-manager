@@ -1,86 +1,95 @@
 import axios from "axios";
 import {defineStore} from "pinia";
 import {computed, ref} from "vue";
-import {API_ENDPOINT} from "../constants";
 
-export interface Group {
-  name: string;
-  members: string[];
-  total?: number;
-  gid: number;
-}
-
-export interface GroupList {
-  groups: string[];
-  total?: string;
-}
+import {API_ENDPOINT, handleError} from "../constants";
+import {
+  SortOrder,
+  GetGroupListRequest,
+  Group,
+  GroupList,
+  NewGroupRequest,
+  UpdateGroupRequest
+} from "ldap-manager";
 
 export const useGroupsStore = defineStore("groups", () => {
+  async function newGroup(request: NewGroupRequest) {
+    try {
+      await axios.put(API_ENDPOINT + "/group", request);
+    } catch (err: unknown) {
+      handleError(err);
+    }
+  }
+
+  async function deleteGroup(name: string) {
+    try {
+      await axios.delete(API_ENDPOINT + "/group/" + name, {});
+    } catch (err: unknown) {
+      handleError(err);
+    }
+  }
+
+  async function updateGroup(request: UpdateGroupRequest) {
+    try {
+      await axios.post(API_ENDPOINT + "/group/" + request.name + "/update",
+                       request);
+    } catch (err: unknown) {
+      handleError(err);
+    }
+  }
+
+  async function getGroup(name: string): Promise<Group | undefined> {
+    try {
+      const response = await axios.get(API_ENDPOINT + "/group/" + name, {});
+      const group = Group.fromJSON(response.data);
+      return group;
+    } catch (err: unknown) {
+      handleError(err);
+    }
+  }
+
+  async function getGroups({
+    page,
+    perPage,
+    search,
+  }: {page: number; perPage : number; search : string;}) {
+    try {
+      const params: GetGroupListRequest = {
+        start : (page - 1) * perPage,
+        end : page * perPage,
+        filter : [],
+        sortOrder: SortOrder.ASCENDING,
+        sortKey: "",
+      };
+      if (search.length > 0) {
+        params.filter.push(`(cn=*${search}*)`);
+      }
+
+      const response = await axios.get(API_ENDPOINT + "/groups", {params});
+      const groups = GroupList.fromJSON(response.data);
+      return groups;
+    } catch (err: unknown) {
+      handleError(err);
+    }
+  }
+
+  async function getUserGroups(username: string) {
+    try {
+      const response =
+          await axios.get(API_ENDPOINT + "/user/" + username + "/groups", {});
+      const groups = GroupList.fromJSON(response.data);
+      return groups;
+    } catch (err: unknown) {
+      handleError(err);
+    }
+  }
+
   return {
-    newGroup : async (group: Group) => {
-      console.log(group)
-      try {
-        const response = await axios.put(API_ENDPOINT + "/group", group);
-        console.log(response)
-        return null;
-      } catch (error) {
-        console.log(error)
-        // return error.response;
-        throw error.response;
-      }
-    },
-
-    deleteGroup : async (name: string) => {
-      try {
-        const response =
-            await axios.delete(API_ENDPOINT + "/group/" + name, {});
-        return null;
-      } catch (error) {
-        return error.response;
-      }
-    },
-
-    updateGroup : async (name: string, new_name?: string, gid?: number) => {
-      try {
-        const response =
-            await axios.post(API_ENDPOINT + "/group/" + name + "/update", {
-              /* eslint-disable-next-line @typescript-eslint/camelcase */
-              new_name : new_name,
-              gid : gid,
-            });
-        return null;
-      } catch (error) {
-        return error.response;
-      }
-    },
-
-    getGroups : async (page: number, perPage: number, search: string) => {
-      try {
-        const request: {start?: number; end?: number; filters?: string} = {
-          start : (req.page - 1) * req.perPage,
-          end : req.page * req.perPage,
-        };
-        if (req.search.length > 0) {
-          request.filters = `(cn=*${req.search}*)`;
-        }
-
-        const response = await axios.get(API_ENDPOINT + "/groups", {
-          params : request,
-        });
-        return response.data;
-      } catch (error) {
-        return error.response;
-      }
-    },
-
-    getUserGroups : async (page: number, perPage: number, search: string) => {
-      try {
-        const response = await axios.get(
-            API_ENDPOINT + "/account/" + username + "/groups", {});
-        return response.data;
-      } catch (error) {
-        return error.response;
-      }
-    },
+    newGroup,
+    deleteGroup,
+    updateGroup,
+    getGroup,
+    getGroups,
+    getUserGroups,
   };
 });

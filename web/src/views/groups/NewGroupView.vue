@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import Account from "../../components/Account.vue";
+import Group from "../../components/Group.vue";
 </script>
 
 <template>
   <div class="new-group-container">
-    <account :create="true" title="New user"></account>
+    <group :create="true" title="New group"></group>
   </div>
 </template>
 

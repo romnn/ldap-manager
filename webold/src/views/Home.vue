@@ -9,9 +9,7 @@
 
       <hr class="my-4" />
 
-      <p>
-        What do you want to do?
-      </p>
+      <p>What do you want to do?</p>
 
       <p>
         <b-button class="m-2" variant="info" :to="{ name: 'NewAccountRoute' }"

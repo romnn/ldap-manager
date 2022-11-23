@@ -1,9 +1,9 @@
 import axios from "axios";
-import {defineStore} from "pinia";
-import {computed, ref} from "vue";
-import {useRoute} from 'vue-router'
+import { defineStore } from "pinia";
+import { computed, ref } from "vue";
+import { useRoute } from "vue-router";
 
-import {API_ENDPOINT} from "../constants";
+import { API_ENDPOINT } from "../constants";
 
 export interface PendingConfirmation {
   message: string;
@@ -14,36 +14,40 @@ export interface PendingConfirmation {
 
 export const useAppStore = defineStore("app", () => {
   const route = useRoute();
+  const pendingConfirmation = ref<PendingConfirmation | null>(null);
 
-  // const allowAll = ref(true);
-  const pendingConfirmation: PendingConfirmation|null = ref(null);
-
-  return {
-    newConfirmation: (message: string, ack: string) => {
+  function newConfirmation({ message, ack }: { message: string; ack: string }) {
     return new Promise<void>((resolve, reject) => {
       pendingConfirmation.value = {
-        message : req.message,
-        ack : req.ack,
-        resolve : resolve,
-        reject : reject,
+        message,
+        ack,
+        resolve: resolve,
+        reject: reject,
       };
     });
-    },
+  }
 
-    cancelConfirmation: () => {
+  function cancelConfirmation() {
     if (pendingConfirmation.value && pendingConfirmation.value.reject)
       pendingConfirmation.value.reject();
     pendingConfirmation.value = null;
-    },
+  }
 
-    confirmConfirmation: () => {
+  function confirmConfirmation() {
     if (pendingConfirmation.value && pendingConfirmation.value.resolve)
       pendingConfirmation.value.resolve();
     pendingConfirmation.value = null;
-    },
+  }
 
-    allowAll: computed(
-      () => Object.keys(route?.query ?? {}).includes("all")
-    ),
+  const allowAll = computed(() =>
+    Object.keys(route?.query ?? {}).includes("all")
+  );
+
+  return {
+    pendingConfirmation,
+    newConfirmation,
+    cancelConfirmation,
+    confirmConfirmation,
+    allowAll,
   };
 });

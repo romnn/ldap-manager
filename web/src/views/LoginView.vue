@@ -1,19 +1,17 @@
 <script setup lang="ts">
-import { AxiosError } from "axios";
 import { ref, defineProps, computed, onMounted } from "vue";
 import { useAuthStore } from "../stores/auth";
-/* import { GatewayError } from "../types"; */
+import { GatewayError } from "../constants";
+import type { Login } from "../stores/auth";
+import { useRouter } from "vue-router";
 
 const auth = useAuthStore();
+const router = useRouter();
 
-const error: string | null = ref(null);
-const processing: boolean = ref(false);
+const error = ref<string | null>(null);
+const processing = ref<boolean>(false);
 
-const form: {
-  username: string;
-  password: string;
-  remember: boolean;
-} = ref({
+const form = ref<Login>({
   username: "",
   password: "",
   remember: true,
@@ -25,17 +23,19 @@ async function onSubmit() {
     const request = {
       username: form.value.username,
       password: form.value.password,
+      remember: form.value.remember,
     };
-    console.log(request);
     await auth.login(request);
-    /* this.$router */
-    /*   .push({ */
-    /*     name: "EditAccountRoute", */
-    /*     params: { username: this.form.username } */
-    /*   }) */
-  } catch (err: AxiosError<GatewayError>) {
-    console.log(err);
-    error.value = `${err.response?.data?.message ?? err}`;
+    router.push({
+      name: "EditAccountRoute",
+      params: { username: form.value.username },
+    });
+  } catch (err: unknown) {
+    if (err instanceof GatewayError) {
+      error.value = err.message;
+    } else {
+      throw err;
+    }
   } finally {
     processing.value = false;
   }

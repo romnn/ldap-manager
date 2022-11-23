@@ -7,6 +7,7 @@ CMD_PKG = "github.com/romnn/ldap-manager/cmd/ldap-manager"
 
 ROOT_DIR = Path(__file__).parent
 BUILD_DIR = ROOT_DIR / "build"
+WEB_DIR = ROOT_DIR / "web"
 
 
 @task
@@ -69,8 +70,8 @@ def pre_commit(c):
 
 
 @task
-def compile_protos(c):
-    """Compile proto files"""
+def compile_go_protos(c):
+    """Compile golang proto files"""
     import shutil
     from pprint import pprint
 
@@ -111,6 +112,49 @@ def compile_protos(c):
         if False:
             pprint(cmd)
         c.run(" ".join(cmd))
+
+
+@task
+def compile_ts_protos(c):
+    """Compile typescript proto files"""
+    import shutil
+    from pprint import pprint
+
+    out_dir = WEB_DIR / "generated" / "src"
+    print(out_dir)
+    try:
+        shutil.rmtree(out_dir)
+    except FileNotFoundError:
+        pass
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    services = [
+        ROOT_DIR / "proto" / "ldap_manager.proto",
+    ]
+
+    for service in services:
+        proto_path = service.parent
+        print(
+            f"compiling {service.relative_to(ROOT_DIR)} "
+            + f"to {out_dir.relative_to(ROOT_DIR)}"
+        )
+        plugin_path = WEB_DIR / "node_modules" / ".bin" / "protoc-gen-ts_proto"
+        cmd = [
+            "protoc",
+            f"--plugin={plugin_path}",
+            f"--proto_path={proto_path}",
+            f"--ts_proto_out={out_dir}",
+            str(service),
+        ]
+        if True:
+            pprint(cmd)
+        c.run(" ".join(cmd))
+
+
+@task(pre=[compile_go_protos, compile_ts_protos])
+def compile_protos(c):
+    """Compiles protos"""
+    pass
 
 
 # @task
