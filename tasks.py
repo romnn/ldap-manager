@@ -120,8 +120,10 @@ def compile_ts_protos(c):
     import shutil
     from pprint import pprint
 
-    out_dir = WEB_DIR / "generated" / "src"
-    print(out_dir)
+    package_dir = WEB_DIR / "generated"
+    c.run(f"cd {package_dir} && yarn install --dev")
+
+    out_dir = package_dir / "src"
     try:
         shutil.rmtree(out_dir)
     except FileNotFoundError:
@@ -138,7 +140,9 @@ def compile_ts_protos(c):
             f"compiling {service.relative_to(ROOT_DIR)} "
             + f"to {out_dir.relative_to(ROOT_DIR)}"
         )
-        plugin_path = WEB_DIR / "node_modules" / ".bin" / "protoc-gen-ts_proto"
+        plugin_path = (
+            package_dir / "node_modules" / ".bin" / "protoc-gen-ts_proto"
+        )
         cmd = [
             "protoc",
             f"--plugin={plugin_path}",
@@ -150,12 +154,9 @@ def compile_ts_protos(c):
             pprint(cmd)
         c.run(" ".join(cmd))
 
-    if False:
-        # rebuild the ldap manager package
-        # this should no longer be required
-        package_dir = WEB_DIR / "generated"
-        c.run(f"cd {package_dir} && yarn build")
-        c.run(f"cd {WEB_DIR} && yarn upgrade ldap-manager --force --latest")
+    # rebuild the ldap manager package
+    c.run(f"cd {package_dir} && yarn build")
+    c.run(f"cd {WEB_DIR} && yarn upgrade ldap-manager --force --latest")
 
 
 @task(pre=[compile_go_protos, compile_ts_protos])

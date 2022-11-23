@@ -307,23 +307,23 @@ export interface HttpRule {
    * Maps to HTTP GET. Used for listing and getting information about
    * resources.
    */
-  get:
+  get?:
     | string
     | undefined;
   /** Maps to HTTP PUT. Used for replacing a resource. */
-  put:
+  put?:
     | string
     | undefined;
   /** Maps to HTTP POST. Used for creating a resource or performing an action. */
-  post:
+  post?:
     | string
     | undefined;
   /** Maps to HTTP DELETE. Used for deleting a resource. */
-  delete:
+  delete?:
     | string
     | undefined;
   /** Maps to HTTP PATCH. Used for updating a resource. */
-  patch:
+  patch?:
     | string
     | undefined;
   /**
@@ -332,7 +332,7 @@ export interface HttpRule {
    * HTTP method unspecified for this rule. The wild-card rule is useful
    * for services that provide content to Web (HTML) clients.
    */
-  custom:
+  custom?:
     | CustomHttpPattern
     | undefined;
   /**
