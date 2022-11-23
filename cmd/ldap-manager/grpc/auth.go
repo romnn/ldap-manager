@@ -124,7 +124,7 @@ func (s *LDAPManagerService) Login(ctx context.Context, req *pb.LoginRequest) (*
 	user, err := s.manager.AuthenticateUser(req)
 	if err != nil {
 		log.Error(err)
-		if appErr, ok := err.(ldaperror.Error); ok {
+		if appErr, ok := err.(ldaperror.ApplicationError); ok {
 			return &pb.Token{}, appErr.StatusError()
 		}
 		return nil, status.Error(

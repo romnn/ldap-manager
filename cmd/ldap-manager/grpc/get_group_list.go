@@ -20,7 +20,7 @@ func (s *LDAPManagerService) GetGroupList(ctx context.Context, req *pb.GetGroupL
 	groups, err := s.manager.GetGroupList(req)
 	if err != nil {
 		log.Error(err)
-		if appErr, ok := err.(ldaperror.Error); ok {
+		if appErr, ok := err.(ldaperror.ApplicationError); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error while getting groups")

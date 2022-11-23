@@ -16,7 +16,7 @@ import (
 // A RemoveLastGroupMemberError is returned when attempting
 // to remove the only member of a group
 type RemoveLastGroupMemberError struct {
-	error
+	ldaperror.ApplicationError
 	Group string
 }
 
@@ -58,15 +58,12 @@ func (m *LDAPManager) RemoveGroupMember(req *pb.GroupMember, allowRemoveFromDefa
 		return &ldaperror.ValidationError{
 			Message: "removing members from default group not allowed"}
 	}
-	username = EscapeDN(req.GetUsername())
-	if !m.GroupMembershipUsesUID {
-		username = m.UserDN(req.GetUsername())
-	}
+	memberDN := m.GroupMemberDN(req.GetUsername())
 	modifyRequest := ldap.NewModifyRequest(
 		m.GroupDN(group),
 		[]ldap.Control{},
 	)
-	modifyRequest.Delete(m.GroupMembershipAttribute, []string{username})
+	modifyRequest.Delete(m.GroupMembershipAttribute, []string{memberDN})
 	log.Debug(PrettyPrint(modifyRequest))
 
 	conn, err := m.Pool.Get()

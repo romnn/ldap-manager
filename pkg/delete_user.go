@@ -14,7 +14,7 @@ import (
 
 // A NoSuchMemberError is returned when the group does not contain the member
 type NoSuchMemberError struct {
-	error
+  ldaperror.ApplicationError
 	Group, Member string
 }
 

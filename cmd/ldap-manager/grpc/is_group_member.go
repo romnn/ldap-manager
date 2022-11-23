@@ -23,7 +23,7 @@ func (s *LDAPManagerService) IsGroupMember(ctx context.Context, req *pb.IsGroupM
 	memberStatus, err := s.manager.IsGroupMember(req)
 	if err != nil {
 		log.Error(err)
-		if appErr, ok := err.(ldaperror.Error); ok {
+		if appErr, ok := err.(ldaperror.ApplicationError); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error while checking if user is member")

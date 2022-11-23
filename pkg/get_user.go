@@ -14,7 +14,7 @@ import (
 
 // A ZeroOrMultipleUsersError is returned when zero or multiple users are found
 type ZeroOrMultipleUsersError struct {
-	error
+	ldaperror.ApplicationError
 	Username string
 	Count    int
 }
@@ -56,17 +56,19 @@ const (
 func (m *LDAPManager) ParseUser(entry *ldap.Entry) *pb.User {
 	UID, _ := strconv.Atoi(entry.GetAttributeValue(userUIDNumber))
 	GID, _ := strconv.Atoi(entry.GetAttributeValue(userGIDNumber))
+	username := entry.GetAttributeValue(m.AccountAttribute)
 	return &pb.User{
-		Username:      entry.GetAttributeValue(m.AccountAttribute),
+		Username:      username,
 		FirstName:     entry.GetAttributeValue(userGivenName),
 		LastName:      entry.GetAttributeValue(userSN),
-		CN:            entry.GetAttributeValue(userCN),
+		Email:         entry.GetAttributeValue(userMail),
 		DisplayName:   entry.GetAttributeValue(userDisplayName),
-		UID:           int32(UID),
-		GID:           int64(GID),
 		LoginShell:    entry.GetAttributeValue(userLoginShell),
 		HomeDirectory: entry.GetAttributeValue(userHomeDirectory),
-		Email:         entry.GetAttributeValue(userMail),
+		CN:            entry.GetAttributeValue(userCN),
+		DN:            m.GroupMemberDN(username),
+		UID:           int32(UID),
+		GID:           int64(GID),
 	}
 }
 

@@ -1,8 +1,6 @@
 package pkg
 
 import (
-	"fmt"
-
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
 
@@ -12,17 +10,19 @@ func (m *LDAPManager) IsGroupMember(req *pb.IsGroupMemberRequest) (*pb.GroupMemb
 	if err != nil {
 		return nil, err
 	}
-	username := req.GetUsername()
-	if !m.GroupMembershipUsesUID {
-		username = fmt.Sprintf(
-			"%s=%s,%s",
-			m.AccountAttribute,
-			username,
-			m.UserGroupDN,
-		)
-	}
+	// todo: use a search here (more efficient)
+	memberDN := m.GroupMemberDN(req.GetUsername())
+	// username := req.GetUsername()
+	// if !m.GroupMembershipUsesUID {
+	// 	username = fmt.Sprintf(
+	// 		"%s=%s,%s",
+	// 		m.AccountAttribute,
+	// 		username,
+	// 		m.UserGroupDN,
+	// 	)
+	// }
 	for _, member := range group.GetMembers() {
-		if member == username {
+		if member == memberDN {
 			return &pb.GroupMemberStatus{
 				IsMember: true,
 			}, nil

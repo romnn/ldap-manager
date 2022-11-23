@@ -19,7 +19,7 @@ func (s *LDAPManagerService) NewUser(ctx context.Context, req *pb.NewUserRequest
 	}
 	if err := s.manager.NewUser(req); err != nil {
 		log.Error(err)
-		if appErr, ok := err.(ldaperror.Error); ok {
+		if appErr, ok := err.(ldaperror.ApplicationError); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error creating new account")

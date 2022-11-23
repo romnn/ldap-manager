@@ -19,7 +19,7 @@ func (s *LDAPManagerService) DeleteGroup(ctx context.Context, req *pb.DeleteGrou
 	}
 	if err := s.manager.DeleteGroup(req); err != nil {
 		log.Error(err)
-		if appErr, ok := err.(ldaperror.Error); ok {
+		if appErr, ok := err.(ldaperror.ApplicationError); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error while deleting group")

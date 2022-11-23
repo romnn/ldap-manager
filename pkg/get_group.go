@@ -54,10 +54,7 @@ const (
 
 // ParseGroup parses an ldap.Entry as a group
 func (m *LDAPManager) parseGroup(entry *ldap.Entry) (*pb.Group, error) {
-	var members []string
-	for _, member := range entry.GetAttributeValues(m.GroupMembershipAttribute) {
-		members = append(members, member)
-	}
+	members := entry.GetAttributeValues(m.GroupMembershipAttribute)
 	GID, err := strconv.Atoi(entry.GetAttributeValue(groupGidNumber))
 	if err != nil {
 		return nil, fmt.Errorf(

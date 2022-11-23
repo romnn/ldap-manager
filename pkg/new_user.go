@@ -3,10 +3,11 @@ package pkg
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"strconv"
 
+	"github.com/badoux/checkmail"
 	"github.com/go-ldap/ldap/v3"
+	ldaperror "github.com/romnn/ldap-manager/pkg/err"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
 
@@ -16,7 +17,7 @@ import (
 
 // UserAlreadyExistsError is returned when a username already exists
 type UserAlreadyExistsError struct {
-	error
+	ldaperror.ApplicationError
 	Username string
 }
 
@@ -34,34 +35,36 @@ func (e *UserAlreadyExistsError) StatusError() error {
 
 // InvalidUserError is returned when the user contains invalid values
 type InvalidUserError struct {
-	error
+	ldaperror.ApplicationError
 	Invalid map[string]error
 }
 
 func (e *InvalidUserError) Error() string {
 	return fmt.Sprintf(
-		"invalid account request. missing or invalid: %v",
+		"invalid new user: missing or invalid: %v",
 		e.Invalid,
 	)
 }
 
 // StatusError returns the GRPC status error for this error
 func (e *InvalidUserError) StatusError() error {
-	return status.Errorf(codes.InvalidArgument, e.Error())
+	message := "Invalid new user request:"
+	for field, reason := range e.Invalid {
+		message += fmt.Sprintf("\n-> %s: %s", field, reason)
+	}
+	return status.Errorf(codes.InvalidArgument, message)
 }
-
-var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 // ValidateEmail validates an email
 func ValidateEmail(email string) error {
 	if len(email) < 3 {
-		return errors.New("email must contain at least 3 characters")
+		return errors.New("must contain at least 3 characters")
 	}
 	if len(email) > 254 {
-		return errors.New("email can contain at most 254 characters")
+		return errors.New("can contain at most 254 characters")
 	}
-	if !emailRegex.MatchString(email) {
-		return fmt.Errorf("%q is not a valid email", email)
+	if err := checkmail.ValidateFormat(email); err != nil {
+		return fmt.Errorf("%q is not a valid email: %v", email, err)
 	}
 	return nil
 }
@@ -69,10 +72,10 @@ func ValidateEmail(email string) error {
 // ValidatePassword validates a password
 func ValidatePassword(password string) error {
 	if password == "" {
-		return errors.New("password must not be empty")
+		return errors.New("must not be empty")
 	}
 	if len(password) < 5 {
-		return errors.New("password must contain at least 5 characters")
+		return errors.New("must contain at least 5 characters")
 	}
 	return nil
 }
@@ -80,10 +83,10 @@ func ValidatePassword(password string) error {
 // ValidateUsername validates a username
 func ValidateUsername(username string) error {
 	if username == "" {
-		return errors.New("username must not be empty")
+		return errors.New("must not be empty")
 	}
 	if len(username) < 5 {
-		return errors.New("username must contain at least 5 characters")
+		return errors.New("must contain at least 5 characters")
 	}
 	return nil
 }
@@ -91,7 +94,7 @@ func ValidateUsername(username string) error {
 // ValidateFirstName validates a first name
 func ValidateFirstName(name string) error {
 	if name == "" {
-		return errors.New("first name must not be empty")
+		return errors.New("must not be empty")
 	}
 	return nil
 }
@@ -99,7 +102,7 @@ func ValidateFirstName(name string) error {
 // ValidateLastName validates a last name
 func ValidateLastName(name string) error {
 	if name == "" {
-		return errors.New("last name must not be empty")
+		return errors.New("must not be empty")
 	}
 	return nil
 }

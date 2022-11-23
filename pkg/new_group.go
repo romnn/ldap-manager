@@ -15,7 +15,7 @@ import (
 
 // GroupAlreadyExistsError is returned when a group already exists
 type GroupAlreadyExistsError struct {
-	error
+  ldaperror.ApplicationError
 	Group string
 }
 
@@ -71,11 +71,8 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 				continue
 			}
 		}
-		member := EscapeDN(username)
-		if !m.GroupMembershipUsesUID {
-			member = m.UserDN(username)
-		}
-		memberList = append(memberList, member)
+		memberDN := m.GroupMemberDN(username)
+		memberList = append(memberList, memberDN)
 	}
 
 	var groupAttributes []ldap.Attribute

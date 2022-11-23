@@ -22,7 +22,7 @@ func (s *LDAPManagerService) GetUserGroups(ctx context.Context, req *pb.GetUserG
 	}
 	groups, err := s.manager.GetUserGroups(req)
 	if err != nil {
-		if appErr, ok := err.(ldaperror.Error); ok {
+		if appErr, ok := err.(ldaperror.ApplicationError); ok {
 			return nil, appErr.StatusError()
 		}
 		log.Error(err)

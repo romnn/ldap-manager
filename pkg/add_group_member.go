@@ -14,7 +14,7 @@ import (
 
 // MemberAlreadyExistsError is returned when a user is already a group member
 type MemberAlreadyExistsError struct {
-	error
+	ldaperror.ApplicationError
 	Group, Member string
 }
 
@@ -28,6 +28,14 @@ func (e *MemberAlreadyExistsError) Error() string {
 // StatusError returns the GRPC status error for this error
 func (e *MemberAlreadyExistsError) StatusError() error {
 	return status.Errorf(codes.AlreadyExists, e.Error())
+}
+
+// GroupMemberDN gets the distinguished name of a group member
+func (m *LDAPManager) GroupMemberDN(username string) string {
+	if !m.GroupMembershipUsesUID {
+		return m.UserDN(username)
+	}
+	return EscapeDN(username)
 }
 
 // AddGroupMember adds a user as a group member
@@ -62,15 +70,12 @@ func (m *LDAPManager) AddGroupMember(req *pb.GroupMember, allowNonExistent bool)
 		}
 	}
 
-	member := EscapeDN(username)
-	if !m.GroupMembershipUsesUID {
-		member = m.UserDN(username)
-	}
+	memberDN := m.GroupMemberDN(username)
 	modifyRequest := ldap.NewModifyRequest(
 		m.GroupDN(group),
 		[]ldap.Control{},
 	)
-	modifyRequest.Add(m.GroupMembershipAttribute, []string{member})
+	modifyRequest.Add(m.GroupMembershipAttribute, []string{memberDN})
 	log.Debug(PrettyPrint(modifyRequest))
 
 	conn, err := m.Pool.Get()
@@ -89,7 +94,7 @@ func (m *LDAPManager) AddGroupMember(req *pb.GroupMember, allowNonExistent bool)
 	}
 	log.Infof(
 		"added member %q to group %q",
-		member, group,
+		memberDN, group,
 	)
 	return nil
 }

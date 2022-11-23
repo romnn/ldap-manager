@@ -23,7 +23,7 @@ func (s *LDAPManagerService) UpdateUser(ctx context.Context, req *pb.UpdateUserR
 	username, err := s.manager.UpdateUser(req, claims.IsAdmin)
 	if err != nil {
 		log.Error(err)
-		if appErr, ok := err.(ldaperror.Error); ok {
+		if appErr, ok := err.(ldaperror.ApplicationError); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error updating user")
@@ -31,7 +31,7 @@ func (s *LDAPManagerService) UpdateUser(ctx context.Context, req *pb.UpdateUserR
 	user, err := s.manager.GetUser(username)
 	if err != nil {
 		log.Error(err)
-		if appErr, ok := err.(ldaperror.Error); ok {
+		if appErr, ok := err.(ldaperror.ApplicationError); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error getting user")

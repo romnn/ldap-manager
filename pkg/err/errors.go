@@ -5,9 +5,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Error ...
-type Error interface {
-	error
+// ApplicationError is an application error that is visible to the end user.
+// 
+// GRPC and HTTP check if an error is an ApplicationError and transparently 
+// pass them to the user.
+type ApplicationError interface {
+  error
 	IsLDAPManagerError() bool
 	StatusError() error
 }

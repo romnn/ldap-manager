@@ -19,7 +19,7 @@ func (s *LDAPManagerService) UpdateGroup(ctx context.Context, req *pb.UpdateGrou
 	}
 	if err := s.manager.UpdateGroup(req); err != nil {
 		log.Error(err)
-		if appErr, ok := err.(ldaperror.Error); ok {
+		if appErr, ok := err.(ldaperror.ApplicationError); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error while updating group")

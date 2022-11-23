@@ -23,7 +23,7 @@ func (s *LDAPManagerService) RemoveGroupMember(ctx context.Context, req *pb.Grou
 	allowDeleteDefaultGroups := claims.IsAdmin
 	if err := s.manager.RemoveGroupMember(req, allowDeleteDefaultGroups); err != nil {
 		log.Error(err)
-		if appErr, ok := err.(ldaperror.Error); ok {
+		if appErr, ok := err.(ldaperror.ApplicationError); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error deleting group member")

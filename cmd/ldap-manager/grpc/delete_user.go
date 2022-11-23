@@ -25,7 +25,7 @@ func (s *LDAPManagerService) DeleteUser(ctx context.Context, req *pb.DeleteUserR
 	keepGroups := false
 	if err := s.manager.DeleteUser(req, keepGroups); err != nil {
 		log.Error(err)
-		if appErr, ok := err.(ldaperror.Error); ok {
+		if appErr, ok := err.(ldaperror.ApplicationError); ok {
 			return nil, appErr.StatusError()
 		}
 		return nil, status.Error(codes.Internal, "error while deleting account")
