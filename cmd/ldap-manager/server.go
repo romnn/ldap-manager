@@ -38,11 +38,17 @@ func newLDAPManager(ctx *cli.Context) ldapmanager.LDAPManager {
 
 	groupsDN := ctx.String(flags.GroupsDn.Name)
 	if groupsDN == "" {
-		groupsDN = fmt.Sprintf("ou=%s,%s", groupsOU, baseDN)
+		groupsDN = fmt.Sprintf(
+			"ou=%s,%s",
+			groupsOU, baseDN,
+		)
 	}
 	userGroupDN := ctx.String(flags.UsersDn.Name)
 	if userGroupDN == "" {
-		userGroupDN = fmt.Sprintf("ou=%s,%s", usersOU, baseDN)
+		userGroupDN = fmt.Sprintf(
+			"ou=%s,%s",
+			usersOU, baseDN,
+		)
 	}
 
 	config := ldapconfig.Config{
@@ -82,7 +88,9 @@ func newLDAPManager(ctx *cli.Context) ldapmanager.LDAPManager {
 
 // newAuthenticator configures the authenticator based on the CLI config
 func newAuthenticator(ctx *cli.Context) auth.Authenticator {
-	expiresAfter, _ := time.ParseDuration(ctx.String(flags.ExpirationTime.Name))
+	expiresAfter, _ := time.ParseDuration(
+		ctx.String(flags.ExpirationTime.Name),
+	)
 	return auth.Authenticator{
 		ExpiresAfter: expiresAfter,
 		Issuer:       ctx.String(flags.Issuer.Name),
@@ -103,7 +111,10 @@ func newAuthKeyConfig(ctx *cli.Context) auth.KeyConfig {
 
 func versionString(version string, buildTime string) string {
 	if buildTime != "" {
-		return fmt.Sprintf("%s (built on %s)", version, buildTime)
+		return fmt.Sprintf(
+			"%s (built on %s)",
+			version, buildTime,
+		)
 	}
 	return version
 }
@@ -131,10 +142,18 @@ func serve(cliCtx *cli.Context) error {
 	}
 
 	manager := newLDAPManager(cliCtx)
+	if err := manager.Setup(); err != nil {
+		return err
+	}
 
 	serveErrChan := make(chan error, 2)
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(1*time.Minute))
-	grpcService := ldapgrpc.NewLDAPManagerService(ctx, manager, authenticator)
+	ctx, cancel := context.WithDeadline(
+		context.Background(),
+		time.Now().Add(1*time.Minute),
+	)
+	grpcService := ldapgrpc.NewLDAPManagerService(
+		ctx, manager, authenticator,
+	)
 
 	go func() {
 		log.Infof("grpc listening on: %v", grpcListener.Addr())
@@ -149,20 +168,29 @@ func serve(cliCtx *cli.Context) error {
 			ctx,
 			grpcListener.Addr().String(),
 			grpc.WithInsecure(),
-			// grpc.WithBlock(),
 		)
 		if err != nil {
-			serveErrChan <- fmt.Errorf("failed to dial grpc upstream: %v", err)
+			serveErrChan <- fmt.Errorf(
+				"failed to dial grpc upstream: %v",
+				err,
+			)
 			return
 		}
 		defer upstream.Close()
 
-		httpService, err = ldaphttp.NewLDAPManagerService(ctx, upstream, &ldaphttp.Config{
-			ServeStatic: !cliCtx.Bool(flags.NoStatic.Name),
-			StaticPath:  cliCtx.String(flags.StaticRoot.Name),
-		})
+		httpService, err = ldaphttp.NewLDAPManagerService(
+			ctx,
+			upstream,
+			&ldaphttp.Config{
+				ServeStatic: !cliCtx.Bool(flags.NoStatic.Name),
+				StaticPath:  cliCtx.String(flags.StaticRoot.Name),
+			},
+		)
 		if err != nil {
-			serveErrChan <- fmt.Errorf("failed to start http service: %v", err)
+			serveErrChan <- fmt.Errorf(
+				"failed to start http service: %v",
+				err,
+			)
 			return
 		}
 		log.Infof("http listening on: %v", httpListener.Addr())
@@ -177,7 +205,8 @@ func serve(cliCtx *cli.Context) error {
 		log.Warnf("shutdown ...")
 		// cancel setup
 		cancel()
-		// shutdown http service first, as it keeps a connection to the GRPC service
+		// shutdown http service first,
+		// as it keeps a connection to the GRPC service
 		if httpService != nil {
 			log.Warnf("shutting down http ...")
 			httpService.Shutdown()
@@ -211,12 +240,18 @@ func main() {
 		Name:    "LDAPManager",
 		Usage:   "service for managing LDAP",
 		Version: version,
-		Flags:   append(flags.LdapConfigFlags, flags.LdapFlags...),
+		Flags: append(
+			flags.LdapConfigFlags,
+			flags.LdapFlags...,
+		),
 		Commands: []*cli.Command{
 			{
-				Name:   "serve",
-				Usage:  "serves the LDAPManager API",
-				Flags:  append(flags.ServiceFlags, flags.AuthFlags...),
+				Name:  "serve",
+				Usage: "serves the LDAPManager API",
+				Flags: append(
+					flags.ServiceFlags,
+					flags.AuthFlags...,
+				),
 				Action: serve,
 			},
 			// TODO: Implement CLI interface with more commands

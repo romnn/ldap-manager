@@ -15,7 +15,8 @@ type DurationValue struct {
 
 // Set sets the duration value and returns an error if the value is not valid
 func (dur *DurationValue) Set(value string) error {
-	value = strings.TrimSpace(strings.ToLower(value))
+	value = strings.ToLower(value)
+	value = strings.ReplaceAll(value, " ", "")
 	duration, err := time.ParseDuration(value)
 	if err != nil {
 		return fmt.Errorf("value %q is not a valid duration (e.g. 5h30m40s): %v", value, err)
@@ -28,7 +29,7 @@ func (dur *DurationValue) Set(value string) error {
 // String returns the current duration value or the default duration otherwise
 func (dur *DurationValue) String() string {
 	if !dur.set {
-		return fmt.Sprintf("%#v", dur.Default)
+		return fmt.Sprintf("%v", dur.Default)
 	}
-	return fmt.Sprintf("%#v", dur.duration)
+	return fmt.Sprintf("%v", dur.duration)
 }

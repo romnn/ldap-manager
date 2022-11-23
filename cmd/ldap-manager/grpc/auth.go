@@ -59,6 +59,7 @@ func (s *LDAPManagerService) SignUserToken(claims *AuthClaims) (*pb.Token, error
 		)
 	}
 	expirationTime := time.Now().Add(s.authenticator.ExpiresAfter)
+	// log.Debugf("signed token for %q: %s", claims.Username, token)
 	return &pb.Token{
 		Token:       token,
 		Username:    claims.Username,
@@ -95,6 +96,8 @@ func (s *LDAPManagerService) Authenticate(ctx context.Context) (*AuthClaims, err
 		&AuthClaims{},
 	)
 	if err != nil {
+		log.Errorf("token=%s", tokens[0])
+		log.Errorf("token validation failed: %v", err)
 		return nil, status.Error(
 			codes.Unauthenticated,
 			"token validation failed",

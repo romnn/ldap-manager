@@ -51,7 +51,7 @@ var (
 		},
 		Aliases: []string{"token-expire"},
 		EnvVars: []string{"EXPIRATION_TIME", "EXPIRATION_TIME"},
-		Usage:   "expiration times for JWT tokens (e.g. 5h30m40s)",
+		Usage:   "expiration times for JWT tokens (e.g. 5h30m40s). Default is 24h",
 	}
 	// Issuer for the JWT tokens
 	Issuer = cli.StringFlag{
