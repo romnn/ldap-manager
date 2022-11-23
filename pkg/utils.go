@@ -10,7 +10,7 @@ import (
 )
 
 var (
-  // pp for pretty printing
+	// pp for pretty printing
 	pp = func() *pretty.PrettyPrinter {
 		useColor := supportscolor.Stdout().SupportsColor
 		pp := pretty.New()

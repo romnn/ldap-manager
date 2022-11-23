@@ -2,7 +2,7 @@ on: [push, pull_request]
 
 name: test
 jobs:
-  checks:
+  ldapmanager-checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -21,21 +21,45 @@ jobs:
       - name: Code checks
         run: pre-commit run --all-files
 
-  lint-chart:
+  web-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          cd web/
+          yarn install --dev
+
+      - name: Run type checks
+        run: |
+          cd web/
+          yarn run type-check
+
+      - name: Run lint
+        run: |
+          cd web/
+          yarn run lint
+
+  helm-checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Lint helm chart
         run: helm lint deployment/helm/charts/ldapmanager/
 
-  test:
+  ldapmanger-tests:
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         go-version:
           - 1.19.x
 
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
@@ -55,6 +79,7 @@ jobs:
           richgo test
           -race
           -parallel 1
+          -failfast
           -coverpkg=all
           -coverprofile=coverage.txt
           -covermode=atomic

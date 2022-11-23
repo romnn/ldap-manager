@@ -1,0 +1,53 @@
+on: [push, pull_request]
+
+name: build
+jobs:
+  ldapmanager:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version:
+          - 1.19.x
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+
+      - name: Compile protos
+        run: |
+          pip install invoke
+          inv compile-go-protos
+
+      - name: Build
+        run: go build -race ./...
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          cd web/
+          yarn install --dev
+
+      - name: Compile protos
+        run: |
+          pip install invoke
+          inv compile-ts-protos
+
+      - name: Build web frontend
+        run: |
+          cd web/
+          yarn build

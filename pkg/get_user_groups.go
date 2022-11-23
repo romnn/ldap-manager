@@ -10,8 +10,8 @@ import (
 
 // GetUserGroups gets the groups a user is member of
 func (m *LDAPManager) GetUserGroups(req *pb.GetUserGroupsRequest) (*pb.GroupList, error) {
-  memberDN := m.GroupMemberDN(req.GetUsername())
-  filter := fmt.Sprintf(
+	memberDN := m.GroupMemberDN(req.GetUsername())
+	filter := fmt.Sprintf(
 		"(&(objectClass=posixGroup)(%s=%s))",
 		m.GroupMembershipAttribute, memberDN,
 	)

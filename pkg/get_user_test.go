@@ -1,8 +1,8 @@
 package pkg
 
 import (
-	"testing"
 	"fmt"
+	"testing"
 
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )

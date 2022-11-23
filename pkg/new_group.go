@@ -15,7 +15,7 @@ import (
 
 // GroupAlreadyExistsError is returned when a group already exists
 type GroupAlreadyExistsError struct {
-  ldaperror.ApplicationError
+	ldaperror.ApplicationError
 	Group string
 }
 
