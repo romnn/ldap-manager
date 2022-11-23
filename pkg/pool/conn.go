@@ -14,6 +14,7 @@ type Conn struct {
 	conn      ldap.Client
 	pool      *channelPool
 	needReset bool
+  // todo: allow marking as closed
 }
 
 // Start starts connection
@@ -28,10 +29,10 @@ func (c *Conn) StartTLS(config *tls.Config) error {
 
 // Close puts the connection back to the pool instead of closing it
 func (c *Conn) Close() {
-	if c.conn != nil {
-		c.conn.Close()
-		return
-	}
+	// if c.conn != nil {
+	// 	c.conn.Close()
+	// 	return
+	// }
 	c.pool.put(c)
 }
 
@@ -43,7 +44,6 @@ func (c *Conn) withRetry(operation func() error) error {
 
 	err := backoff.Retry(func() error {
 		if err := operation(); err != nil {
-			log.Warnf("conn: operation failed: %v", err)
 			connectionErr := ldap.IsErrorAnyOf(
 				err,
 				ldap.LDAPResultConnectError,
@@ -61,6 +61,7 @@ func (c *Conn) withRetry(operation func() error) error {
 				ldap.LDAPResultSyncRefreshRequired,
 			)
 			if connectionErr || tempErr {
+        // log.Warnf("conn: operation failed: %v", err)
 				// we could lazily swap the connection here:
 				// panic("lazy reconnect")
 				// if conn, err := c.pool.NewConnection(); err == nil {

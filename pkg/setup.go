@@ -321,7 +321,7 @@ func (m *LDAPManager) Connect() error {
 		URI := m.Config.URI()
 		b := backoff.WithMaxRetries(&backoff.ConstantBackOff{
 			Interval: 2 * time.Second,
-		}, 5)
+		}, 10)
 
 		var conn *ldap.Conn
 		err := backoff.Retry(func() error {

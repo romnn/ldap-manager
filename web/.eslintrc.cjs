@@ -18,4 +18,6 @@ module.exports = {
   parserOptions: {
     ecmaVersion: "latest",
   },
+  // check using: DEBUG=eslint:cli-engine yarn run lint
+  ignorePatterns: ["node_modules/", "generated/", "dist/"],
 };

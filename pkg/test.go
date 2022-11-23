@@ -30,7 +30,6 @@ type Test struct {
 
 // Start starts the container
 func (test *Test) Start(t *testing.T) *Test {
-	var err error
 	t.Parallel()
 
 	// start OpenLDAP container
