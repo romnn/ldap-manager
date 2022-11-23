@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"fmt"
 	"testing"
 
 	recursivesort "github.com/romnn/go-recursive-sort"
@@ -34,11 +35,15 @@ func TestGetUserList(t *testing.T) {
 	expected := &pb.UserList{
 		Users: []*pb.User{
 			{
-				Username:      req.GetUsername(),
-				FirstName:     req.GetFirstName(),
-				LastName:      req.GetLastName(),
-				DisplayName:   "roman d",
-				CN:            "roman d",
+				Username:    req.GetUsername(),
+				FirstName:   req.GetFirstName(),
+				LastName:    req.GetLastName(),
+				DisplayName: "roman d",
+				CN:          "roman d",
+				DN: fmt.Sprintf(
+					"uid=%s,ou=users,dc=example,dc=org",
+					req.GetUsername(),
+				),
 				Email:         req.GetEmail(),
 				UID:           2001,
 				GID:           2001,
@@ -46,11 +51,15 @@ func TestGetUserList(t *testing.T) {
 				HomeDirectory: "/home/test-user",
 			},
 			{
-				Username:      test.Manager.DefaultAdminUsername,
-				FirstName:     "changeme",
-				LastName:      "changeme",
-				DisplayName:   "changeme changeme",
-				CN:            "changeme changeme",
+				Username:    test.Manager.DefaultAdminUsername,
+				FirstName:   "changeme",
+				LastName:    "changeme",
+				DisplayName: "changeme changeme",
+				CN:          "changeme changeme",
+				DN: fmt.Sprintf(
+					"uid=%s,ou=users,dc=example,dc=org",
+					test.Manager.DefaultAdminUsername,
+				),
 				Email:         "changeme@changeme.com",
 				UID:           2000,
 				GID:           2001,

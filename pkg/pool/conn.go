@@ -6,6 +6,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/go-ldap/ldap/v3"
+	log "github.com/sirupsen/logrus"
 )
 
 // Conn implements Client to override the Close() method
@@ -38,44 +39,46 @@ func (c *Conn) Close() {
 func (c *Conn) withRetry(operation func() error) error {
 	b := backoff.WithMaxRetries(&backoff.ConstantBackOff{
 		Interval: 1 * time.Second,
-	}, 3)
+	}, 10)
 
 	err := backoff.Retry(func() error {
-		err := operation()
-		connectionErr := ldap.IsErrorAnyOf(
-			err,
-			ldap.LDAPResultConnectError,
-			ldap.ErrorNetwork,
-		)
-		tempErr := ldap.IsErrorAnyOf(
-			err,
-			ldap.LDAPResultTimeLimitExceeded,
-			ldap.LDAPResultSaslBindInProgress,
-			ldap.LDAPResultBusy,
-			ldap.LDAPResultUnavailable,
-			ldap.LDAPResultServerDown,
-			ldap.LDAPResultTimeout,
-			ldap.LDAPResultTooLate,
-			ldap.LDAPResultSyncRefreshRequired,
-		)
-		if connectionErr {
-			// we could lazily swap the connection here:
-			// panic("lazy reconnect")
-			// if conn, err := c.pool.NewConnection(); err == nil {
-			// 	c.conn = conn
-			// }
+		if err := operation(); err != nil {
+      log.Warnf("conn: operation failed: %v", err)
+      connectionErr := ldap.IsErrorAnyOf(
+        err,
+        ldap.LDAPResultConnectError,
+        ldap.ErrorNetwork,
+      )
+      tempErr := ldap.IsErrorAnyOf(
+        err,
+        ldap.LDAPResultTimeLimitExceeded,
+        ldap.LDAPResultSaslBindInProgress,
+        ldap.LDAPResultBusy,
+        ldap.LDAPResultUnavailable,
+        ldap.LDAPResultServerDown,
+        ldap.LDAPResultTimeout,
+        ldap.LDAPResultTooLate,
+        ldap.LDAPResultSyncRefreshRequired,
+      )
+      if connectionErr || tempErr {
+        // we could lazily swap the connection here:
+        // panic("lazy reconnect")
+        // if conn, err := c.pool.NewConnection(); err == nil {
+        // 	c.conn = conn
+        // }
 
-			// HOWEVER, if the connection was bound it will also just lead to errors
-			// so here its probably too late
-			return err
-		}
-		if tempErr {
-			return err
-		}
-		return backoff.Permanent(err)
+        // HOWEVER, if the connection was bound it will also just lead to errors
+        // so here its probably too late
+        log.Warnf("backoff from temporary failure: %v", err)
+        return err
+      }
+      return backoff.Permanent(err)
+    }
+    return nil
 	}, b)
 
 	if err, ok := err.(*backoff.PermanentError); ok {
+		// return the underlying permanent error
 		return err.Err
 	}
 	return err

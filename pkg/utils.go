@@ -5,7 +5,19 @@ import (
 	"strings"
 
 	"github.com/go-ldap/ldap/v3"
-	"github.com/k0kubun/pp/v3"
+	"github.com/jwalton/go-supportscolor"
+	pretty "github.com/k0kubun/pp/v3"
+)
+
+var (
+  // pp for pretty printing
+	pp = func() *pretty.PrettyPrinter {
+		useColor := supportscolor.Stdout().SupportsColor
+		pp := pretty.New()
+		pp.SetColoringEnabled(useColor)
+		pp.SetExportedOnly(true)
+		return pp
+	}()
 )
 
 const (

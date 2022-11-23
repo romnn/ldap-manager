@@ -13,6 +13,8 @@ import (
 
 // TestHarborIntegration tests integration with the Harbor container registry
 func TestHarborIntegration(t *testing.T) {
+  t.Skip("we still need a local docker based harbor setup for this test")
+
 	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
@@ -27,6 +29,7 @@ func TestHarborIntegration(t *testing.T) {
 	)
 	searchPass := config.ReadOnlyPassword
 
+  // retry 10 times
 	b := backoff.WithMaxRetries(&backoff.ConstantBackOff{
 		Interval: 10 * time.Second,
 	}, 10)

@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"testing"
+	"fmt"
 
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
@@ -87,12 +88,16 @@ func TestGetUser(t *testing.T) {
 		t.Fatalf("failed to get user: %v", err)
 	}
 	expected := &pb.User{
-		Username:      username,
-		FirstName:     "Felix",
-		LastName:      "Heisenberg",
-		DisplayName:   "Felix Heisenberg",
-		UID:           2001,
-		CN:            "Felix Heisenberg",
+		Username:    username,
+		FirstName:   "Felix",
+		LastName:    "Heisenberg",
+		DisplayName: "Felix Heisenberg",
+		UID:         2001,
+		CN:          "Felix Heisenberg",
+		DN: fmt.Sprintf(
+			"uid=%s,ou=users,dc=example,dc=org",
+			username,
+		),
 		GID:           2001,
 		LoginShell:    "/bin/bash",
 		HomeDirectory: "/home/felix",

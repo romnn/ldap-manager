@@ -1,8 +1,6 @@
 package pkg
 
 import (
-	"github.com/jwalton/go-supportscolor"
-	"github.com/k0kubun/pp/v3"
 	log "github.com/sirupsen/logrus"
 
 	ldapconfig "github.com/romnn/ldap-manager/pkg/config"
@@ -37,10 +35,6 @@ type LDAPManager struct {
 
 // NewLDAPManager creates a new LDAPManager
 func NewLDAPManager(config ldapconfig.Config) *LDAPManager {
-	useColor := supportscolor.Stdout().SupportsColor
-	pp.Default.SetColoringEnabled(useColor)
-	pp.Default.SetExportedOnly(true)
-
 	log.SetFormatter(&log.TextFormatter{
 		DisableQuote: true,
 	})

@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"fmt"
 	"testing"
 
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
@@ -21,12 +22,16 @@ func TestNewUser(t *testing.T) {
 		LastName:  "d",
 	}
 	expected := &pb.User{
-		Username:      "romnn",
-		FirstName:     "roman",
-		LastName:      "d",
-		DisplayName:   "roman d",
-		UID:           2001,
-		CN:            "roman d",
+		Username:    username,
+		FirstName:   "roman",
+		LastName:    "d",
+		DisplayName: "roman d",
+		UID:         2001,
+		CN:          "roman d",
+		DN: fmt.Sprintf(
+			"uid=%s,ou=users,dc=example,dc=org",
+			username,
+		),
 		GID:           2001,
 		LoginShell:    "/bin/bash",
 		HomeDirectory: "/home/romnn",
