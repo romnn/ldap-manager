@@ -107,12 +107,9 @@ inv compile-proto
 
 - v2
 
-  - add a simple connection pool
-  - function that opens a new connection
-  - binds should always open new connections
   - add integration test with harbor
 
-  - test the grpc and http servers as well
+  - refactor in general
   - refactor to use manual ldap search only where necessary
   - fix the frontend
   - fix the docker container
@@ -122,6 +119,7 @@ inv compile-proto
   - documentation
 
 - nice to have
+  - test the grpc and http servers as well
 
   - Implement CLI interface
     - new acc
@@ -132,6 +130,9 @@ inv compile-proto
     - verify?
 
 - done
+  - binds should always open new connections
+  - function that opens a new connection
+  - add a simple connection pool
   - fix nil pointer errors
   - decide what goes into pkg and what goes into internal
   - add tests for each file in pkg

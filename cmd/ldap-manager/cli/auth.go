@@ -40,7 +40,7 @@ var (
 		Name:    "generate",
 		Value:   false,
 		Aliases: []string{"gen", "create"},
-		EnvVars: []string{"GENERATE", "CREATE", "GEN"},
+		EnvVars: []string{"GENERATE"},
 		Usage:   "generate new keys if none were supplied",
 	}
 	// ExpirationTime of JWT tokens

@@ -49,9 +49,9 @@ var (
 	}
 	// LdapReadOnlyPassword configures the LDAP read-only user
 	LdapReadOnlyPassword = cli.StringFlag{
-		Name:    "openldap-readonly-password",
+		Name:    "ldap-readonly-password",
 		Value:   "", // no read-only user
-		EnvVars: []string{"OPENLDAP_READONLY_PASSWORD"},
+		EnvVars: []string{"LDAP_READONLY_PASSWORD"},
 		Usage:   "LDAP read-only password",
 	}
 	// LdapOrganization configures the LDAP organization

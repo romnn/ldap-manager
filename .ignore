@@ -1,3 +1,7 @@
 pkg/grpc/gen
 proto/google
+web/generated/src
+**/node_modules
+
 **/package-lock.json
+**/yarn.lock
