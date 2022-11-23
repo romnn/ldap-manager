@@ -1,33 +1,26 @@
-# Ignore all
-*
-
-# Unignore all with extensions
-!*.*
-
-# Unignore all dirs
-!*/
-
-# Unignore bazel files without extension
-!**/WORKSPACE
-!**/BUILD
-
-# Unignore Dockerfile and other useful files
-!**/Dockerfile
-!**/.dockerignore
-!**/LICENSE
-
-### Above combination will ignore all files without extension ###
-
 .DS_Store
 .vscode/
 .idea/
-public/
-coverage*
+.gitattributes
+.ignore
+.gitignore
+.bumpversion.cfg
+.codecov.yml
+.README.md
+.pre-commit-config.yaml
+LICENSE
 *.exe
+coverage*
+tasks.py
+
+.git/
+.github/
+website/
+test/
+proto/
+deployment/
+screenshots/
 build/
+
 **/dist
 **/node_modules
-icon/
-**/debug.yaml
-**/index.yaml
-deployment/
