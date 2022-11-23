@@ -16,10 +16,10 @@ export default defineConfig({
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
       // "ldap-manager": "file:./generated",
-      "ldap-manager": path.resolve(
-        __dirname,
-        "./generated/src/ldap_manager.ts"
-      ),
+      // "ldap-manager": path.resolve(
+      //   __dirname,
+      //   "./generated"
+      // ),
     },
   },
 });

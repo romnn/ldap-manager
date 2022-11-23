@@ -7,9 +7,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
+        with:
+          python-version: '3.10' 
       - uses: actions/setup-go@v3
         with:
-          go-version: 1.19.x
+          go-version: '1.19.x'
 
       - name: Install code check tools
         run: |
@@ -26,15 +28,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
+        with:
+          python-version: '3.10' 
       - uses: actions/setup-node@v2
         with:
-          node-version: 18
+          node-version: '18'
 
       - name: Install dependencies
         run: |
+          cd web/generated
+          yarn install --dev
+          yarn build
+
           cd web/
           yarn install --dev
-
+          
       - name: Run type checks
         run: |
           cd web/
@@ -58,11 +66,13 @@ jobs:
       fail-fast: false
       matrix:
         go-version:
-          - 1.19.x
+          - '1.19.x'
 
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
+        with:
+          python-version: '3.10' 
       - uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go-version }}
