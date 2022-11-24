@@ -25,6 +25,7 @@ services:
       driver: none
 
   ldapmanager:
+    # you probably want to use the prebuild image
     # image: romnn/ldap-manager:latest
     build:
       context: ../
@@ -60,39 +61,18 @@ services:
       GENERATE: "true"
 
   screenshot:
-    image: zenika/alpine-chrome:with-puppeteer
-    # entrypoint: sh -c
-    # mkdir -p ./app/deployment/screenshot 
-    command: sh -c "cp -r ./app_tmp ./app && chmod -R 775 ./app && cd ./app/deployment/screenshot && ls -lia . && yarn install && ./node_modules/.bin/ts-node screenshot.ts"
-    # command: sh -c "cp -p ./app/web && cp -r ./app_tmp/web ./app/web && cp -r ./app_tmp/deployment/screenshot ./app/deployment/screenshot && cd ./app/deployment/screenshot && ls -lia ."
-
-      # ./app/deployment/screenshot/"
-      # - && cd ./app/deployment/screenshot
-      # - && yarn install
-      # - && ts-node src/screenshot.ts
-      # - sh
-      # - -c
-      # - chown -R chrome:chrome app/deployment/ && chmod -R 775 app/deployment/ && 
-    # command: ["sh", "-c", "yarn install && ts-node src/screenshot.ts"]
+    build:
+      context: ../
+      dockerfile: ./deployment/screenshot/Dockerfile
     environment:
-      OUTPUT_DIR: "/usr/src/app/output"
+      OUTPUT_DIR: "/output"
       LDAP_MANAGER_HOST: "ldapmanager"
       ADMIN_USERNAME: "ldapadmin"
       ADMIN_PASSWORD: "changeme"
-    # depends_on:
-    #   - ldapmanager
+    depends_on:
+      - ldapmanager
     volumes:
-      - ../:/usr/src/app/app_tmp:ro
-      # - ./screenshot/screenshot.ts:/usr/src/app/app/screenshot_tmp/screenshot.ts:ro
-      # - ./screenshot/package.json:/usr/src/app/app/screenshot_tmp/package.json:ro
-      # - ./screenshot/yarn.lock:/usr/src/app/app/screenshot_tmp/yarn.lock:ro
-      # - ../web:/usr/src/app/app/web:ro
-      - ../screenshots:/usr/src/app/output
-    # volumes:
-    #   - ./screenshot/screenshot.ts:/usr/src/app/app/src/screenshot.ts:ro
-    #   - ./screenshot/package.json:/usr/src/app/app/package.json:ro
-    #   - ./screenshot/yarn.lock:/usr/src/app/app/yarn.lock:ro
-    #   - ../screenshots:/usr/src/app/app/output
+      - ../screenshots:/output
     cap_add:
       - SYS_ADMIN
     

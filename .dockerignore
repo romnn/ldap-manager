@@ -18,7 +18,6 @@ tasks.py
 website/
 test/
 proto/
-deployment/
 screenshots/
 build/
 
