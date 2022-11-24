@@ -11,6 +11,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/romnn/go-service/pkg/http/health"
 	gw "github.com/romnn/ldap-manager/pkg/grpc/gen"
+	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc"
 )
@@ -64,6 +65,7 @@ func NewLDAPManagerService(ctx context.Context, upstream *grpc.ClientConn, confi
 
 	// serve static files
 	if config.ServeStatic {
+		log.Infof("serving static files at %s", config.StaticPath)
 		fileServer := http.FileServer(http.Dir(config.StaticPath))
 
 		router.HandleFunc("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -669,7 +669,7 @@ onMounted(async () => {
                   <b-form-invalid-feedback :state="passwordsMatch">
                     Passwords do not match
                   </b-form-invalid-feedback>
-                  <b-form-valid-feedback :state="passwordsMatch">
+                  <b-form-valid-feedback :state="passwordsMatch && newUserRequest.password.length > 0">
                     All good
                   </b-form-valid-feedback>
                 </b-form-group>

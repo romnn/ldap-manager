@@ -109,8 +109,7 @@ def compile_go_protos(c):
             "--grpc-gateway_opt=logtostderr=true,paths=source_relative",
             str(service),
         ]
-        if False:
-            pprint(cmd)
+        pprint(cmd)
         c.run(" ".join(cmd))
 
 
@@ -148,10 +147,19 @@ def compile_ts_protos(c):
             f"--plugin={plugin_path}",
             f"--proto_path={proto_path}",
             f"--ts_proto_out={out_dir}",
+            # compliance with es modules to correctly import Long
+            "--ts_proto_opt=esModuleInterop=true",
+            # no Message.fromPartial methods
+            "--ts_proto_opt=outputPartialMethods=false",
+            # no binary encode / decode methods
+            "--ts_proto_opt=outputEncodeMethods=false",
+            # no client implementations
+            "--ts_proto_opt=outputClientImpl=false",
+            # no service implementations
+            "--ts_proto_opt=outputServices=false",
             str(service),
         ]
-        if True:
-            pprint(cmd)
+        pprint(cmd)
         c.run(" ".join(cmd))
 
     # rebuild the ldap manager package

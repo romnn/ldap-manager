@@ -16,8 +16,8 @@ LDAP Manager is written in Go and comes with a Vue/Typescript frontend in a sing
 
 |                                                 |                                                 |
 | :---------------------------------------------: | :---------------------------------------------: |
-|      <img src="screenshots/home-user.png">      | <img src="screenshots/accounts-edit-admin.png"> |
-| <img src="screenshots/accounts-list-admin.png"> |  <img src="screenshots/groups-edit-admin.png">  |
+|      <img src="screenshots/home-of-user.png">      | <img src="screenshots/accounts-edit-by-admin.png"> |
+| <img src="screenshots/users-list-for-admin.png"> |  <img src="screenshots/group-edit-by-admin.png">  |
 
 Before you get started, make sure you have an OpenLDAP server like
 [osixia/openldap](https://hub.docker.com/r/osixia/openldap/) running.
@@ -44,7 +44,7 @@ For a list of options, run with `--help`. If you want to deploy OpenLDAP with LD
 ##### docker-compose
 
 ```bash
-docker-compose -f deployment/docker-compose.yml up
+COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose -f deployment/docker-compose.yml up
 ```
 
 ##### Helm

@@ -16,15 +16,16 @@ RUN go build \
 # NODE_BUILD
 FROM node:18 AS NODE_BUILD
 
-ENV STABLE_VERSION /web/dist
-
 ARG version=0.0.1
-ENV STABLE_VERSION=$version
+ARG branding=true
+
+ENV VITE_APP_VERSION=$version
+ENV VITE_BRANDING=$branding
 
 WORKDIR /app
 COPY ./ /app
 
-RUN cd web && yarn install && yarn build
+RUN cd web && yarn install --dev && yarn build
 
 # FINAL
 FROM gcr.io/distroless/static

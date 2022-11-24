@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { RouterLink, RouterView } from "vue-router";
+import { parseBool } from "./utils";
 import type { RouteParams, RouteParamValue } from "vue-router";
 import type { BreadcrumbItem } from "bootstrap-vue-3";
 import ConfirmationComponent from "./components/ConfirmationComponent.vue";
@@ -76,8 +77,12 @@ function confirmConfirmation() {
   appStore.confirmConfirmation();
 }
 
+const branding = computed(() => {
+  return parseBool(import.meta.env.VITE_BRANDING);
+});
+
 const version = computed(() => {
-  return import.meta.env.STABLE_VERSION;
+  return import.meta.env.VITE_APP_VERSION;
 });
 
 onMounted(() => {
@@ -90,7 +95,9 @@ onMounted(() => {
     <div>
       <b-navbar toggleable="sm" size="sm" type="dark" variant="dark">
         <RouterLink :to="{ name: 'HomeRoute' }">
-          <span class="title">LDAP Manager</span>
+          <span class="title">
+            {{ branding ? 'LDAP Manager' : 'Home' }}
+          </span>
         </RouterLink>
 
         <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
@@ -161,7 +168,7 @@ onMounted(() => {
       </div>
     </div>
     <div class="footer">
-      <a href="https://github.com/romnn/ldap-manager"
+      <a v-if="branding" href="https://github.com/romnn/ldap-manager"
         >LDAPManager {{ version }}</a
       >
     </div>
