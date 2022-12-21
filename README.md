@@ -16,7 +16,7 @@ LDAP Manager is written in Go and comes with a Vue/Typescript frontend in a sing
 
 |                                                 |                                                 |
 | :---------------------------------------------: | :---------------------------------------------: |
-|      <img src="screenshots/home-of-user.png">      | <img src="screenshots/accounts-edit-by-admin.png"> |
+|      <img src="screenshots/home-of-user.png">      | <img src="screenshots/user-edit-by-admin.png"> |
 | <img src="screenshots/users-list-for-admin.png"> |  <img src="screenshots/group-edit-by-admin.png">  |
 
 Before you get started, make sure you have an OpenLDAP server like
