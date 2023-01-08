@@ -38,6 +38,7 @@ func (c *Container) Terminate(ctx context.Context) {
 }
 
 const (
+	// OpenLDAPPort is the OpenLDAP protocol port
 	OpenLDAPPort = 389
 )
 

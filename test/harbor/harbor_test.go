@@ -124,7 +124,7 @@ func TestHarborIntegration(t *testing.T) {
 		t.Fatalf("failed to get container host: %v", err)
 	}
 
-	harborPort, _ := nat.NewPort("", strconv.Itoa(HarborCorePort))
+	harborPort, _ := nat.NewPort("", strconv.Itoa(harborCorePort))
 	realHarborPort, err := test.HarborCoreContainer.MappedPort(context.TODO(), harborPort)
 	if err != nil {
 		t.Fatalf("failed to get exposed container port: %v", err)

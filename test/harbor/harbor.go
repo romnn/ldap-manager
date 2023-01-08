@@ -135,13 +135,13 @@ func newResponse(httpRes *http.Response) (*response, error) {
 }
 
 const (
-	HarborTag        = "v2.6.1"
-	RedisPort        = 6379
-	PostgresPort     = 5432
-	PostgresPassword = "root123"
-	HarborPortalPort = 8080
-	HarborCorePort   = 8080
-	HarborProxyPort  = 8080
+	harborTag        = "v2.6.1"
+	redisPort        = 6379
+	postgresPort     = 5432
+	postgresPassword = "root123"
+	harborPortalPort = 8080
+	harborCorePort   = 8080
+	harborProxyPort  = 8080
 )
 
 // Test wraps a pre-configured harbor and LDAP Manager setup
@@ -175,18 +175,16 @@ func readEnvFile(path string) (map[string]string, error) {
 	return env, nil
 }
 
-type TestLogConsumer struct {
-	Msgs   []string
+type logger struct {
 	Prefix string
 }
 
-func (g *TestLogConsumer) Accept(l testcontainers.Log) {
-	fmt.Printf("%s: %s", g.Prefix, string(l.Content))
-	// g.Msgs = append(g.Msgs, string(l.Content))
+func (l *logger) Accept(log testcontainers.Log) {
+	fmt.Printf("%s: %s", l.Prefix, string(log.Content))
 }
 
-func (test *Test) StartHarborCoreContainer(ctx context.Context) error {
-	port, err := nat.NewPort("", strconv.Itoa(HarborCorePort))
+func (test *Test) startHarborCoreContainer(ctx context.Context) error {
+	port, err := nat.NewPort("", strconv.Itoa(harborCorePort))
 	if err != nil {
 		return fmt.Errorf("failed to build port: %v", err)
 	}
@@ -208,18 +206,17 @@ func (test *Test) StartHarborCoreContainer(ctx context.Context) error {
 	// }
 	// fmt.Println(realPostgresPort)
 
-	postgresPort, _ := nat.NewPort("", strconv.Itoa(PostgresPort))
+	pgPort, _ := nat.NewPort("", strconv.Itoa(postgresPort))
 	postgresIP, err := test.PostgresContainer.ContainerIP(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get postgres container ip: %v", err)
 	}
 
-	// redisPort, _ := nat.NewPort("", strconv.Itoa(RedisPort))
 	redisIP, err := test.RedisContainer.ContainerIP(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get redis container ip: %v", err)
 	}
-	redisURL, err := url.Parse(fmt.Sprintf("redis://%s:%d", redisIP, RedisPort))
+	redisURL, err := url.Parse(fmt.Sprintf("redis://%s:%d", redisIP, redisPort))
 	fmt.Println(err)
 	fmt.Println(redisURL.String())
 
@@ -228,13 +225,13 @@ func (test *Test) StartHarborCoreContainer(ctx context.Context) error {
 		return err
 	}
 
-	env["POSTGRES_PASSWORD"] = PostgresPassword
+	env["POSTGRES_PASSWORD"] = postgresPassword
 	// "POSTGRESQL_HOST":   postgresHost,
 	env["POSTGRESQL_HOST"] = postgresIP
 	// "POSTGRESQL_HOST": test.NetworkName,
 	// "POSTGRESQL_HOST": "postgres",
 	// "POSTGRESQL_PORT":   strconv.Itoa(realPostgresPort.Int()),
-	env["POSTGRESQL_PORT"] = strconv.Itoa(postgresPort.Int())
+	env["POSTGRESQL_PORT"] = strconv.Itoa(pgPort.Int())
 	// "REDIS_HOST":      redisIP,
 	// "REDIS_PORT":      strconv.Itoa(redisPort.Int()),
 	env["_REDIS_URL_CORE"] = redisURL.String()
@@ -243,7 +240,7 @@ func (test *Test) StartHarborCoreContainer(ctx context.Context) error {
 
 	req := testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
-			Image:        fmt.Sprintf("goharbor/harbor-core:%s", HarborTag),
+			Image:        fmt.Sprintf("goharbor/harbor-core:%s", harborTag),
 			Hostname:     "core",
 			Networks:     []string{test.NetworkName},
 			ExposedPorts: []string{string(port)},
@@ -270,33 +267,30 @@ func (test *Test) StartHarborCoreContainer(ctx context.Context) error {
 		return fmt.Errorf("failed to start container: %v", err)
 	}
 
-	g := TestLogConsumer{
-		Msgs:   []string{},
-		Prefix: "core",
-	}
+	l := logger{Prefix: "core"}
 
 	if err := test.HarborCoreContainer.StartLogProducer(ctx); err != nil {
 		// do something with err
 	}
 
-	test.HarborCoreContainer.FollowOutput(&g)
+	test.HarborCoreContainer.FollowOutput(&l)
 	return nil
 }
 
-func (test *Test) StartPostgresContainer(ctx context.Context) error {
-	port, err := nat.NewPort("", strconv.Itoa(PostgresPort))
+func (test *Test) startPostgresContainer(ctx context.Context) error {
+	port, err := nat.NewPort("", strconv.Itoa(postgresPort))
 	if err != nil {
 		return fmt.Errorf("failed to build port: %v", err)
 	}
 
 	req := testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
-			Image:        fmt.Sprintf("goharbor/harbor-db:%s", HarborTag),
+			Image:        fmt.Sprintf("goharbor/harbor-db:%s", harborTag),
 			Hostname:     "postgresql",
 			Networks:     []string{test.NetworkName},
 			ExposedPorts: []string{string(port)},
 			Env: map[string]string{
-				"POSTGRES_PASSWORD": PostgresPassword,
+				"POSTGRES_PASSWORD": postgresPassword,
 			},
 			ShmSize:    1024 * 1024 * 1024, // 1 GB
 			WaitingFor: wait.ForListeningPort(port).WithStartupTimeout(5 * time.Minute),
@@ -313,8 +307,8 @@ func (test *Test) StartPostgresContainer(ctx context.Context) error {
 	return nil
 }
 
-func (test *Test) StartHarborProxyContainer(ctx context.Context) error {
-	port, err := nat.NewPort("", strconv.Itoa(HarborProxyPort))
+func (test *Test) startHarborProxyContainer(ctx context.Context) error {
+	port, err := nat.NewPort("", strconv.Itoa(harborProxyPort))
 	if err != nil {
 		return fmt.Errorf("failed to build port: %v", err)
 	}
@@ -328,7 +322,7 @@ func (test *Test) StartHarborProxyContainer(ctx context.Context) error {
 		Interval: 3 * time.Second,
 	}, 10)
 
-	waiter, err := test.StartWaitContainer(ctx)
+	waiter, err := test.startWaitContainer(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to start waiter container: %v", err)
 	}
@@ -353,7 +347,7 @@ func (test *Test) StartHarborProxyContainer(ctx context.Context) error {
 	// startContainer := func() error {
 	req := testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
-			Image:        fmt.Sprintf("goharbor/nginx-photon:%s", HarborTag),
+			Image:        fmt.Sprintf("goharbor/nginx-photon:%s", harborTag),
 			Hostname:     "proxy",
 			Networks:     []string{test.NetworkName},
 			ExposedPorts: []string{string(port)},
@@ -371,24 +365,21 @@ func (test *Test) StartHarborProxyContainer(ctx context.Context) error {
 	}
 	fmt.Println(test.HarborProxyContainer.MappedPort(ctx, port))
 
-	g := TestLogConsumer{
-		Msgs:   []string{},
-		Prefix: "proxy",
-	}
+	l := logger{Prefix: "proxy"}
 
 	if err := test.HarborProxyContainer.StartLogProducer(ctx); err != nil {
 		// do something with err
 	}
 
-	test.HarborProxyContainer.FollowOutput(&g)
+	test.HarborProxyContainer.FollowOutput(&l)
 	return nil
 	// }
 
 	// return backoff.Retry(startContainer, b)
 }
 
-func (test *Test) StartHarborPortalContainer(ctx context.Context) error {
-	port, err := nat.NewPort("", strconv.Itoa(HarborPortalPort))
+func (test *Test) startHarborPortalContainer(ctx context.Context) error {
+	port, err := nat.NewPort("", strconv.Itoa(harborPortalPort))
 	if err != nil {
 		return fmt.Errorf("failed to build port: %v", err)
 	}
@@ -400,7 +391,7 @@ func (test *Test) StartHarborPortalContainer(ctx context.Context) error {
 
 	req := testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
-			Image:        fmt.Sprintf("goharbor/harbor-portal:%s", HarborTag),
+			Image:        fmt.Sprintf("goharbor/harbor-portal:%s", harborTag),
 			Hostname:     "portal",
 			Networks:     []string{test.NetworkName},
 			ExposedPorts: []string{string(port)},
@@ -418,7 +409,7 @@ func (test *Test) StartHarborPortalContainer(ctx context.Context) error {
 	return nil
 }
 
-func (test *Test) StartWaitContainer(ctx context.Context) (testcontainers.Container, error) {
+func (test *Test) startWaitContainer(ctx context.Context) (testcontainers.Container, error) {
 	req := testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			Image:    "curlimages/curl",
@@ -430,15 +421,15 @@ func (test *Test) StartWaitContainer(ctx context.Context) (testcontainers.Contai
 	return testcontainers.GenericContainer(ctx, req)
 }
 
-func (test *Test) StartRedisContainer(ctx context.Context) error {
-	port, err := nat.NewPort("", strconv.Itoa(RedisPort))
+func (test *Test) startRedisContainer(ctx context.Context) error {
+	port, err := nat.NewPort("", strconv.Itoa(redisPort))
 	if err != nil {
 		return fmt.Errorf("failed to build port: %v", err)
 	}
 
 	req := testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
-			Image:        fmt.Sprintf("goharbor/redis-photon:%s", HarborTag),
+			Image:        fmt.Sprintf("goharbor/redis-photon:%s", harborTag),
 			Hostname:     "redis",
 			Networks:     []string{test.NetworkName},
 			ExposedPorts: []string{string(port)},
@@ -453,8 +444,7 @@ func (test *Test) StartRedisContainer(ctx context.Context) error {
 	return nil
 }
 
-// CreateNetwork creates a docker network for the harbor services
-func (test *Test) CreateNetwork(ctx context.Context) error {
+func (test *Test) createNetwork(ctx context.Context) error {
 	test.NetworkName = fmt.Sprintf("harbor-network-%s", xid.New().String())
 	request := testcontainers.NetworkRequest{
 		Driver:         "bridge",
@@ -481,22 +471,22 @@ func (test *Test) CreateNetwork(ctx context.Context) error {
 
 // Start starts the containers
 func (test *Test) Start(t *testing.T) *Test {
-	if err := test.CreateNetwork(context.Background()); err != nil {
+	if err := test.createNetwork(context.Background()); err != nil {
 		t.Fatalf("failed to create docker bridge network: %v", err)
 	}
-	if err := test.StartPostgresContainer(context.Background()); err != nil {
+	if err := test.startPostgresContainer(context.Background()); err != nil {
 		t.Fatalf("failed to start postgres container: %v", err)
 	}
-	if err := test.StartRedisContainer(context.Background()); err != nil {
+	if err := test.startRedisContainer(context.Background()); err != nil {
 		t.Fatalf("failed to start redis container: %v", err)
 	}
-	if err := test.StartHarborCoreContainer(context.Background()); err != nil {
+	if err := test.startHarborCoreContainer(context.Background()); err != nil {
 		t.Fatalf("failed to start harbor core container: %v", err)
 	}
-	if err := test.StartHarborPortalContainer(context.Background()); err != nil {
+	if err := test.startHarborPortalContainer(context.Background()); err != nil {
 		t.Fatalf("failed to start harbor portal container: %v", err)
 	}
-	if err := test.StartHarborProxyContainer(context.Background()); err != nil {
+	if err := test.startHarborProxyContainer(context.Background()); err != nil {
 		t.Fatalf("failed to start harbor proxy container: %v", err)
 	}
 
