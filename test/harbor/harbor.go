@@ -197,18 +197,6 @@ func (test *Test) startHarborCoreContainer(ctx context.Context) error {
 		return fmt.Errorf("failed to get current working dir: %v", err)
 	}
 
-	// postgresHost, err := test.PostgresContainer.Host(ctx)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to get postgres host: %v", err)
-	// }
-	// fmt.Println(postgresHost)
-
-	// realPostgresPort, err := test.PostgresContainer.MappedPort(ctx, postgresPort)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to get exposed postgres port: %v", err)
-	// }
-	// fmt.Println(realPostgresPort)
-
 	pgPort, _ := nat.NewPort("", strconv.Itoa(postgresPort))
 	postgresIP, err := test.PostgresContainer.ContainerIP(ctx)
 	if err != nil {
@@ -229,14 +217,8 @@ func (test *Test) startHarborCoreContainer(ctx context.Context) error {
 	}
 
 	env["POSTGRES_PASSWORD"] = postgresPassword
-	// "POSTGRESQL_HOST":   postgresHost,
 	env["POSTGRESQL_HOST"] = postgresIP
-	// "POSTGRESQL_HOST": test.NetworkName,
-	// "POSTGRESQL_HOST": "postgres",
-	// "POSTGRESQL_PORT":   strconv.Itoa(realPostgresPort.Int()),
 	env["POSTGRESQL_PORT"] = strconv.Itoa(pgPort.Int())
-	// "REDIS_HOST":      redisIP,
-	// "REDIS_PORT":      strconv.Itoa(redisPort.Int()),
 	env["_REDIS_URL_CORE"] = redisURL.String()
 
 	pp.Print(env)
@@ -247,15 +229,9 @@ func (test *Test) startHarborCoreContainer(ctx context.Context) error {
 			Hostname:     "core",
 			Networks:     []string{test.NetworkName},
 			ExposedPorts: []string{string(port)},
-			Env:          env, // map[string]string{},
+			Env:          env,
 			Binds: []string{
-				// ./:/etc/core/ca/
-				// - ./:/data/
-				// - ./common/config/core/certificates/:/etc/core/certificates/
-				// cwd + ":/etc/core/ca/",
-				// cwd + ":/data/",
 				filepath.Join(cwd, "./common/config/core/certificates/") + ":/etc/core/certificates/",
-				// bind mounts
 				filepath.Join(cwd, "./common/config/core/app.conf") + ":/etc/core/app.conf",
 				filepath.Join(cwd, "./secret/core/private_key.pem") + ":/etc/core/private_key.pem",
 				filepath.Join(cwd, "./secret/keys/secretkey") + ":/etc/core/key",
@@ -345,7 +321,6 @@ func (test *Test) startHarborProxyContainer(ctx context.Context) error {
 		return err
 	}
 
-	// startContainer := func() error {
 	req := testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			Image:        fmt.Sprintf("goharbor/nginx-photon:%s", harborTag),
@@ -374,9 +349,6 @@ func (test *Test) startHarborProxyContainer(ctx context.Context) error {
 
 	test.HarborProxyContainer.FollowOutput(&l)
 	return nil
-	// }
-
-	// return backoff.Retry(startContainer, b)
 }
 
 func (test *Test) startHarborPortalContainer(ctx context.Context) error {

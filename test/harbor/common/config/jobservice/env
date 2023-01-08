@@ -1,0 +1,16 @@
+CORE_SECRET=jvT1JIb1noSJPP3o
+REGISTRY_URL=http://registry:5000
+JOBSERVICE_SECRET=cZShyjrP4EzBBkE0
+CORE_URL=http://core:8080
+REGISTRY_CONTROLLER_URL=http://registryctl:8080
+JOBSERVICE_WEBHOOK_JOB_MAX_RETRY=10
+
+
+HTTP_PROXY=
+HTTPS_PROXY=
+NO_PROXY=localhost,db,notary-signer,.local,exporter,registry,127.0.0.1,log,notary-server,nginx,postgresql,trivy-adapter,.internal,portal,registryctl,core,redis,chartmuseum,jobservice
+REGISTRY_CREDENTIAL_USERNAME=harbor_registry_user
+REGISTRY_CREDENTIAL_PASSWORD=twderR1ETYO0kcqF3zstXvpKvT53DZs3
+
+
+
