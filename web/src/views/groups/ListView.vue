@@ -3,6 +3,7 @@ import { ref, watch, computed, onMounted } from "vue";
 import TableView from "../../components/TableView.vue";
 import type { Group, GroupList } from "ldap-manager";
 import { GatewayError } from "../../constants";
+import { AxiosError } from "axios";
 
 import { useToast } from "bootstrap-vue-3";
 import { useGroupsStore } from "../../stores/groups";
@@ -70,6 +71,8 @@ async function loadGroups() {
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       error.value = err.message;
+    } else if (err instanceof AxiosError) {
+      error.value = err.message;
     } else {
       throw err;
     }
@@ -89,6 +92,8 @@ async function deleteGroup(name: string) {
     deleted.value.push(name);
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
+      errorAlert(err.message);
+    } else if (err instanceof AxiosError) {
       errorAlert(err.message);
     } else {
       throw err;

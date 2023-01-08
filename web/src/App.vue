@@ -93,17 +93,26 @@ onMounted(() => {
 <template>
   <div id="app">
     <div>
-      <b-navbar toggleable="sm" size="sm" type="dark" variant="dark">
+      <b-navbar toggleable="sm" size="sm" variant="dark">
+        <!--
         <RouterLink :to="{ name: 'HomeRoute' }">
           <span class="title">
-            {{ branding ? 'LDAP Manager' : 'Home' }}
+            {{ branding ? "LDAP Manager" : "Home" }}
           </span>
         </RouterLink>
+        -->
+
+        
 
         <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
         <b-collapse class="navbar" id="nav-collapse" is-nav>
           <b-navbar-nav v-if="username !== null">
+            <b-nav-item
+              :to="{ name: 'HomeRoute' }"
+              ><span class="title">{{ branding ? "LDAP Manager" : "Home" }}</span></b-nav-item
+            >
+
             <b-nav-item
               :to="{
                 name: 'EditUserRoute',
@@ -175,7 +184,7 @@ onMounted(() => {
   </div>
 </template>
 
-<style lang="sass" scoped>
+<style lang="sass">
 .app-content-container
   display: flex
   .app-content
@@ -191,9 +200,13 @@ onMounted(() => {
   font-size: 0.7rem
   color: gray
 
+.navbar.bg-dark
+  .nav-link
+    color: white
+    &.router-link-exact-active
+      color: #0dcaf0
+
 .navbar
-  overflow-x: hidden
   .title
     font-weight: 600
-    color: white
 </style>

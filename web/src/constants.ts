@@ -1,6 +1,6 @@
 import axios from "axios";
-import type { AxiosError } from "axios";
 import { useAuthStore } from "./stores/auth";
+import type { AxiosError } from "axios";
 export const API_ENDPOINT = "/api/v1";
 
 export const Codes = {

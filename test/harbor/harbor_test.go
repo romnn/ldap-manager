@@ -1,21 +1,27 @@
 package harbor
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/docker/go-connections/nat"
+	"github.com/romnn/ldap-manager/pkg"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
 
 // TestHarborIntegration tests integration with the Harbor container registry
 func TestHarborIntegration(t *testing.T) {
-	t.Skip("we still need a local docker based harbor setup for this test")
+	// t.Skip("we still need a local docker based harbor setup for this test")
 
 	test := new(Test).Start(t).Setup(t)
+	// time.Sleep(time.Minute * 3)
 	defer test.Teardown()
 
 	manager := test.LMTest.Manager
@@ -60,14 +66,26 @@ func TestHarborIntegration(t *testing.T) {
 		)
 	}
 
+	ldapIP, err := test.LMTest.Container.Container.ContainerIP(context.TODO())
+	if err != nil {
+		t.Fatalf("failed to get ldap container ip: %v", err)
+	}
+
+	ldapURL := fmt.Sprintf(
+		"%s://%s:%d",
+		config.Protocol,
+		// "docker.for.mac.localhost",
+		ldapIP,
+		// "localhost",
+		// config.Port,
+		pkg.OpenLDAPPort,
+		// 389,
+	)
+	// ldapURL = "http://openldap:389"
+	// t.Log(ldapURL)
 	req := updateConfigurationRequest{
-		AuthMode: "ldap_auth",
-		LdapURL: fmt.Sprintf(
-			"%s://%s:%d",
-			config.Protocol,
-			"docker.for.mac.localhost",
-			config.Port,
-		),
+		AuthMode:           "ldap_auth",
+		LdapURL:            ldapURL,
 		LdapBaseDN:         config.BaseDN,
 		LdapSearchDN:       searchUserDN,
 		LdapSearchPassword: config.ReadOnlyPassword,
@@ -101,12 +119,29 @@ func TestHarborIntegration(t *testing.T) {
 	harborAdminUsername := "admin"
 	harborAdminPassword := "Harbor12345"
 
-	harborURL := "http://localhost:80"
+	harborHost, err := test.HarborCoreContainer.Host(context.TODO())
+	if err != nil {
+		t.Fatalf("failed to get container host: %v", err)
+	}
+
+	harborPort, _ := nat.NewPort("", strconv.Itoa(HarborCorePort))
+	realHarborPort, err := test.HarborCoreContainer.MappedPort(context.TODO(), harborPort)
+	if err != nil {
+		t.Fatalf("failed to get exposed container port: %v", err)
+	}
+
+	// harborURL, _ := url.Parse(fmt.Sprintf("%s:%d", harborHost, realHarborPort))
+	harborURL := fmt.Sprintf("http://%s:%d", harborHost, realHarborPort.Int())
+	// for testing
+	// harborURL = "http://localhost:80"
+
 	configURL, err := url.JoinPath(harborURL, "/api/v2.0/configurations")
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log(configURL)
 
+	// var response *response
 	response, err := test.put(
 		configURL,
 		strings.NewReader(body),
@@ -119,7 +154,10 @@ func TestHarborIntegration(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(response.Status)
-	t.Log(response.Body)
+	t.Log(response.DebugBody)
+	if response.StatusCode != 200 {
+		t.Fatalf("configuring LDAP returned bad status code %s", response.Status)
+	}
 
 	// create new LDAP user
 	username := "romnn"
@@ -144,32 +182,75 @@ func TestHarborIntegration(t *testing.T) {
 		},
 	)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 	t.Log(response.Status)
-	t.Log(response.Body)
+	t.Log(response.DebugBody)
+	if response.StatusCode != 200 {
+		t.Errorf("user query for user %q returned bad status code %s", username, response.Status)
+	}
 
 	// get projects for a random LDAP user
+	randomUsername := "random"
 	projectsURL, err = url.JoinPath(harborURL, "/api/v2.0/projects")
 	response, err = test.get(
 		projectsURL,
 		&auth{
-			Username: "random",
+			Username: randomUsername,
 			Password: "shit",
 		},
 	)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 	t.Log(response.Status)
-	t.Log(response.Body)
+	t.Log(response.DebugBody)
+	if response.StatusCode != 200 {
+		t.Errorf("user query for user %q returned bad status code %s", randomUsername, response.Status)
+	}
 
 	// get LDAP users
+	query := url.Values{}
+	query.Set("username", username)
 	usersURL, err := url.JoinPath(
 		harborURL,
-		fmt.Sprintf("/api/v2.0/ldap/users/search?username=%s", username),
+		"/api/v2.0/ldap/users/search",
 	)
-	t.Log(usersURL)
+	// usersURL.RawQuery = query.Encode()
+	// t.Log(usersURL)
+	response, err = test.get(
+		usersURL,
+		&auth{
+			Username: harborAdminUsername,
+			Password: harborAdminPassword,
+			// Username: username,
+			// Password: password,
+		},
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(response.Status)
+	t.Log(response.DebugBody)
+	if response.StatusCode != 200 {
+		t.Errorf(
+			"user query for harbor admin %q returned bad status code %s",
+			harborAdminUsername,
+			response.Status,
+		)
+	}
+	var queryUsers []map[string]interface{}
+	if err := json.Unmarshal([]byte(response.Body), &queryUsers); err != nil {
+		t.Errorf("failed to parse users JSON: %v", err)
+	}
+	if len(queryUsers) != 2 {
+		t.Errorf(
+			"user query for harbor admin %q returned %d users, expected 2",
+			harborAdminUsername,
+			len(queryUsers),
+		)
+	}
+
 	response, err = test.get(
 		usersURL,
 		&auth{
@@ -178,10 +259,13 @@ func TestHarborIntegration(t *testing.T) {
 		},
 	)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 	t.Log(response.Status)
-	t.Log(response.Body)
+	t.Log(response.DebugBody)
+	if response.StatusCode != 403 {
+		t.Errorf("user query for LDAP user %q returned bad status code %s", username, response.Status)
+	}
 
 	// // ping the LDAP server (THIS WILL CRASH HARBOR)
 	// ldapPingURL, err := url.JoinPath(harborURL, "/api/v2.0/ldap/ping")
@@ -194,10 +278,12 @@ func TestHarborIntegration(t *testing.T) {
 	// 	},
 	// )
 	// if err != nil {
-	// 	t.Fatal(err)
+	// 	t.Error(err)
 	// }
 	// t.Log(response.Status)
-	// t.Log(response.Body)
+	// t.Log(response.DebugBody)
+
+	// time.Sleep(time.Minute * 10)
 
 	// wait to inspect the containers
 	// time.Sleep(10 * time.Minute)
@@ -214,5 +300,5 @@ func TestHarborIntegration(t *testing.T) {
 	// 	t.Fatal(err)
 	// }
 	// t.Log(response.Status)
-	// t.Log(response.Body)
+	// t.Log(response.DebugBody)
 }

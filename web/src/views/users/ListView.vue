@@ -4,6 +4,7 @@ import TableView from "../../components/TableView.vue";
 import { RouterLink } from "vue-router";
 import type { UserList } from "ldap-manager";
 import { GatewayError } from "../../constants";
+import { AxiosError } from "axios";
 
 import { useToast } from "bootstrap-vue-3";
 import { useAppStore } from "../../stores/app";
@@ -59,6 +60,8 @@ async function loadUsers() {
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       error.value = err.message;
+    } else if (err instanceof AxiosError) {
+      error.value = err.message;
     } else {
       throw err;
     }
@@ -96,6 +99,8 @@ async function deleteUser(username: string) {
     deleted.value.push(username);
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
+      errorAlert(err.message);
+    } else if (err instanceof AxiosError) {
       errorAlert(err.message);
     } else {
       throw err;

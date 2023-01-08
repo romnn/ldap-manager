@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { GatewayError } from "../constants";
+import { AxiosError } from "axios";
 import MemberListComponent from "./MemberListComponent.vue";
 import type { Group, User, UserList } from "ldap-manager";
 
@@ -122,6 +123,8 @@ async function deleteGroup(name: string | undefined) {
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       submissionError.value = err.message;
+    } else if (err instanceof AxiosError) {
+      submissionError.value = err.message;
     } else {
       throw err;
     }
@@ -142,6 +145,8 @@ async function createGroup() {
     });
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
+      submissionError.value = err.message;
+    } else if (err instanceof AxiosError) {
       submissionError.value = err.message;
     } else {
       throw err;
@@ -181,6 +186,8 @@ async function removeAccount(
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       groupMemberOperationError.value = err.message;
+    } else if (err instanceof AxiosError) {
+      groupMemberOperationError.value = err.message;
     } else {
       throw err;
     }
@@ -213,6 +220,8 @@ async function addAccount(
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       groupMemberOperationError.value = err.message;
+    } else if (err instanceof AxiosError) {
+      groupMemberOperationError.value = err.message;
     } else {
       throw err;
     }
@@ -241,6 +250,8 @@ async function updateGroup(group: string | undefined = undefined) {
     });
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
+      submissionError.value = err.message;
+    } else if (err instanceof AxiosError) {
       submissionError.value = err.message;
     } else {
       throw err;
@@ -271,6 +282,8 @@ async function loadAvailableAccounts() {
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       loadingAvailableError.value = err.message;
+    } else if (err instanceof AxiosError) {
+      loadingAvailableError.value = err.message;
     } else {
       throw err;
     }
@@ -298,6 +311,8 @@ async function loadGroupData(name: string | undefined = undefined) {
     form.value.members = group.members; // .map((m) => m.username);
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
+      loadingGroupError.value = err.message;
+    } else if (err instanceof AxiosError) {
       loadingGroupError.value = err.message;
     } else {
       throw err;

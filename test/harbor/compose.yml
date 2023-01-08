@@ -1,0 +1,286 @@
+version: '2.3'
+services:
+  openldap:
+    image: osixia/openldap
+    container_name: harbor-ldap
+    restart: always
+    # ports:
+    #   - 389:389
+    #   - 636:636
+    networks:
+      - harbor
+    environment:
+      LDAP_ORGANISATION: Example Inc.
+      LDAP_DOMAIN: example.org
+      LDAP_BASE_DN: dc=example,dc=org
+
+      LDAP_ADMIN_PASSWORD: admin
+      LDAP_CONFIG_PASSWORD: config
+
+      LDAP_READONLY_USER: "true"
+      LDAP_READONLY_USER_USERNAME: readonly
+      LDAP_READONLY_USER_PASSWORD: readonly
+
+      LDAP_TLS: "false"
+      LDAP_RFC2307BIS_SCHEMA: "true"
+    logging:
+      # disable logging
+      driver: none
+
+  # log:
+  #   image: goharbor/harbor-log:v2.6.1
+  #   container_name: harbor-log
+  #   restart: always
+  #   cap_drop:
+  #     - ALL
+  #   cap_add:
+  #     - CHOWN
+  #     - DAC_OVERRIDE
+  #     - SETGID
+  #     - SETUID
+  #   volumes:
+  #     - /var/log/harbor/:/var/log/docker/:z
+  #     - type: bind
+  #       source: ./common/config/log/logrotate.conf
+  #       target: /etc/logrotate.d/logrotate.conf
+  #     - type: bind
+  #       source: ./common/config/log/rsyslog_docker.conf
+  #       target: /etc/rsyslog.d/rsyslog_docker.conf
+  #   ports:
+  #     - 127.0.0.1:1514:10514
+  #   networks:
+  #     - harbor
+  registry:
+    image: goharbor/registry-photon:v2.6.1
+    container_name: registry
+    restart: always
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    volumes:
+      - ./registry:/storage:z
+      - ./common/config/registry/:/etc/registry/:z
+      - type: bind
+        source: ./secret/registry/root.crt
+        target: /etc/registry/root.crt
+      - type: bind
+        source: ./common/config/shared/trust-certificates
+        target: /harbor_cust_cert
+    networks:
+      - harbor
+    # depends_on:
+    #   - log
+    # logging:
+    #   driver: "syslog"
+    #   options:
+    #     syslog-address: "tcp://localhost:1514"
+    #     tag: "registry"
+  registryctl:
+    image: goharbor/harbor-registryctl:v2.6.1
+    container_name: registryctl
+    env_file:
+      - ./common/config/registryctl/env
+    restart: always
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    volumes:
+      - ./registry:/storage:z
+      - ./common/config/registry/:/etc/registry/:z
+      - type: bind
+        source: ./common/config/registryctl/config.yml
+        target: /etc/registryctl/config.yml
+      - type: bind
+        source: ./common/config/shared/trust-certificates
+        target: /harbor_cust_cert
+    networks:
+      - harbor
+    # depends_on:
+    #   - log
+    # logging:
+    #   driver: "syslog"
+    #   options:
+    #     syslog-address: "tcp://localhost:1514"
+    #     tag: "registryctl"
+  postgresql:
+    image: goharbor/harbor-db:v2.6.1
+    container_name: harbor-db
+    restart: always
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+    # volumes:
+    #   - ./database:/var/lib/postgresql/data
+    networks:
+      harbor:
+    env_file:
+      - ./common/config/db/env
+    # depends_on:
+    #   - log
+    # logging:
+    #   driver: "syslog"
+    #   options:
+    #     syslog-address: "tcp://localhost:1514"
+    #     tag: "postgresql"
+    shm_size: '1gb'
+  core:
+    image: goharbor/harbor-core:v2.6.1
+    container_name: harbor-core
+    env_file:
+      - ./common/config/core/env
+    restart: always
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+    # ports:
+    #   - 80:8080
+    volumes:
+      - ./:/etc/core/ca/
+      - ./:/data/
+      - ./common/config/core/certificates/:/etc/core/certificates/
+      - type: bind
+        source: ./common/config/core/app.conf
+        target: /etc/core/app.conf
+      - type: bind
+        source: ./secret/core/private_key.pem
+        target: /etc/core/private_key.pem
+      - type: bind
+        source: ./secret/keys/secretkey
+        target: /etc/core/key
+      - type: bind
+        source: ./common/config/shared/trust-certificates
+        target: /harbor_cust_cert
+    networks:
+      harbor:
+    depends_on:
+      # - log
+      # - registry
+      - redis
+      - postgresql
+    # logging:
+    #   driver: "syslog"
+    #   options:
+    #     syslog-address: "tcp://localhost:1514"
+    #     tag: "core"
+  portal:
+    image: goharbor/harbor-portal:v2.6.1
+    container_name: harbor-portal
+    restart: always
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+    volumes:
+      - type: bind
+        source: ./common/config/portal/nginx.conf
+        target: /etc/nginx/nginx.conf
+    networks:
+      - harbor
+  #   depends_on:
+  #     - log
+  #   logging:
+  #     driver: "syslog"
+  #     options:
+  #       syslog-address: "tcp://localhost:1514"
+  #       tag: "portal"
+
+  jobservice:
+    image: goharbor/harbor-jobservice:v2.6.1
+    container_name: harbor-jobservice
+    env_file:
+      - ./common/config/jobservice/env
+    restart: always
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    volumes:
+      - ./job_logs:/var/log/jobs:z
+      - ./scandata_exports:/var/scandata_exports:z
+      - type: bind
+        source: ./common/config/jobservice/config.yml
+        target: /etc/jobservice/config.yml
+      - type: bind
+        source: ./common/config/shared/trust-certificates
+        target: /harbor_cust_cert
+    networks:
+      - harbor
+    depends_on:
+      - core
+    # logging:
+    #   driver: "syslog"
+    #   options:
+    #     syslog-address: "tcp://localhost:1514"
+    #     tag: "jobservice"
+  redis:
+    image: goharbor/redis-photon:v2.6.1
+    container_name: redis
+    restart: always
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    # volumes:
+    #   - ./redis:/var/lib/redis
+    networks:
+      harbor:
+    # depends_on:
+    #   - log
+    # logging:
+    #   driver: "syslog"
+    #   options:
+    #     syslog-address: "tcp://localhost:1514"
+    #     tag: "redis"
+  proxy:
+    image: goharbor/nginx-photon:v2.6.1
+    container_name: nginx
+    restart: always
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+    volumes:
+      - ./common/config/nginx:/etc/nginx
+      - type: bind
+        source: ./common/config/shared/trust-certificates
+        target: /harbor_cust_cert
+    networks:
+      - harbor
+    ports:
+      - 80:8080
+    depends_on:
+    #   - registry
+      - openldap
+      - core
+      - portal
+      # - log
+    # logging:
+    #   driver: "syslog"
+    #   options:
+    #     syslog-address: "tcp://localhost:1514"
+    #     tag: "proxy"
+networks:
+  harbor:
+    external: false

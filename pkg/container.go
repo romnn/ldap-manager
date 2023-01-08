@@ -21,6 +21,7 @@ var (
 type ContainerOptions struct {
 	ldapconfig.Config
 	ImageTag string
+	Networks []string
 }
 
 // Container holds the LDAP container
@@ -36,10 +37,14 @@ func (c *Container) Terminate(ctx context.Context) {
 	}
 }
 
+const (
+	OpenLDAPPort = 389
+)
+
 // StartOpenLDAP starts the OpenLDAP container
 func StartOpenLDAP(ctx context.Context, options ContainerOptions) (Container, error) {
 	var container Container
-	port, err := nat.NewPort("", "389")
+	port, err := nat.NewPort("", strconv.Itoa(OpenLDAPPort))
 	if err != nil {
 		return container, fmt.Errorf("failed to build port: %v", err)
 	}
@@ -66,6 +71,7 @@ func StartOpenLDAP(ctx context.Context, options ContainerOptions) (Container, er
 	req := testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			Image:        fmt.Sprintf("osixia/openldap:%s", imageTag),
+			Networks:     options.Networks,
 			Env:          env,
 			ExposedPorts: []string{string(port)},
 			Cmd: []string{

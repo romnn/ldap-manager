@@ -640,6 +640,8 @@ github.com/romnn/go-recursive-sort v0.0.5 h1:5v6vm2PK4uxg+apvRDuHINpo2/HpUllgab+
 github.com/romnn/go-recursive-sort v0.0.5/go.mod h1:bZjxs7A91RPdQKqy4N78Rr9n6Ndzj7yTAGn4JnMy0bE=
 github.com/romnn/go-service v0.0.15 h1:zxReWTMQ0LbcW4nSDYhQ7kMLTIa4oof8XfRx7ZTPtX8=
 github.com/romnn/go-service v0.0.15/go.mod h1:loJieS/+NgD1cg11I0s8y8h+06E5GTAiyGHVh+RrF2Q=
+github.com/rs/xid v1.4.0 h1:qd7wPTDkN6KQx2VmMBLrpHkiyQwgFXRnkOLacUiaSNY=
+github.com/rs/xid v1.4.0/go.mod h1:trrq9SKmegXys3aeAKXMUTdJsYXVwGY3RLcfgqegfbg=
 github.com/russross/blackfriday/v2 v2.0.1/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/russross/blackfriday/v2 v2.1.0 h1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf35Ld67mk=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=

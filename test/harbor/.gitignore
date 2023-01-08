@@ -1,0 +1,7 @@
+common
+registry
+secret
+database
+job_logs
+scandata_exports
+redis

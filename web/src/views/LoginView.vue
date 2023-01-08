@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { GatewayError } from "../constants";
+import { AxiosError } from "axios";
 import type { Login } from "../stores/auth";
 
 import { useAuthStore } from "../stores/auth";
@@ -35,6 +36,8 @@ async function onSubmit() {
     });
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
+      error.value = err.message;
+    } else if (err instanceof AxiosError) {
       error.value = err.message;
     } else {
       throw err;

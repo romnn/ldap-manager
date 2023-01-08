@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed, onMounted } from "vue";
 import { GatewayError } from "../constants";
+import { AxiosError } from "axios";
 import * as EmailValidator from "email-validator";
 import {
   User,
@@ -190,6 +191,8 @@ async function deleteAccount(username: string) {
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       submissionError.value = err.message;
+    } else if (err instanceof AxiosError) {
+      submissionError.value = err.message;
     } else {
       throw err;
     }
@@ -214,6 +217,8 @@ async function createAccount() {
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       submissionError.value = err.message;
+    } else if (err instanceof AxiosError) {
+      submissionError.value = err.message;
     } else {
       throw err;
     }
@@ -236,6 +241,8 @@ async function removeFromGroup(username: string, group: string) {
     // add group again
     userGroupNames.value.push(group);
     if (err instanceof GatewayError) {
+      groupMemberError.value = err.message;
+    } else if (err instanceof AxiosError) {
       groupMemberError.value = err.message;
     } else {
       throw err;
@@ -266,6 +273,8 @@ async function addToGroup(username: string, group: string) {
       (g: string) => g !== group
     );
     if (err instanceof GatewayError) {
+      groupMemberError.value = err.message;
+    } else if (err instanceof AxiosError) {
       groupMemberError.value = err.message;
     } else {
       throw err;
@@ -304,6 +313,8 @@ async function updateAccount(username: string | undefined = undefined) {
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       submissionError.value = err.message;
+    } else if (err instanceof AxiosError) {
+      submissionError.value = err.message;
     } else {
       throw err;
     }
@@ -340,6 +351,8 @@ async function fetchAvailableGroups() {
     }
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
+      error.value = err.message;
+    } else if (err instanceof AxiosError) {
       error.value = err.message;
     } else {
       throw err;
@@ -381,6 +394,8 @@ async function loadAccountData(username: string | undefined = undefined) {
     userGroupNames.value = list.groups.map((group: Group) => group.name);
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
+      error.value = err.message;
+    } else if (err instanceof AxiosError) {
       error.value = err.message;
     } else {
       throw err;
@@ -669,7 +684,11 @@ onMounted(async () => {
                   <b-form-invalid-feedback :state="passwordsMatch">
                     Passwords do not match
                   </b-form-invalid-feedback>
-                  <b-form-valid-feedback :state="passwordsMatch && newUserRequest.password.length > 0">
+                  <b-form-valid-feedback
+                    :state="
+                      passwordsMatch && newUserRequest.password.length > 0
+                    "
+                  >
                     All good
                   </b-form-valid-feedback>
                 </b-form-group>
