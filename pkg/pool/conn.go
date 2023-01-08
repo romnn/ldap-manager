@@ -66,7 +66,7 @@ func (c *Conn) withRetry(operation func() error) error {
 				// mark connection as unuseable
 				c.unuseable = true
 			}
-			if connectionErr || tempErr {
+			if connectionErr || tempErr || c.conn.IsClosing() {
 				if conn, err := c.pool.NewConnection(); err == nil {
 					c.conn.Close()
 					log.Info("swapped connection")

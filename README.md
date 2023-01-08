@@ -107,9 +107,6 @@ inv compile-proto
 
 - v2
 
-  - fix the docker container
-  - add integration test with harbor
-  - refactor in general
   - refactor to use manual ldap search only where necessary
   - use an interface for the main functions of the manager in GRPC server
   - point out that the goal is user management only
@@ -128,6 +125,9 @@ inv compile-proto
     - verify?
 
 - done
+  - refactor in general
+  - add integration test with harbor
+  - fix the docker container
   - fix the frontend
   - binds should always open new connections
   - function that opens a new connection
