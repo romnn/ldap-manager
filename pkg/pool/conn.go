@@ -6,7 +6,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/go-ldap/ldap/v3"
-	// log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // Conn implements Client to override the Close() method
@@ -41,7 +41,7 @@ func (c *Conn) Close() {
 // withRetry performs an operation and retries on temporary failures
 func (c *Conn) withRetry(operation func() error) error {
 	b := backoff.WithMaxRetries(&backoff.ConstantBackOff{
-		Interval: 1 * time.Second,
+		Interval: 2 * time.Second,
 	}, 10)
 
 	err := backoff.Retry(func() error {
@@ -69,6 +69,7 @@ func (c *Conn) withRetry(operation func() error) error {
 			if connectionErr || tempErr {
 				if conn, err := c.pool.NewConnection(); err == nil {
 					c.conn.Close()
+					log.Info("swapped connection")
 					c.conn = conn
 					if _, err := c.SimpleBind(&ldap.SimpleBindRequest{
 						Username: c.bindUser,
@@ -112,6 +113,8 @@ func (c *Conn) SimpleBind(simpleBindRequest *ldap.SimpleBindRequest) (*ldap.Simp
 // Bind wraps the Bind LDAP client method
 func (c *Conn) Bind(username, password string) error {
 	c.needReset = true
+	c.bindUser = username
+	c.bindPassword = password
 	return c.withRetry(func() error {
 		return c.conn.Bind(username, password)
 	})
