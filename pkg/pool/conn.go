@@ -6,15 +6,17 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/go-ldap/ldap/v3"
-	log "github.com/sirupsen/logrus"
+	// log "github.com/sirupsen/logrus"
 )
 
 // Conn implements Client to override the Close() method
 type Conn struct {
-	conn      ldap.Client
-	pool      *channelPool
-	needReset bool
-	unuseable bool
+	conn         ldap.Client
+	pool         *channelPool
+	bindUser     string
+	bindPassword string
+	needReset    bool
+	unuseable    bool
 }
 
 // Start starts connection
@@ -68,13 +70,20 @@ func (c *Conn) withRetry(operation func() error) error {
 				// log.Warnf("conn: operation failed: %v", err)
 				// we could lazily swap the connection here:
 				// panic("lazy reconnect")
-				// if conn, err := c.pool.NewConnection(); err == nil {
-				// 	c.conn = conn
-				// }
+				if conn, err := c.pool.NewConnection(); err == nil {
+					c.conn = conn
+					if _, err := c.SimpleBind(&ldap.SimpleBindRequest{
+						Username: c.bindUser,
+						Password: c.bindPassword,
+						Controls: []ldap.Control{},
+					}); err != nil {
+						return err
+					}
+				}
 
 				// HOWEVER, if the connection was bound it will also just lead to errors
 				// so here its probably too late
-				log.Warnf("backoff from temporary failure: %v", err)
+				// log.Warnf("backoff from temporary failure: %v", err)
 				return err
 			}
 			return backoff.Permanent(err)
@@ -93,6 +102,8 @@ func (c *Conn) withRetry(operation func() error) error {
 // SimpleBind wraps the SimpleBind LDAP client method
 func (c *Conn) SimpleBind(simpleBindRequest *ldap.SimpleBindRequest) (*ldap.SimpleBindResult, error) {
 	c.needReset = true
+	c.bindUser = simpleBindRequest.Username
+	c.bindPassword = simpleBindRequest.Password
 	var result *ldap.SimpleBindResult
 	err := c.withRetry(func() error {
 		var err error

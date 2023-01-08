@@ -330,7 +330,6 @@ func (test *Test) startHarborProxyContainer(ctx context.Context) error {
 		return fmt.Errorf("failed to start waiter container: %v", err)
 	}
 	waitForHostnames := func() error {
-    // "--fail", 
 		ret, reader, err := waiter.Exec(ctx, []string{"curl", "-s", "http://core:8080"})
 		output, err := io.ReadAll(reader)
 		fmt.Printf("proxy health check return code: %d error: %v output: %s\n", ret, err, string(output))
