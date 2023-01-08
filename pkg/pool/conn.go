@@ -67,10 +67,8 @@ func (c *Conn) withRetry(operation func() error) error {
 				c.unuseable = true
 			}
 			if connectionErr || tempErr {
-				// log.Warnf("conn: operation failed: %v", err)
-				// we could lazily swap the connection here:
-				// panic("lazy reconnect")
 				if conn, err := c.pool.NewConnection(); err == nil {
+					c.conn.Close()
 					c.conn = conn
 					if _, err := c.SimpleBind(&ldap.SimpleBindRequest{
 						Username: c.bindUser,
@@ -79,11 +77,9 @@ func (c *Conn) withRetry(operation func() error) error {
 					}); err != nil {
 						return err
 					}
+					c.unuseable = false
 				}
 
-				// HOWEVER, if the connection was bound it will also just lead to errors
-				// so here its probably too late
-				// log.Warnf("backoff from temporary failure: %v", err)
 				return err
 			}
 			return backoff.Permanent(err)
