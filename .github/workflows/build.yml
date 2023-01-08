@@ -76,4 +76,4 @@ jobs:
           build-args: |
             version=${{ steps.query.outputs.stable_semver_version }}
           tags: |
-            romnn/film-borders-cli:latest
+            romnn/ldap-manager:latest
