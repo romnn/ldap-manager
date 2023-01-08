@@ -146,8 +146,11 @@ const (
 
 // Test wraps a pre-configured harbor and LDAP Manager setup
 type Test struct {
-	LMTest                pkg.Test
-	Client                http.Client
+	LMTest              pkg.Test
+	Client              http.Client
+	HarborAdminUsername string
+	HarborAdminPassword string
+
 	RedisContainer        testcontainers.Container
 	PostgresContainer     testcontainers.Container
 	HarborCoreContainer   testcontainers.Container
@@ -327,9 +330,8 @@ func (test *Test) startHarborProxyContainer(ctx context.Context) error {
 		return fmt.Errorf("failed to start waiter container: %v", err)
 	}
 	waitForHostnames := func() error {
-		// ret, reader, err := waiter.Exec(ctx, []string{"curl", "--fail", "-s", "http://core:8080"})
-		// "--fail", "-s",
-		ret, reader, err := waiter.Exec(ctx, []string{"curl", "-q", "http://core:8080"})
+    // "--fail", 
+		ret, reader, err := waiter.Exec(ctx, []string{"curl", "-s", "http://core:8080"})
 		output, err := io.ReadAll(reader)
 		fmt.Printf("proxy health check return code: %d error: %v output: %s\n", ret, err, string(output))
 		if err != nil {
@@ -461,6 +463,9 @@ func (test *Test) createNetwork(ctx context.Context) error {
 				NetworkRequest: request,
 			},
 		)
+		if err != nil {
+			fmt.Printf("failed to create network %s: %v\n", test.NetworkName, err)
+		}
 		return err
 	}
 	b := backoff.WithMaxRetries(&backoff.ConstantBackOff{
@@ -505,15 +510,20 @@ func (test *Test) Start(t *testing.T) *Test {
 	test.LMTest.Manager = pkg.NewLDAPManager(test.LMTest.Container.Config)
 	test.LMTest.Manager.DefaultAdminUsername = "ldapadmin"
 	test.LMTest.Manager.DefaultAdminPassword = "123456"
+
 	if err := test.LMTest.Manager.Connect(); err != nil {
 		t.Fatalf("failed to connect to OpenLDAP: %v", err)
 	}
+
 	return test
 }
 
 // Setup runs the setup
 func (test *Test) Setup(t *testing.T) *Test {
 	test.LMTest.Setup(t)
+	test.HarborAdminUsername = "admin"
+	test.HarborAdminPassword = "Harbor12345"
+
 	return test
 }
 
