@@ -1,20 +1,37 @@
 apiVersion: v1
 entries:
-  ldapmanager:
+  ldap-manager:
   - apiVersion: v2
-    appVersion: 0.0.26
-    created: "2021-02-02T23:25:18.982765936Z"
+    appVersion: 0.0.5
+    created: "2023-01-09T00:20:37.016733956Z"
     dependencies:
     - condition: openldap.enabled
       name: openldap
       repository: '@stable'
       version: '>=1.2.4'
     description: cloud-native LDAP management service with a web interface
-    digest: 1dff475197c0360a7508d11d12ffeb7673c6b8a6dffce15da69ae1c930b14813
+    digest: fc603b7f563b5fedd6d80411f24ff30318a2d6a6cca4ec40404af414ecec16d6
+    icon: https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Kubernetes_logo_without_workmark.svg/1280px-Kubernetes_logo_without_workmark.svg.png
+    name: ldap-manager
+    type: application
+    urls:
+    - https://romnn.github.io/ldap-manager/charts/ldap-manager-0.0.5.tgz
+    version: 0.0.5
+  ldapmanager:
+  - apiVersion: v2
+    appVersion: 0.0.26
+    created: "2023-01-09T00:20:37.017985661Z"
+    dependencies:
+    - condition: openldap.enabled
+      name: openldap
+      repository: '@stable'
+      version: '>=1.2.4'
+    description: cloud-native LDAP management service with a web interface
+    digest: 2e2e7bc3519ff2a823d34838e3f096d39323cdaddb8ac4aed073d6a07524df11
     icon: https://romnn.github.io/ldap-manager/icon/icon_lg.jpg
     name: ldapmanager
     type: application
     urls:
     - https://romnn.github.io/ldap-manager/charts/ldapmanager-0.0.26.tgz
     version: 0.0.26
-generated: "2021-02-02T23:25:18.980990319Z"
+generated: "2023-01-09T00:20:37.015261151Z"
