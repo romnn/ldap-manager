@@ -19,17 +19,17 @@ jobs:
 
       - name: Package helm chart
         run: |
-          touch ./public/.nojekyll
+          touch ./website/.nojekyll
           deployment/helm/charts/ldapmanager/add-repos.sh
-          helm package --dependency-update --version=${{ steps.query.outputs.stable_semver_version }} --destination ./public/charts deployment/helm/charts/ldapmanager
-          helm repo index --url https://${{ env.repo_user }}.github.io/${{ env.repo_name }}/charts ./public/charts
+          helm package --dependency-update --version=${{ steps.query.outputs.stable_semver_version }} --destination ./website/charts deployment/helm/charts/ldapmanager
+          helm repo index --url https://${{ env.repo_user }}.github.io/${{ env.repo_name }}/charts ./website/charts
 
       - name: Deploy to pages
         uses: JamesIves/github-pages-deploy-action@3.7.1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
-          FOLDER: public
+          FOLDER: website
           CLEAN: true
 
   publish-binary:
