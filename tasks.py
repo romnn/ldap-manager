@@ -139,9 +139,7 @@ def compile_ts_protos(c):
             f"compiling {service.relative_to(ROOT_DIR)} "
             + f"to {out_dir.relative_to(ROOT_DIR)}"
         )
-        plugin_path = (
-            package_dir / "node_modules" / ".bin" / "protoc-gen-ts_proto"
-        )
+        plugin_path = package_dir / "node_modules" / ".bin" / "protoc-gen-ts_proto"
         cmd = [
             "protoc",
             f"--plugin={plugin_path}",
@@ -171,25 +169,6 @@ def compile_ts_protos(c):
 def compile_protos(c):
     """Compiles protos"""
     pass
-
-
-# @task
-# def cc(c):
-#     """Build the project for all architectures"""
-
-#     output = "{{.Dir}}-{{.OS}}-{{.Arch}}"
-#     TRAVIS_TAG = os.environ.get("TRAVIS_TAG")
-#     BINARY = os.environ.get("BINARY")
-#     if TRAVIS_TAG and BINARY:
-#         output = "%s-%s-{{.OS}}-{{.Arch}}" % (BINARY, TRAVIS_TAG)
-
-#     # FIXME: compiling github.com/docker/docker/pkg/system
-# on windows fails, so windows is disabled for now
-#     c.run(
-#         'gox -os="linux darwin" -arch="amd64" -output="build/%s"'
-# + '-ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose %s'
-#         % (output, CMD_PKG)
-#     )
 
 
 @task
