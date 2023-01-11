@@ -84,6 +84,7 @@ jobs:
       - name: Test
         env:
           RICHGO_FORCE_COLOR: "1"
+        # -failfast
         run: >
           richgo test
           -race
@@ -92,7 +93,6 @@ jobs:
           -coverprofile=coverage.txt
           -covermode=atomic
           ./...
-          # -failfast
 
       - uses: codecov/codecov-action@v1
         if: ${{ matrix.go-version == '1.19.x' }}

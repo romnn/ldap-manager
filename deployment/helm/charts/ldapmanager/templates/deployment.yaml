@@ -35,59 +35,83 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 8080
             - name: grpc
               containerPort: 9090
+
           readinessProbe:
-            exec:
-              command: ["/usr/bin/grpc_health_probe", "-addr=:9090"]
-              # as of now we can only check the health of the grpc service because the distroless image has neither a shell nor curl
-              # command: ["/bin/sh", "-c", "/usr/bin/grpc_health_probe -addr=:9090 && curl --silent --show-error --fail http://localhost/healthz"]
+            httpGet:
+              path: /healthz
+              port: http
+            grpc:
+              port: grpc
             initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+
           livenessProbe:
-            exec:
-              command: ["/usr/bin/grpc_health_probe", "-addr=:9090"]
-              # as of now we can only check the health of the grpc service because the distroless image has neither a shell nor curl
-              # command: ["/bin/sh", "-c", "/usr/bin/grpc_health_probe -addr=:9090 && curl --silent --show-error --fail http://localhost/healthz"]
-            initialDelaySeconds: 10
+            httpGet:
+              path: /healthz
+              port: http
+            grpc:
+              port: grpc
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+
+          # readinessProbe:
+          #   exec:
+          #     command: ["/usr/bin/grpc_health_probe", "-addr=:9090"]
+          #     # as of now we can only check the health of the grpc service
+          #     # because the distroless image has neither a shell nor curl
+          #     # command: ["/bin/sh", "-c", "/usr/bin/grpc_health_probe -addr=:9090 && 
+          #     # curl --silent --show-error --fail http://localhost/healthz"]
+          #   initialDelaySeconds: 5
+          # livenessProbe:
+          #   exec:
+          #     command: ["/usr/bin/grpc_health_probe", "-addr=:9090"]
+          #     # as of now we can only check the health of the grpc service
+          #     # because the distroless image has neither a shell nor curl
+          #     # command: ["/bin/sh", "-c", "/usr/bin/grpc_health_probe -addr=:9090 
+          #     # && curl --silent --show-error --fail http://localhost/healthz"]
+          #   initialDelaySeconds: 10
           # TODO: Create secrets for all passwords
           env:
           {{- if .Values.log }}
           - name: LOG
             value: {{ .Values.log | quote }}
           {{- end }}
-          {{- if .Values.static.enabled }}
-          - name: STATIC
-            value: {{ .Values.static.enabled | quote }}
-          {{- end }}
-          {{- if .Values.static.root }}
+          - name: NO_STATIC
+            value: {{ not (default true (.Values.static).enabled) | quote }}
+          {{- if (.Values.static).root }}
           - name: STATIC_ROOT
             value: {{ .Values.static.root | quote }}
           {{- end }}
+          
           # JWT auth
-          {{- if .Values.auth.privateKey }}
+          {{- if (.Values.auth).privateKey }}
           - name: PRIVATE_KEY
             value: {{ .Values.auth.privateKey | quote }}
           {{- end }}
-          {{- if .Values.auth.jwksJSON }}
+          {{- if (.Values.auth).jwksJSON }}
           - name: JWKS_JSON
-            value: {{ .Values.auth.jwksJSON | quote }}
+            value: {{ (.Values.auth).jwksJSON | quote }}
           {{- end }}
-          {{- if .Values.auth.privateKeyFile }}
+          {{- if (.Values.auth).privateKeyFile }}
           - name: PRIVATE_KEY_FILE
             value: {{ .Values.auth.privateKeyFile | quote }}
           {{- end }}
-          {{- if .Values.auth.jwksJSONFile }}
+          {{- if (.Values.auth).jwksJSONFile }}
           - name: JWKS_JSON_FILE
             value: {{ .Values.auth.jwksJSONFile | quote }}
           {{- end }}
-          {{- if .Values.auth.generateKeys }}
+          {{- if (.Values.auth).generateKeys }}
           - name: GENERATE
             value: {{ .Values.auth.generateKeys | quote }}
           {{- end }}
-          {{- if .Values.auth.expirationSeconds }}
-          - name: EXPIRATION_SEC
-            value: {{ .Values.auth.expirationSeconds | quote }}
+          {{- if .Values.auth.expirationTime }}
+          - name: EXPIRATION_TIME
+            value: {{ .Values.auth.expirationTime | quote }}
           {{- end }}
           {{- if .Values.auth.issuer }}
           - name: ISSUER
@@ -97,53 +121,54 @@ spec:
           - name: AUDIENCE
             value: {{ .Values.auth.audience | quote }}
           {{- end }}
-          # OPENLDAP config
+
+          # LDAP server config
           {{- if .Values.ldap.host }}
-          - name: OPENLDAP_HOST
+          - name: LDAP_HOST
             value: {{ .Values.ldap.host | quote }}
           {{- end }}
           {{- if .Values.ldap.port }}
-          - name: OPENLDAP_PORT
+          - name: LDAP_PORT
             value: {{ .Values.ldap.port | quote }}
           {{- end }}
           {{- if .Values.ldap.protocol }}
-          - name: OPENLDAP_PROTOCOL
+          - name: LDAP_PROTOCOL
             value: {{ .Values.ldap.protocol | quote }}
           {{- end }}
           {{- if .Values.ldap.adminPassword }}
-          - name: OPENLDAP_ADMIN_PASSWORD
+          - name: LDAP_ADMIN_PASSWORD
             value: {{ .Values.ldap.adminPassword | quote }}
           {{- end }}
           {{- if .Values.ldap.configPassword }}
           - name: OPENLDAP_CONFIG_PASSWORD
             value: {{ .Values.ldap.configPassword | quote }}
           {{- end }}
-          {{- if .Values.ldap.readonly.user }}
-          - name: OPENLDAP_READONLY_USER
-            value: {{ .Values.ldap.readonly.user | quote }}
+          {{- if .Values.ldap.readonly.username }}
+          - name: LDAP_READONLY_USER
+            value: {{ .Values.ldap.readonly.username | quote }}
           {{- end }}
           {{- if .Values.ldap.readonly.password }}
-          - name: OPENLDAP_READONLY_PASSWORD
+          - name: LDAP_READONLY_PASSWORD
             value: {{ .Values.ldap.readonly.password | quote }}
           {{- end }}
           {{- if .Values.ldap.organization }}
-          - name: OPENLDAP_ORGANIZATION
+          - name: LDAP_ORGANIZATION
             value: {{ .Values.ldap.organization | quote }}
           {{- end }}
           {{- if .Values.ldap.domain }}
-          - name: OPENLDAP_DOMAIN
+          - name: LDAP_DOMAIN
             value: {{ .Values.ldap.domain | quote }}
           {{- end }}
           {{- if .Values.ldap.baseDN }}
-          - name: OPENLDAP_BASE_DN
+          - name: LDAP_BASE_DN
             value: {{ .Values.ldap.baseDN | quote }}
           {{- end }}
           {{- if .Values.ldap.tls }}
-          - name: OPENLDAP_TLS
+          - name: LDAP_TLS
             value: {{ .Values.ldap.tls | quote }}
           {{- end }}
           {{- if .Values.ldap.useRFC2307BIS }}
-          - name: OPENLDAP_USE_RFC2307BIS
+          - name: LDAP_USE_RFC2307BIS
             value: {{ .Values.ldap.useRFC2307BIS | quote }}
           {{- end }}
 

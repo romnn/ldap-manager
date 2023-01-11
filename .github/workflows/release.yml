@@ -14,15 +14,14 @@ jobs:
         run: helm lint deployment/helm/charts/ldapmanager/
 
       - run: |
-          echo "repo_user=$(echo ${GITHUB_REPOSITORY} | awk -F / '{print $1}' )" >> $GITHUB_ENV
-          echo "repo_name=$(echo ${GITHUB_REPOSITORY} | awk -F / '{print $2}' )" >> $GITHUB_ENV
+          echo "REPO_USER=$(echo ${GITHUB_REPOSITORY} | awk -F / '{print $1}' )" >> $GITHUB_ENV
+          echo "REPO_NAME=$(echo ${GITHUB_REPOSITORY} | awk -F / '{print $2}' )" >> $GITHUB_ENV
 
       - name: Package helm chart
         run: |
           touch ./website/.nojekyll
-          deployment/helm/charts/ldapmanager/add-repos.sh
           helm package --dependency-update --version=${{ steps.query.outputs.stable_semver_version }} --destination ./website/charts deployment/helm/charts/ldapmanager
-          helm repo index --url https://${{ env.repo_user }}.github.io/${{ env.repo_name }}/charts ./website/charts
+          helm repo index --url https://${{ env.REPO_USER }}.github.io/${{ env.REPO_NAME }}/charts ./website/charts
 
       - name: Deploy to pages
         uses: JamesIves/github-pages-deploy-action@3.7.1
@@ -55,7 +54,7 @@ jobs:
           go-version: 1.19.x
 
       - id: query
-        uses: romnnn/query-git-action@master
+        uses: romnn/query-git-action@master
 
       - name: Set binary name
         id: bin_name

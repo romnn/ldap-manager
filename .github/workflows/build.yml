@@ -2,6 +2,32 @@ on: [push, pull_request]
 
 name: build
 jobs:
+  publish-chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Lint helm chart
+        run: helm lint deployment/helm/charts/ldapmanager/
+
+      - run: |
+          echo "REPO_USER=$(echo ${GITHUB_REPOSITORY} | awk -F / '{print $1}' )" >> $GITHUB_ENV
+          echo "REPO_NAME=$(echo ${GITHUB_REPOSITORY} | awk -F / '{print $2}' )" >> $GITHUB_ENV
+
+      - name: Package helm chart
+        run: |
+          touch ./website/.nojekyll
+          helm package --dependency-update --version=${{ steps.query.outputs.stable_semver_version }} --destination ./website/charts deployment/helm/charts/ldapmanager
+          helm repo index --url https://${{ env.REPO_USER }}.github.io/${{ env.REPO_NAME }}/charts ./website/charts
+
+      - name: Deploy to pages
+        uses: JamesIves/github-pages-deploy-action@3.7.1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: website
+          CLEAN: true
+
   ldapmanager:
     runs-on: ubuntu-latest
     strategy:
