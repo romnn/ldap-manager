@@ -18,10 +18,18 @@ jobs:
           echo "REPO_NAME=$(echo ${GITHUB_REPOSITORY} | awk -F / '{print $2}' )" >> $GITHUB_ENV
 
       - name: Package helm chart
-        run: |
-          touch ./website/.nojekyll
-          helm package --dependency-update --version=${{ steps.query.outputs.stable_semver_version }} --destination ./website/charts deployment/helm/charts/ldapmanager
-          helm repo index --url https://${{ env.REPO_USER }}.github.io/${{ env.REPO_NAME }}/charts ./website/charts
+        run: >
+          helm package
+          --dependency-update
+          --app-version=${{ steps.query.outputs.stable_semver_version }}
+          --version=${{ steps.query.outputs.stable_semver_version }}
+          --destination ./website/charts deployment/helm/charts/ldapmanager
+
+      - name: Package helm chart
+        run: >
+          helm repo index
+          --url https://${{ env.REPO_USER }}.github.io/${{ env.REPO_NAME }}/charts
+          ./website/charts
 
       - name: Deploy to pages
         uses: JamesIves/github-pages-deploy-action@3.7.1
