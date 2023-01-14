@@ -38,7 +38,7 @@ COPY --from=GO_BUILD --chown=nonroot:nonroot /app/app /app
 COPY --from=NODE_BUILD --chown=nonroot:nonroot /app/web/dist /web/dist
 
 ENV STATIC_ROOT /web/dist
-ENV GRPC_PORT 9090
+ENV HTTP_PORT 8080
 ENV GRPC_PORT 9090
 
 EXPOSE 8080

@@ -31,13 +31,21 @@ services:
       context: ../
       dockerfile: Dockerfile
     ports:
-      - 80:80
-      # uncomment if you want to expose the GRPC endpoint
-      # - 9090:9090
+      # exposes the HTTP endpoint
+      - 80:8080
+      # exposes the GRPC endpoint
+      - 9090:9090
     depends_on:
       - openldap
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     environment:
-      HTTP_PORT: 80
+      HTTP_PORT: 8080
+      GRPC_PORT: 9090
 
       LDAP_HOST: "openldap"
       LDAP_PORT: 389
@@ -66,7 +74,7 @@ services:
       dockerfile: ./deployment/screenshot/Dockerfile
     environment:
       OUTPUT_DIR: "/output"
-      LDAP_MANAGER_HOST: "ldapmanager"
+      LDAP_MANAGER_HOST: "http://ldapmanager:8080"
       ADMIN_USERNAME: "ldapadmin"
       ADMIN_PASSWORD: "changeme"
     depends_on:

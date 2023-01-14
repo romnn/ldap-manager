@@ -155,6 +155,9 @@ func serve(cliCtx *cli.Context) error {
 		ctx, manager, authenticator,
 	)
 
+	// if setup succeeds, we are serving
+	grpcService.SetHealthy(true)
+
 	go func() {
 		log.Infof("grpc listening on: %v", grpcListener.Addr())
 		serveErrChan <- grpcService.Serve(grpcListener)
@@ -193,6 +196,8 @@ func serve(cliCtx *cli.Context) error {
 			)
 			return
 		}
+
+		httpService.SetHealthy(true)
 		log.Infof("http listening on: %v", httpListener.Addr())
 		serveErrChan <- httpService.Serve(httpListener)
 		log.Infof("shutdown http service")
@@ -224,6 +229,8 @@ func serve(cliCtx *cli.Context) error {
 	var serveErr error
 	for i := 0; i < 2; i++ {
 		err := <-serveErrChan
+		grpcService.SetHealthy(false)
+		// todo: shutdown anyways?
 		if err != nil && errors.Is(err, context.Canceled) {
 			serveErr = err
 			go once.Do(shutdown)

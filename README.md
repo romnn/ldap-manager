@@ -41,6 +41,11 @@ For a list of options, run with `--help`. If you want to deploy OpenLDAP with LD
 
 ### Deployment
 
+```bash
+helm repo add fluktuid https://fluktuid.github.io/helm-charts/
+helm dependency build deployment/helm/charts/ldapmanager/
+```
+
 ##### docker-compose
 
 ```bash
@@ -101,6 +106,13 @@ To compile the protos, you can use the provided script:
 
 ```bash
 inv compile-proto
+```
+
+#### Generate screenshots
+```bash
+cd deployment/screenshot
+yarn install --dev
+yarn run screenshot
 ```
 
 #### TODO

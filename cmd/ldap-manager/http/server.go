@@ -12,6 +12,7 @@ import (
 	"github.com/romnn/go-service/pkg/http/health"
 	gw "github.com/romnn/ldap-manager/pkg/grpc/gen"
 	log "github.com/sirupsen/logrus"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	"google.golang.org/grpc"
 )
@@ -27,7 +28,23 @@ type LDAPManagerService struct {
 
 // Shutdown gracefully stops the service
 func (s *LDAPManagerService) Shutdown() {
+	s.SetHealthy(false)
 	s.server.Shutdown(context.Background())
+}
+
+// SetHealthy sets the health state for the service
+func (s *LDAPManagerService) SetHealthy(healthy bool) {
+	if s.health == nil {
+		return
+	}
+
+	// assumes SetServingStatus is thread-safe
+	if healthy {
+		s.health.SetServingStatus(healthpb.HealthCheckResponse_SERVING)
+	} else {
+		s.health.SetServingStatus(healthpb.HealthCheckResponse_NOT_SERVING)
+	}
+
 }
 
 // Config defines configuration options for the HTTP service

@@ -24,8 +24,8 @@ appVersion: 0.0.0
 
 icon: https://romnn.github.io/ldap-manager/icon/icon_lg.jpg
 
-# dependencies:
-#   - name: openldap
-#     version: ">=1.2.4"
-#     repository: "@stable"
-#     condition: openldap.enabled
+dependencies:
+  - name: openldap
+    version: "0.1.1"
+    repository: https://fluktuid.github.io/helm-charts/
+    condition: openldap.enabled

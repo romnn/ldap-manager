@@ -16,6 +16,9 @@ import (
 	"google.golang.org/grpc/health"
 )
 
+// ServiceName is the name of the service used for health checking
+const ServiceName = "ldap-manager"
+
 // LDAPManagerService implements the GRPC service
 type LDAPManagerService struct {
 	pb.UnimplementedLDAPManagerServer
@@ -28,8 +31,23 @@ type LDAPManagerService struct {
 	registry reflect.Registry
 }
 
+// SetHealthy sets the health state for the service
+func (s *LDAPManagerService) SetHealthy(healthy bool) {
+	if s.health == nil {
+		return
+	}
+
+	// assumes SetServingStatus is thread-safe
+	if healthy {
+		s.health.SetServingStatus(ServiceName, healthpb.HealthCheckResponse_SERVING)
+	} else {
+		s.health.SetServingStatus(ServiceName, healthpb.HealthCheckResponse_NOT_SERVING)
+	}
+}
+
 // Shutdown gracefully stops the service
 func (s *LDAPManagerService) Shutdown() {
+	s.health.Shutdown()
 	s.server.GracefulStop()
 }
 

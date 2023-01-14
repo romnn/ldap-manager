@@ -8,5 +8,6 @@ website/charts
 **/dist
 **/node_modules
 **/debug.yaml
+**/debug.yml
 **/index.yaml
 /ldap-manager

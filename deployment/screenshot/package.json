@@ -5,6 +5,9 @@
   "main": "screenshot.js",
   "author": "romnn <contact@romnn.com>",
   "license": "ISC",
+  "scripts": {
+    "screenshot": "ts-node ./screenshot.ts"
+  },
   "dependencies": {
     "@grpc/grpc-js": "^1.7.3",
     "axios": "^1.2.0",

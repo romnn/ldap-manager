@@ -1,6 +1,6 @@
 dependencies:
 - name: openldap
-  repository: https://kubernetes-charts.storage.googleapis.com/
-  version: 1.2.5
-digest: sha256:4240520534b6bde555ce0d06e034db523852ffe654924c7a57c49acd57a74254
-generated: "2020-08-26T00:59:36.341021213+02:00"
+  repository: https://fluktuid.github.io/helm-charts/
+  version: 0.1.1
+digest: sha256:96ddbf47ba75a142230b5115bd8ed9ac73f7529169c3c8d6fb784d73287699a5
+generated: "2023-01-13T13:34:41.382004603+01:00"

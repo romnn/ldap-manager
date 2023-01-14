@@ -35,29 +35,29 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: 8080
+              containerPort: {{ .Values.service.httpPort }}
             - name: grpc
-              containerPort: 9090
+              containerPort: {{ .Values.service.grpcPort }}
 
-          readinessProbe:
-            httpGet:
-              path: /healthz
-              port: http
-            grpc:
-              port: grpc
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            failureThreshold: 3
+          # readinessProbe:
+          #   httpGet:
+          #     path: /healthz
+          #     port: {{ .Values.service.httpPort }}
+          #   # grpc:
+          #   #   port: {{ .Values.service.grpcPort }}
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 10
+          #   failureThreshold: 3
 
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: http
-            grpc:
-              port: grpc
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            failureThreshold: 3
+          # livenessProbe:
+          #   httpGet:
+          #     path: /healthz
+          #     port: {{ .Values.service.httpPort }}
+          #   # grpc:
+          #   #   port: {{ .Values.service.grpcPort }}
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 10
+          #   failureThreshold: 3
 
           # readinessProbe:
           #   exec:
@@ -77,6 +77,11 @@ spec:
           #   initialDelaySeconds: 10
           # TODO: Create secrets for all passwords
           env:
+          # ports
+          - name: HTTP_PORT
+            value: {{ .Values.service.httpPort | quote }}
+          - name: GRPC_PORT
+            value: {{ .Values.service.grpcPort | quote }}
           {{- if .Values.log }}
           - name: LOG
             value: {{ .Values.log | quote }}

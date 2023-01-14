@@ -2,6 +2,97 @@ global: {}
   # default to the appVersion of the chart instead
   #   appVersion: ""
 
+openldap:
+  enabled: true
+  adminPassword: admin
+  configPassword: config
+  env:
+    LDAP_ORGANISATION: "Example Inc."
+    LDAP_DOMAIN: "example.org"
+    # LDAP_BACKEND: "hdb"
+    # LDAP_TLS: "true"
+    LDAP_TLS: "false"
+    LDAP_TLS_ENFORCE: "false"
+    LDAP_RFC2307BIS_SCHEMA: "true"
+    # LDAP_REMOVE_CONFIG_AFTER_SETUP: "true"
+    # LDAP_REMOVE_CONFIG_AFTER_SETUP: "false"
+    LDAP_BASE_DN: dc=example,dc=org
+    LDAP_READONLY_USER: "true"
+    LDAP_READONLY_USER_USERNAME: readonly
+    LDAP_READONLY_USER_PASSWORD: readonly
+
+    LDAP_ADMIN_PASSWORD: admin
+    LDAP_CONFIG_PASSWORD: config
+
+  tls:
+    enabled: false
+
+  persistence:
+    enabled: false
+    # existingClaim: ""
+
+  logLevel: info
+
+# This persistence will patch the openldap default persistence's PVC
+# if you use your own existingClaim in the openldap config, make sure to disable persistence here
+persistence:
+  enabled: false
+  claimName: "ldapmanager-openldap-pvc" 
+  resourcePolicy: "keep"
+
+ldap:
+  host: ldapmanager-openldap
+  port: 389
+  protocol: "ldap"
+  adminPassword: admin
+  configPassword: config
+  readonly:
+    username: readonly
+    password: readonly
+  organization: Example Inc.
+  domain: example.org
+  baseDN: dc=example,dc=org
+  tls: "false"
+  useRFC2307BIS: "true"
+
+log: "info"
+
+# static is enabled by default
+static: {}
+  # enabled: "true"
+  # root: "./frontend/dist"
+
+auth:
+  # privateKey: ""
+  # jwksJSON: ""
+  # privateKeyFile: ""
+  # jwksJSONFile: ""
+  generateKeys: true
+  expirationTime: "24h"
+  issuer: "issuer@example.org"
+  audience: "example.org"
+
+groupsOU: "groups"
+usersOU: "users"
+# if groupsDN left empty, will be generated from groupsOU and baseDN (e.g.ou=groups,dc=example,dc=org)
+groupsDN: "" 
+# if usersDN left empty, will be generated from usersOU and baseDN (e.g.ou=users,dc=example,dc=org)
+usersDN: "" 
+groupMembershipAttribute: "uniqueMember"
+groupMembershipUsesUID: false
+accountAttribute: "uid"
+groupAttribute: "gid"
+defaultUserGroup: "users"
+defaultAdminGroup: "admins"
+defaultLoginShell: "/bin/bash"
+defaultAdminUsername: "admin"
+defaultAdminPassword: "admin"
+forceCreateAdmin: false
+
+# additionalEnv:
+#  - name: "KEY"
+#   value: "VALUE"
+
 replicaCount: 1
 
 image:
@@ -38,42 +129,28 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  httpPort: 80
+  httpPort: 8080
   grpcPort: 9090
 
 ingress:
   enabled: true
-  annotations:
-    kubernetes.io/ingress.class: nginx
-    kubernetes.io/tls-acme: "true"
-    cert-manager.io/cluster-issuer: letsencrypt-staging
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+    # cert-manager.io/cluster-issuer: letsencrypt-staging
   hosts:
     - host: ldapmanager.example.org
       paths:
         - path: /
           pathType: ImplementationSpecific
-          # http port
-          servicePort: 80
+          # expose HTTP REST API
+          servicePort: 8080
+          # or: expose GRPC API
+          # servicePort: 9090
   # tls:
   #   - secretName: ldapmanager.example.org
   #     hosts:
-  #       - ldapmanager.example.org
-
-# ingress:
-#   enabled: true
-#   annotations: {}
-#     # kubernetes.io/ingress.class: nginx
-#     # kubernetes.io/tls-acme: "true"
-#   httpHosts:
-#     - host: ldapmanager.example.org
-#       paths: ["/"]
-#   grpcHosts: {}
-#   #   - host: ldapmanager.example.org
-#   #     paths: ["/"]
-#   tls: []
-#   #  - secretName: chart-example-tls
-#   #    hosts:
-#   #      - chart-example.local
+  #       - um.romnn.com
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -99,81 +176,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-# todo: make openldap our own subchart
-openldap:
-  enabled: true
-  fullnameOverride: ldapmanager-openldap
-  adminPassword: admin
-  configPassword: config
-  env:
-    LDAP_ORGANISATION: Example Inc.
-    LDAP_DOMAIN: example.org
-    LDAP_BASE_DN: dc=example,dc=org
-    LDAP_READONLY_USER: "true"
-    LDAP_READONLY_USER_USERNAME: readonly
-    LDAP_READONLY_USER_PASSWORD: readonly
-    LDAP_TLS: "false"
-    LDAP_RFC2307BIS_SCHEMA: "true"
-
-  persistence:
-    enabled: false
-    # existingClaim: "ldapmanager-openldap-pvc" 
-
-# This persistence will patch the openldap default persistence's PVC
-# if you use your own existingClaim in the openldap config, make sure to disable persistence here
-persistence:
-  enabled: false
-  claimName: "ldapmanager-openldap-pvc" 
-  resourcePolicy: "keep"
-
-ldap:
-  host: ldapmanager-openldap
-  port: 389
-  protocol: "ldap"
-  adminPassword: admin
-  configPassword: config
-  readonly:
-    username: readonly
-    password: readonly
-  organization: Example Inc.
-  domain: example.org
-  baseDN: dc=example,dc=org
-  tls: "false"
-  useRFC2307BIS: "true"
-
-# log: "info"
-static: {}
-  # enabled: "true"
-  # root: "./frontend/dist"
-
-auth:
-  # privateKey: ""
-  # jwksJSON: ""
-  # privateKeyFile: ""
-  # jwksJSONFile: ""
-  generateKeys: true
-  expirationTime: "24h"
-  issuer: "issuer@example.org"
-  audience: "example.org"
-
-groupsOU: "groups"
-usersOU: "users"
-# if groupsDN left empty, will be generated from groupsOU and baseDN (e.g.ou=groups,dc=example,dc=org)
-groupsDN: "" 
-# if usersDN left empty, will be generated from usersOU and baseDN (e.g.ou=users,dc=example,dc=org)
-usersDN: "" 
-groupMembershipAttribute: "uniqueMember"
-groupMembershipUsesUID: false
-accountAttribute: "uid"
-groupAttribute: "gid"
-defaultUserGroup: "users"
-defaultAdminGroup: "admins"
-defaultLoginShell: "/bin/bash"
-defaultAdminUsername: "admin"
-defaultAdminPassword: "admin"
-forceCreateAdmin: false
-
-# additionalEnv:
-#  - name: "KEY"
-#   value: "VALUE"
