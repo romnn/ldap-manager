@@ -9,17 +9,22 @@ openldap:
   env:
     LDAP_ORGANISATION: "Example Inc."
     LDAP_DOMAIN: "example.org"
+    LDAP_BASE_DN: dc=example,dc=org
+
     # LDAP_BACKEND: "hdb"
-    # LDAP_TLS: "true"
     LDAP_TLS: "false"
     LDAP_TLS_ENFORCE: "false"
+
+    # should be the same as ldap.useRFC2307BIS
     LDAP_RFC2307BIS_SCHEMA: "true"
-    # LDAP_REMOVE_CONFIG_AFTER_SETUP: "true"
-    # LDAP_REMOVE_CONFIG_AFTER_SETUP: "false"
-    LDAP_BASE_DN: dc=example,dc=org
+    
     LDAP_READONLY_USER: "true"
+    # should be the same as ldap.readonly.username
     LDAP_READONLY_USER_USERNAME: readonly
+    # should be the same as ldap.readonly.password
     LDAP_READONLY_USER_PASSWORD: readonly
+
+    LDAP_REMOVE_CONFIG_AFTER_SETUP: "false"
 
     LDAP_ADMIN_PASSWORD: admin
     LDAP_CONFIG_PASSWORD: config
@@ -33,17 +38,7 @@ openldap:
 
   logLevel: info
 
-# This persistence will patch the openldap default persistence's PVC
-# if you use your own existingClaim in the openldap config, make sure to disable persistence here
-persistence:
-  enabled: false
-  claimName: "ldapmanager-openldap-pvc" 
-  resourcePolicy: "keep"
-
 ldap:
-  host: ldapmanager-openldap
-  port: 389
-  protocol: "ldap"
   adminPassword: admin
   configPassword: config
   readonly:
@@ -55,6 +50,11 @@ ldap:
   tls: "false"
   useRFC2307BIS: "true"
 
+  # host: ldapmanager-openldap
+  # port: 389
+  # protocol: "ldap"
+
+
 log: "info"
 
 # static is enabled by default
@@ -63,20 +63,22 @@ static: {}
   # root: "./frontend/dist"
 
 auth:
-  # privateKey: ""
-  # jwksJSON: ""
-  # privateKeyFile: ""
-  # jwksJSONFile: ""
   generateKeys: true
   expirationTime: "24h"
   issuer: "issuer@example.org"
   audience: "example.org"
+  # privateKey: ""
+  # jwksJSON: ""
+  # privateKeyFile: ""
+  # jwksJSONFile: ""
 
 groupsOU: "groups"
 usersOU: "users"
-# if groupsDN left empty, will be generated from groupsOU and baseDN (e.g.ou=groups,dc=example,dc=org)
+# if groupsDN left empty, it will be generated
+# from groupsOU and baseDN (e.g.ou=groups,dc=example,dc=org)
 groupsDN: "" 
-# if usersDN left empty, will be generated from usersOU and baseDN (e.g.ou=users,dc=example,dc=org)
+# if usersDN left empty, it will be generated
+# from usersOU and baseDN (e.g.ou=users,dc=example,dc=org)
 usersDN: "" 
 groupMembershipAttribute: "uniqueMember"
 groupMembershipUsesUID: false
@@ -85,6 +87,7 @@ groupAttribute: "gid"
 defaultUserGroup: "users"
 defaultAdminGroup: "admins"
 defaultLoginShell: "/bin/bash"
+
 defaultAdminUsername: "admin"
 defaultAdminPassword: "admin"
 forceCreateAdmin: false
@@ -98,8 +101,9 @@ replicaCount: 1
 image:
   repository: romnn/ldap-manager
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion or globalVersion
-  # tag: "v0.0.26"
+  # Overrides the image tag
+  # Default: the chart `appVersion` or `global.appVersion`
+  # tag: "v0.0.0"
 
 imagePullSecrets: []
 nameOverride: ""

@@ -119,7 +119,38 @@ func versionString(version string, buildTime string) string {
 	return version
 }
 
+func setupLogging(cliCtx *cli.Context) {
+	level := log.InfoLevel
+	switch cliCtx.String(flags.LogLevel.Name) {
+	case "debug":
+		level = log.DebugLevel
+		break
+	case "info":
+		level = log.InfoLevel
+		break
+	case "warn":
+		level = log.WarnLevel
+		break
+	case "fatal":
+		level = log.FatalLevel
+		break
+	case "trace":
+		level = log.TraceLevel
+		break
+	case "error":
+		level = log.ErrorLevel
+		break
+	case "panic":
+		level = log.PanicLevel
+		break
+	default:
+		break
+	}
+	log.SetLevel(level)
+}
+
 func serve(cliCtx *cli.Context) error {
+	setupLogging(cliCtx)
 	shutdownChan := make(chan os.Signal, 1)
 	signal.Notify(shutdownChan, syscall.SIGINT, syscall.SIGTERM)
 
@@ -142,6 +173,9 @@ func serve(cliCtx *cli.Context) error {
 	}
 
 	manager := newLDAPManager(cliCtx)
+	log.Debug(ldapmanager.PrettyPrint(manager))
+	log.Debug(ldapmanager.PrettyPrint(manager.Config))
+
 	if err := manager.Setup(); err != nil {
 		return err
 	}

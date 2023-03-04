@@ -16,17 +16,19 @@ type EnumValue struct {
 
 // Set sets the enum value and returns an error if the value is not valid
 func (enum *EnumValue) Set(value string) error {
-	enum.set = true
 	value = strings.TrimSpace(strings.ToLower(value))
 	for _, e := range enum.Enum {
 		if strings.ToLower(e) == value {
-			enum.selected = value
+			enum.selected = e
+			enum.set = true
 			return nil
 		}
 	}
 	if !enum.AllowNone {
-		allowed := strings.Join(enum.Enum, ", ")
-		return fmt.Errorf("unknown option %q, must be one of %s", value, allowed)
+		return fmt.Errorf(
+			"unknown option %q, must be one of %v",
+			value, enum.Enum,
+		)
 	}
 	return nil
 }

@@ -53,9 +53,12 @@ services:
       LDAP_ADMIN_PASSWORD: admin
       LDAP_CONFIG_PASSWORD: config
 
+      LDAP_READONLY_USERNAME: readonly
+      LDAP_READONLY_PASSWORD: readonly
+
       LDAP_ORGANIZATION: Example Inc.
       LDAP_DOMAIN: example.org
-      DAP_BASE_DN: dc=example,dc=org
+      LDAP_BASE_DN: dc=example,dc=org
 
       DEFAULT_ADMIN_USERNAME: ldapadmin
       DEFAULT_ADMIN_PASSWORD: changeme

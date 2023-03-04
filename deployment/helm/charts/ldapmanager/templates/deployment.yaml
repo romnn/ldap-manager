@@ -31,7 +31,7 @@ spec:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ default .Values.image.tag (default .Chart.AppVersion .Values.global.appVersion) }}"
+          image: "{{ .Values.image.repository }}:{{ default (default .Chart.AppVersion .Values.global.appVersion) .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
@@ -39,42 +39,26 @@ spec:
             - name: grpc
               containerPort: {{ .Values.service.grpcPort }}
 
-          # readinessProbe:
-          #   httpGet:
-          #     path: /healthz
-          #     port: {{ .Values.service.httpPort }}
-          #   # grpc:
-          #   #   port: {{ .Values.service.grpcPort }}
-          #   initialDelaySeconds: 5
-          #   periodSeconds: 10
-          #   failureThreshold: 3
+          readinessProbe:
+            # httpGet:
+            #   path: /healthz
+            #   port: {{ .Values.service.httpPort }}
+            grpc:
+              port: {{ .Values.service.grpcPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
 
-          # livenessProbe:
-          #   httpGet:
-          #     path: /healthz
-          #     port: {{ .Values.service.httpPort }}
-          #   # grpc:
-          #   #   port: {{ .Values.service.grpcPort }}
-          #   initialDelaySeconds: 5
-          #   periodSeconds: 10
-          #   failureThreshold: 3
+          livenessProbe:
+            # httpGet:
+            #   path: /healthz
+            #   port: {{ .Values.service.httpPort }}
+            grpc:
+              port: {{ .Values.service.grpcPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
 
-          # readinessProbe:
-          #   exec:
-          #     command: ["/usr/bin/grpc_health_probe", "-addr=:9090"]
-          #     # as of now we can only check the health of the grpc service
-          #     # because the distroless image has neither a shell nor curl
-          #     # command: ["/bin/sh", "-c", "/usr/bin/grpc_health_probe -addr=:9090 && 
-          #     # curl --silent --show-error --fail http://localhost/healthz"]
-          #   initialDelaySeconds: 5
-          # livenessProbe:
-          #   exec:
-          #     command: ["/usr/bin/grpc_health_probe", "-addr=:9090"]
-          #     # as of now we can only check the health of the grpc service
-          #     # because the distroless image has neither a shell nor curl
-          #     # command: ["/bin/sh", "-c", "/usr/bin/grpc_health_probe -addr=:9090 
-          #     # && curl --silent --show-error --fail http://localhost/healthz"]
-          #   initialDelaySeconds: 10
           # TODO: Create secrets for all passwords
           env:
           # ports
@@ -128,18 +112,12 @@ spec:
           {{- end }}
 
           # LDAP server config
-          {{- if .Values.ldap.host }}
           - name: LDAP_HOST
-            value: {{ .Values.ldap.host | quote }}
-          {{- end }}
-          {{- if .Values.ldap.port }}
+            value: {{ default (include "ldapmanager.openldap" .) .Values.ldap.host | quote }}
           - name: LDAP_PORT
-            value: {{ .Values.ldap.port | quote }}
-          {{- end }}
-          {{- if .Values.ldap.protocol }}
+            value: {{ default 389 .Values.ldap.port | quote }}
           - name: LDAP_PROTOCOL
-            value: {{ .Values.ldap.protocol | quote }}
-          {{- end }}
+            value: {{ default "ldap" .Values.ldap.protocol | quote }}
           {{- if .Values.ldap.adminPassword }}
           - name: LDAP_ADMIN_PASSWORD
             value: {{ .Values.ldap.adminPassword | quote }}
@@ -198,10 +176,8 @@ spec:
           - name: GROUP_MEMBERSHIP_ATTRIBUTE
             value: {{ .Values.groupMembershipAttribute | quote }}
           {{- end }}
-          {{- if .Values.groupMembershipUsesUID }}
           - name: GROUP_MEMBERSHIP_USES_UID
-            value: {{ .Values.groupMembershipUsesUID | quote }}
-          {{- end }}
+            value: {{ (default false .Values.groupMembershipUsesUID) | quote }}
           {{- if .Values.accountAttribute }}
           - name: ACCOUNT_ATTRIBUTE
             value: {{ .Values.accountAttribute | quote }}
@@ -230,10 +206,8 @@ spec:
           - name: DEFAULT_ADMIN_PASSWORD
             value: {{ .Values.defaultAdminPassword | quote }}
           {{- end }}
-          {{- if .Values.forceCreateAdmin }}
           - name: FORCE_CREATE_ADMIN
-            value: {{ .Values.forceCreateAdmin | quote }}
-          {{- end }}
+            value: {{ (default false .Values.forceCreateAdmin) | quote }}
 
           # Any additional environment variables
           {{- range .Values.additionalEnv }}
