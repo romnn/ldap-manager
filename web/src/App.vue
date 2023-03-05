@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { RouterLink, RouterView } from "vue-router";
-import { parseBool } from "./utils";
+import { RouterView } from "vue-router";
 import type { RouteParams, RouteParamValue } from "vue-router";
 import type { BreadcrumbItem } from "bootstrap-vue-3";
 import ConfirmationComponent from "./components/ConfirmationComponent.vue";
@@ -77,14 +76,6 @@ function confirmConfirmation() {
   appStore.confirmConfirmation();
 }
 
-const branding = computed(() => {
-  return parseBool(import.meta.env.VITE_BRANDING);
-});
-
-const version = computed(() => {
-  return import.meta.env.VITE_APP_VERSION;
-});
-
 onMounted(() => {
   authStore.init();
 });
@@ -94,23 +85,14 @@ onMounted(() => {
   <div id="app">
     <div>
       <b-navbar toggleable="sm" size="sm" variant="dark">
-        <!--
-        <RouterLink :to="{ name: 'HomeRoute' }">
-          <span class="title">
-            {{ branding ? "LDAP Manager" : "Home" }}
-          </span>
-        </RouterLink>
-        -->
-
-        
-
         <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
         <b-collapse class="navbar" id="nav-collapse" is-nav>
           <b-navbar-nav v-if="username !== null">
-            <b-nav-item
-              :to="{ name: 'HomeRoute' }"
-              ><span class="title">{{ branding ? "LDAP Manager" : "Home" }}</span></b-nav-item
+            <b-nav-item :to="{ name: 'HomeRoute' }"
+              ><span class="title">{{
+                appStore.showBranding ? "LDAP Manager" : "Home"
+              }}</span></b-nav-item
             >
 
             <b-nav-item
@@ -130,7 +112,7 @@ onMounted(() => {
 
           <b-navbar-nav>
             <b-nav-item right href="https://github.com/romnn/ldap-manager">{{
-              version
+              appStore.version
             }}</b-nav-item>
 
             <b-nav-item-dropdown right v-if="username !== null">
@@ -177,8 +159,10 @@ onMounted(() => {
       </div>
     </div>
     <div class="footer">
-      <a v-if="branding" href="https://github.com/romnn/ldap-manager"
-        >LDAPManager {{ version }}</a
+      <a
+        v-if="appStore.showBranding"
+        href="https://github.com/romnn/ldap-manager"
+        >LDAPManager {{ appStore.version }}</a
       >
     </div>
   </div>

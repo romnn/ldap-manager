@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
+import { parseBool } from "../utils";
 
 export interface PendingConfirmation {
   message: string;
@@ -40,11 +41,19 @@ export const useAppStore = defineStore("app", () => {
     Object.keys(route?.query ?? {}).includes("all")
   );
 
+  const showBranding = computed(() => parseBool(import.meta.env.VITE_BRANDING));
+
+  const version = computed(() => {
+    return import.meta.env.VITE_APP_VERSION;
+  });
+
   return {
     pendingConfirmation,
     newConfirmation,
     cancelConfirmation,
     confirmConfirmation,
     allowAll,
+    showBranding,
+    version,
   };
 });

@@ -30,9 +30,9 @@ const membersStore = useMembersStore();
 const props = withDefaults(
   defineProps<{
     account?: string;
-    title: string;
-    all: boolean;
-    create: boolean;
+    title?: string;
+    all?: boolean;
+    create?: boolean;
   }>(),
   {
     title: "Account",

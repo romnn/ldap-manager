@@ -27,6 +27,7 @@ see the [deployment guide](#Deployment).
 ```bash
 go install github.com/romnn/ldap-manager/cmd/ldap-manager
 ldap-manager serve --generate
+go run github.com/romnn/ldap-manager/cmd/ldap-manager serve --generate --http-port 8090
 ```
 
 You can also download pre-built binaries from the

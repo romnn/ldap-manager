@@ -1,10 +1,13 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { useAppStore } from "../stores/app";
+const appStore = useAppStore();
+</script>
 
 <template>
   <div class="home-container">
     <div class="h-100 p-5 bg-light border rounded-3">
-      <h1 class="">LDAP Manager</h1>
-      <p class="">The cloud-native LDAP management web interface</p>
+      <h1 v-if="appStore.showBranding">LDAP Manager</h1>
+      <p>The cloud-native LDAP management web interface</p>
 
       <hr class="my-4" />
 
