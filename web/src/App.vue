@@ -111,10 +111,6 @@ onMounted(() => {
           </b-navbar-nav>
 
           <b-navbar-nav>
-            <b-nav-item right href="https://github.com/romnn/ldap-manager">{{
-              appStore.version
-            }}</b-nav-item>
-
             <b-nav-item-dropdown right v-if="username !== null">
               <template v-slot:button-content>
                 <em>{{ displayName }} </em>
