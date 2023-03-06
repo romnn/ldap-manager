@@ -57,6 +57,14 @@ COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose -f deployment/docker
 
 TODO
 
+##### Known bugs
+
+##### Fixed bugs
+- when creating new groups, errors are not properly passed through
+- when creating new group, cannot add initial members
+- removing groups in edit user does not do anything (no errors)
+- errors when removing from group in user edit page break layout
+
 ##### Considerations
 
 - Serving the frontend externally

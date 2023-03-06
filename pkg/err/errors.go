@@ -15,9 +15,9 @@ type ApplicationError interface {
 	StatusError() error
 }
 
-// ValidationError ...
+// ValidationError indicates an invalid request
 type ValidationError struct {
-	error
+	ApplicationError
 	Message string
 }
 

@@ -75,15 +75,11 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 		memberList = append(memberList, memberDN)
 	}
 
-	var groupAttributes []ldap.Attribute
+	var objectClass []string
 	if !m.UseRFC2307BISSchema {
-		groupAttributes = []ldap.Attribute{
-			{Type: "objectClass", Vals: []string{
-				"top",
-				"posixGroup",
-			}},
-			{Type: "cn", Vals: []string{EscapeDN(groupName)}},
-			{Type: "gidNumber", Vals: []string{strconv.Itoa(GID)}},
+		objectClass = []string{
+			"top",
+			"posixGroup",
 		}
 	} else {
 		if len(memberList) < 1 {
@@ -91,21 +87,19 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 				Message: "must specify at least one existing group member when using RFC2307BIS (not NIS)",
 			}
 		}
-		groupAttributes = []ldap.Attribute{
-			{Type: "objectClass", Vals: []string{
-				"top",
-				"groupOfUniqueNames",
-				"posixGroup",
-			}},
-			{Type: "cn", Vals: []string{EscapeDN(groupName)}},
-			{Type: "gidNumber", Vals: []string{strconv.Itoa(GID)}},
+		objectClass = []string{
+			"top",
+			"groupOfUniqueNames",
+			"posixGroup",
 		}
 	}
 
-	groupAttributes = append(groupAttributes, ldap.Attribute{
-		Type: m.GroupMembershipAttribute,
-		Vals: memberList,
-	})
+	groupAttributes := []ldap.Attribute{
+		{Type: "objectClass", Vals: objectClass},
+		{Type: "cn", Vals: []string{EscapeDN(groupName)}},
+		{Type: "gidNumber", Vals: []string{strconv.Itoa(GID)}},
+		{Type: m.GroupMembershipAttribute, Vals: memberList},
+	}
 
 	addGroupRequest := &ldap.AddRequest{
 		DN:         m.GroupDN(groupName),

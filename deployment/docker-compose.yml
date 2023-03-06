@@ -20,6 +20,7 @@ services:
 
       LDAP_TLS: "false"
       LDAP_RFC2307BIS_SCHEMA: "true"
+
     logging:
       # disable logging
       driver: none

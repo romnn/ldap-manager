@@ -49,6 +49,8 @@ const submissionError = ref<string | undefined>(undefined);
 const availableGroups = ref<Group[]>([]);
 const userGroups = ref<Group[]>([]);
 const userGroupNames = ref<string[]>([]);
+let prevUserGroupNames: Set<string> = new Set([]);
+
 const userGroupInputDisabled = ref<boolean>(false);
 const groupState = computed(() => true);
 
@@ -62,38 +64,47 @@ const passwordConfirm = ref<string>("");
 
 const activeIsAdmin = computed(() => authStore.isAdmin);
 
-watch(userGroupNames, async (after: string[], before: string[]) => {
-  if (watchGroups.value) {
-    try {
-      // lock
-      watchGroups.value = false;
-      userGroupInputDisabled.value = true;
-      processing.value = true;
+watch(
+  userGroupNames,
+  async () => {
+    // deep watch:  after and before point to the same array
+    //              hence we need to keep track of prev ourselves
+    console.log("groups changed");
+    if (watchGroups.value) {
+      try {
+        // lock
+        watchGroups.value = false;
+        userGroupInputDisabled.value = true;
+        processing.value = true;
 
-      const b = new Set(before);
-      const a = new Set(after);
-      const added = new Set([...a].filter((x) => !b.has(x)));
-      const removed = new Set([...b].filter((x) => !a.has(x)));
-      console.log("added", added);
-      console.log("removed", removed);
+        const b = prevUserGroupNames;
+        const a = new Set(userGroupNames.value);
+        const added = new Set([...a].filter((x) => !b.has(x)));
+        const removed = new Set([...b].filter((x) => !a.has(x)));
 
-      for (let group of added) {
-        if (props.account) {
-          await addToGroup(props.account, group);
+        console.log("added", added);
+        console.log("removed", removed);
+
+        for (let group of added) {
+          if (props.account) {
+            await addToGroup(props.account, group);
+          }
         }
-      }
-      for (let group of removed) {
-        if (props.account) {
-          await removeFromGroup(props.account, group);
+        for (let group of removed) {
+          if (props.account) {
+            await removeFromGroup(props.account, group);
+          }
         }
+      } finally {
+        prevUserGroupNames = new Set(userGroupNames.value);
+        watchGroups.value = true;
+        userGroupInputDisabled.value = false;
+        processing.value = false;
       }
-    } finally {
-      watchGroups.value = true;
-      userGroupInputDisabled.value = false;
-      processing.value = false;
     }
-  }
-});
+  },
+  { deep: true }
+);
 
 function groupValidator(name: string) {
   invalidGroupText.value = "no such group";
@@ -392,6 +403,7 @@ async function loadAccountData(username: string | undefined = undefined) {
     }
     userGroups.value = list.groups;
     userGroupNames.value = list.groups.map((group: Group) => group.name);
+    prevUserGroupNames = new Set(userGroupNames.value);
   } catch (err: unknown) {
     if (err instanceof GatewayError) {
       error.value = err.message;
@@ -423,6 +435,7 @@ onMounted(async () => {
     processing.value = false;
     checkingGroup.value = false;
     watchGroups.value = true;
+    console.log("watching groups");
   }
 });
 </script>
@@ -745,7 +758,7 @@ onMounted(async () => {
                   <div v-if="checkingGroup">Checking group...</div>
                 </template>
                 <b-alert
-                  class="text-left"
+                  class=""
                   :show="groupMemberError !== undefined"
                   variant="danger"
                 >
