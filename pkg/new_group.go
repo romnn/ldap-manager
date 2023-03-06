@@ -45,9 +45,13 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 			Group: groupName,
 		}
 	}
-	GID, err := m.GetHighestGID()
-	if err != nil {
-		return err
+	// we define the user group to always be MinGID
+	GID := MinGID
+	if groupName != m.DefaultUserGroup {
+		GID, err = m.GetHighestGID()
+		if err != nil {
+			return err
+		}
 	}
 
 	var memberList []string

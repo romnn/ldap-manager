@@ -131,38 +131,37 @@ func ValidateNewUser(req *pb.NewUserRequest) *InvalidUserError {
 	return nil
 }
 
-// GetUserGroup gets or creates the user group
-//
-// If there exist no users yet, the default user groups is created with
-// the given user as the initial member
-func (m *LDAPManager) GetUserGroup(username string) (*pb.Group, error) {
-	// fast path: the user group already exists
-	groupName := m.DefaultUserGroup
-	if group, err := m.GetGroupByName(groupName); err == nil {
-		return group, nil
-	}
-	// slow path: the default user group might not yet exist
-	// note that a group can only be created with at least one member
-	// when using RFC2307BIS
-	// because we need the GID to create the user,
-	// strict checking of members is disabled
-	strict := false
-	if err := m.NewGroup(&pb.NewGroupRequest{
-		Name:    groupName,
-		Members: []string{username},
-	}, strict); err != nil {
-		return nil, err
-	}
+//// GetUserGroup gets or creates the user group
+////
+//// If there exist no users yet, the default user groups is created with
+//// the given user as the initial member
+//func (m *LDAPManager) GetUserGroup(username string) (*pb.Group, error) {
+//	// fast path: the user group already exists
+//	groupName := m.DefaultUserGroup
+//	if group, err := m.GetGroupByName(groupName); err == nil {
+//		return group, nil
+//	}
+//	// slow path: the default user group might not yet exist
+//	// note that a group can only be created with at least one member
+//	// when using RFC2307BIS
+//	strict := false
+//	if err := m.NewGroup(&pb.NewGroupRequest{
+//		Name:    groupName,
+//    // note: user must already exist for memberOf overlay to work correctly
+//		Members: []string{username},
+//	}, strict); err != nil {
+//		return nil, err
+//	}
 
-	group, err := m.GetGroupByName(groupName)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to get GID for group %q: %v",
-			groupName, err,
-		)
-	}
-	return group, nil
-}
+//	group, err := m.GetGroupByName(groupName)
+//	if err != nil {
+//		return nil, fmt.Errorf(
+//			"failed to get group %q: %v",
+//			groupName, err,
+//		)
+//	}
+//	return group, nil
+//}
 
 func (m *LDAPManager) checkUserExists(username string) error {
 	_, err := m.GetUser(username)
@@ -217,10 +216,6 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
 			m.AccountAttribute, err,
 		)
 	}
-	userGroup, err := m.GetUserGroup(username)
-	if err != nil {
-		return err
-	}
 
 	fullName := fmt.Sprintf(
 		"%s %s",
@@ -240,7 +235,8 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
 		{Type: "displayName", Vals: []string{fullName}},
 		{Type: "uidNumber", Vals: []string{strconv.Itoa(UID)}},
 		{Type: "gidNumber", Vals: []string{
-			strconv.Itoa(int(userGroup.GetGID())),
+			strconv.Itoa(MinGID),
+			// strconv.Itoa(int(userGroup.GetGID())),
 		}},
 		{Type: "loginShell", Vals: []string{loginShell}},
 		{Type: "homeDirectory", Vals: []string{homeDirectory}},
@@ -287,15 +283,30 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
 		)
 	}
 
+	groupName := m.DefaultUserGroup
+
+	strict := false
+	if err := m.NewGroup(&pb.NewGroupRequest{
+		Name:    groupName,
+		Members: []string{username},
+	}, strict); err != nil {
+		if _, exists := err.(*GroupAlreadyExistsError); !exists {
+			return fmt.Errorf(
+				"failed to create %q group: %v",
+				groupName, err,
+			)
+		}
+	}
+
 	allowNonExistent := false
 	if err := m.AddGroupMember(&pb.GroupMember{
-		Group:    m.DefaultUserGroup,
+		Group:    groupName,
 		Username: username,
 	}, allowNonExistent); err != nil {
 		if _, exists := err.(*MemberAlreadyExistsError); !exists {
 			return fmt.Errorf(
 				"failed to add user %q to group %q: %v",
-				username, userGroup.Name, err,
+				username, groupName, err,
 			)
 		}
 	}
@@ -304,7 +315,7 @@ func (m *LDAPManager) NewUser(req *pb.NewUserRequest) error {
 	}
 	log.Infof(
 		"added new user %q (member of group %q)",
-		username, userGroup.Name,
+		username, groupName,
 	)
 	return nil
 }

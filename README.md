@@ -59,11 +59,13 @@ TODO
 
 ##### Known bugs
 
+
 ##### Fixed bugs
 - when creating new groups, errors are not properly passed through
 - when creating new group, cannot add initial members
 - removing groups in edit user does not do anything (no errors)
 - errors when removing from group in user edit page break layout
+- memberof does not respect the initial admin user for both users and admins groups
 
 ##### Considerations
 

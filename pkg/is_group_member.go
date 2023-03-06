@@ -10,7 +10,8 @@ func (m *LDAPManager) IsGroupMember(req *pb.IsGroupMemberRequest) (*pb.GroupMemb
 	if err != nil {
 		return nil, err
 	}
-	// todo: use a search here (more efficient)
+	// todo: use memberOf overlay here (muchhhhh more efficient)
+	// todo: first we need to get it to work with the ldapadmin user out of the box
 	memberDN := m.GroupMemberDN(req.GetUsername())
 	// username := req.GetUsername()
 	// if !m.GroupMembershipUsesUID {

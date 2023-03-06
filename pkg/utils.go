@@ -23,7 +23,7 @@ var (
 const (
 	// MinUID for POSIX accounts
 	MinUID = 2000
-	// MinGID for POSIX accounts
+	// MinGID for POSIX accounts, reserved for the users group
 	MinGID = 2000
 )
 

@@ -17,8 +17,7 @@ import (
 // AdminUserDN gets the DN of the admin user
 func (m *LDAPManager) AdminUserDN() string {
 	return fmt.Sprintf(
-		"cn=%s,%s",
-		m.Config.AdminUsername,
+		"cn=%s,%s", m.Config.AdminUsername,
 		m.Config.BaseDN,
 	)
 }
@@ -193,6 +192,9 @@ func (m *LDAPManager) setupReadOnlyUser() error {
 }
 
 func (m *LDAPManager) setupAdmin() error {
+	// important: create the admin user before the groups
+	// otherwise, the memberOf overlay will never pick up that
+	// the admin user belongs to the users and admins groups
 	admin := pb.NewUserRequest{
 		Username:  m.DefaultAdminUsername,
 		Password:  m.DefaultAdminPassword,
@@ -201,47 +203,56 @@ func (m *LDAPManager) setupAdmin() error {
 		Email:     "changeme@changeme.com",
 	}
 
-	// get the admin group
+	// get the admin group (if already exists)
 	adminGroup, err := m.GetGroupByName(m.DefaultAdminGroup)
-	_, missing := err.(*ZeroOrMultipleGroupsError)
+	// _, adminGroupMissing := err.(*ZeroOrMultipleGroupsError)
 
-	if missing {
-		// create admin group (admin user may not exist yet)
+	var presentAdmins []string
+	if err == nil {
+		presentAdmins = adminGroup.Members
+	}
+
+	// if 1 or more admins in the admin group exist, we cannot assume they are the defaults
+	if !m.ForceCreateAdmin && len(presentAdmins) > 0 {
+		return nil
+	}
+
+	// from here, we should set up the initial admin from scratch
+
+	// create the initial admin
+	if err := m.NewUser(&admin); err != nil {
+		if _, exists := err.(*UserAlreadyExistsError); !exists {
+			return fmt.Errorf(
+				"failed to create initial admin user: %v",
+				err,
+			)
+		}
+	}
+
+	// create initial groups and add admin user to them
+	for _, groupName := range []string{m.DefaultAdminGroup, m.DefaultUserGroup} {
 		strict := false
 		if err := m.NewGroup(&pb.NewGroupRequest{
-			Name:    m.DefaultAdminGroup,
+			Name:    groupName,
 			Members: []string{admin.GetUsername()},
 		}, strict); err != nil {
 			if _, exists := err.(*GroupAlreadyExistsError); !exists {
 				return fmt.Errorf(
-					"failed to create admin group: %v",
-					err,
-				)
-			}
-		}
-	}
-
-	if missing || len(adminGroup.Members) < 1 || m.ForceCreateAdmin {
-		// add the initial admin
-		if err := m.NewUser(&admin); err != nil {
-			if _, exists := err.(*UserAlreadyExistsError); !exists {
-				return fmt.Errorf(
-					"failed to create initial admin user: %v",
-					err,
+					"failed to create %q group: %v",
+					groupName, err,
 				)
 			}
 		}
 
-		// add the initial admin to group
 		allowNonExistent := false
 		if err := m.AddGroupMember(&pb.GroupMember{
 			Username: admin.GetUsername(),
-			Group:    m.DefaultAdminGroup,
+			Group:    groupName,
 		}, allowNonExistent); err != nil {
 			if _, exists := err.(*MemberAlreadyExistsError); !exists {
 				return fmt.Errorf(
-					"failed to add admin user to admins group: %v",
-					err,
+					"failed to add admin user %q to group %q: %v",
+					admin.GetUsername(), groupName, err,
 				)
 			}
 		}

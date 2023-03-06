@@ -33,7 +33,7 @@ func (m *LDAPManager) GetHighestUID() (int, error) {
 func (m *LDAPManager) GetHighestGID() (int, error) {
 	req := highestIDRequest{
 		attribute:      m.GroupAttribute,
-		min:            MinGID,
+		min:            MinGID + 1, // we reserve MinGID for the users group
 		entryBaseDN:    m.GroupsDN,
 		entryFilter:    "(objectClass=posixGroup)",
 		entryAttribute: "gidNumber",
