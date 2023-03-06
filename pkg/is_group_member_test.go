@@ -15,15 +15,7 @@ func TestIsGroupMember(t *testing.T) {
 	groupName := "test-group"
 	usernames := []string{"user1", "user2"}
 
-	if err := test.Manager.NewGroup(&pb.NewGroupRequest{
-		Name:    groupName,
-		Members: usernames,
-	}, strict); err != nil {
-		t.Fatalf(
-			"failed to add new group: %v",
-			err,
-		)
-	}
+	// users must be created first
 	for _, username := range usernames {
 		if err := test.Manager.NewUser(&pb.NewUserRequest{
 			Username:  username,
@@ -39,10 +31,20 @@ func TestIsGroupMember(t *testing.T) {
 		}
 	}
 
+	if err := test.Manager.NewGroup(&pb.NewGroupRequest{
+		Name:    groupName,
+		Members: usernames,
+	}, strict); err != nil {
+		t.Fatalf(
+			"failed to add new group: %v",
+			err,
+		)
+	}
+
 	// assert every user is member of the users group by default
 	for _, username := range usernames {
 		userGroup := test.Manager.DefaultUserGroup
-		memberStatus := test.isGroupMember(t, username, userGroup)
+		memberStatus, _ := test.isGroupMember(t, username, userGroup, true)
 		if !memberStatus.GetIsMember() {
 			t.Fatalf(
 				"expected user %q to be a member of group %q",
@@ -53,7 +55,7 @@ func TestIsGroupMember(t *testing.T) {
 
 	// assert every user is member of the new group
 	for _, username := range usernames {
-		memberStatus := test.isGroupMember(t, username, groupName)
+		memberStatus, _ := test.isGroupMember(t, username, groupName, true)
 		if !memberStatus.GetIsMember() {
 			t.Fatalf(
 				"expected user %q to be a member of group %q",
@@ -74,7 +76,7 @@ func TestIsGroupMember(t *testing.T) {
 			err,
 		)
 	}
-	memberStatus := test.isGroupMember(t, username, groupName2)
+	memberStatus, _ := test.isGroupMember(t, username, groupName2, true)
 	if !memberStatus.GetIsMember() {
 		t.Fatalf(
 			"expected user %q to be a member of group %q",
@@ -82,7 +84,7 @@ func TestIsGroupMember(t *testing.T) {
 		)
 	}
 	username = usernames[1]
-	memberStatus = test.isGroupMember(t, username, groupName2)
+	memberStatus, _ = test.isGroupMember(t, username, groupName2, false)
 	if memberStatus.GetIsMember() {
 		t.Fatalf(
 			"expected user %q to not be a member of group %q",
@@ -111,7 +113,7 @@ func TestIsGroupMember(t *testing.T) {
 		)
 	}
 	for _, group := range groups.GetGroups() {
-		memberStatus = test.isGroupMember(t, username, group.GetName())
+		memberStatus, _ = test.isGroupMember(t, username, group.GetName(), false)
 		if memberStatus.GetIsMember() {
 			t.Errorf(
 				"expected user %q to not be a member of group %q",
@@ -129,7 +131,7 @@ func TestIsGroupMemberMissing(t *testing.T) {
 	// assert sure a non-existent user is not a member of an existent group
 	username := "i-dont-exist"
 	groupName := test.Manager.DefaultUserGroup
-	memberStatus := test.isGroupMember(t, username, groupName)
+	memberStatus, _ := test.isGroupMember(t, username, groupName, false)
 	if memberStatus.GetIsMember() {
 		t.Fatalf(
 			"expected user %q to not be a member of group %q",
@@ -140,10 +142,7 @@ func TestIsGroupMemberMissing(t *testing.T) {
 	// make sure an existent user is not a member of a non-existent group
 	username = test.Manager.DefaultAdminUsername
 	groupName = "group-that-is-ficticious"
-	memberStatus, err := test.Manager.IsGroupMember(&pb.IsGroupMemberRequest{
-		Username: username,
-		Group:    groupName,
-	})
+	memberStatus, err := test.isGroupMember(t, username, groupName, false)
 	_, missing := err.(*ZeroOrMultipleGroupsError)
 	if err == nil || !missing {
 		t.Fatalf(

@@ -2,41 +2,41 @@ global: {}
   # default to the appVersion of the chart instead
   #   appVersion: ""
 
-openldap:
-  enabled: true
-  # adminPassword: admin
-  # configPassword: config
-  env:
-    LDAP_ORGANISATION: "Example Inc."
-    LDAP_DOMAIN: "example.org"
-    LDAP_BASE_DN: "dc=example,dc=org"
+# openldap:
+#   enabled: true
+#   # adminPassword: admin
+#   # configPassword: config
+#   env:
+#     LDAP_ORGANISATION: "Example Inc."
+#     LDAP_DOMAIN: "example.org"
+#     LDAP_BASE_DN: "dc=example,dc=org"
 
-    # LDAP_BACKEND: "hdb"
-    LDAP_TLS: "false"
-    LDAP_TLS_ENFORCE: "false"
+#     # LDAP_BACKEND: "hdb"
+#     LDAP_TLS: "false"
+#     LDAP_TLS_ENFORCE: "false"
 
-    # should be the same as ldap.useRFC2307BIS
-    LDAP_RFC2307BIS_SCHEMA: "true"
+#     # should be the same as ldap.useRFC2307BIS
+#     LDAP_RFC2307BIS_SCHEMA: "true"
     
-    LDAP_READONLY_USER: "true"
-    # should be the same as ldap.readonly.username
-    LDAP_READONLY_USER_USERNAME: "readonly"
-    # should be the same as ldap.readonly.password
-    LDAP_READONLY_USER_PASSWORD: "readonly"
+#     LDAP_READONLY_USER: "true"
+#     # should be the same as ldap.readonly.username
+#     LDAP_READONLY_USER_USERNAME: "readonly"
+#     # should be the same as ldap.readonly.password
+#     LDAP_READONLY_USER_PASSWORD: "readonly"
 
-    LDAP_REMOVE_CONFIG_AFTER_SETUP: "false"
+#     LDAP_REMOVE_CONFIG_AFTER_SETUP: "false"
 
-    LDAP_ADMIN_PASSWORD: "admin"
-    LDAP_CONFIG_PASSWORD: "config"
+#     LDAP_ADMIN_PASSWORD: "admin"
+#     LDAP_CONFIG_PASSWORD: "config"
 
-  tls:
-    enabled: false
+#   tls:
+#     enabled: false
 
-  persistence:
-    enabled: false
-    # existingClaim: ""
+#   persistence:
+#     enabled: false
+#     # existingClaim: ""
 
-  logLevel: info
+#   logLevel: info
 
 ldap:
   adminPassword: admin

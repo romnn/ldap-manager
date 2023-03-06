@@ -195,6 +195,7 @@ func (m *LDAPManager) setupAdmin() error {
 	// important: create the admin user before the groups
 	// otherwise, the memberOf overlay will never pick up that
 	// the admin user belongs to the users and admins groups
+	// see: https://github.com/osixia/docker-openldap/issues/635
 	admin := pb.NewUserRequest{
 		Username:  m.DefaultAdminUsername,
 		Password:  m.DefaultAdminPassword,
@@ -205,21 +206,19 @@ func (m *LDAPManager) setupAdmin() error {
 
 	// get the admin group (if already exists)
 	adminGroup, err := m.GetGroupByName(m.DefaultAdminGroup)
-	// _, adminGroupMissing := err.(*ZeroOrMultipleGroupsError)
 
 	var presentAdmins []string
 	if err == nil {
 		presentAdmins = adminGroup.Members
 	}
 
-	// if 1 or more admins in the admin group exist, we cannot assume they are the defaults
+	// if 1 or more admins in the admin group exist,
+	// we cannot assume their credentials are still the same unless forced
 	if !m.ForceCreateAdmin && len(presentAdmins) > 0 {
 		return nil
 	}
 
-	// from here, we should set up the initial admin from scratch
-
-	// create the initial admin
+	// create the initial admin from scratch
 	if err := m.NewUser(&admin); err != nil {
 		if _, exists := err.(*UserAlreadyExistsError); !exists {
 			return fmt.Errorf(
@@ -230,7 +229,10 @@ func (m *LDAPManager) setupAdmin() error {
 	}
 
 	// create initial groups and add admin user to them
-	for _, groupName := range []string{m.DefaultAdminGroup, m.DefaultUserGroup} {
+	for _, groupName := range []string{
+		m.DefaultAdminGroup,
+		m.DefaultUserGroup,
+	} {
 		strict := false
 		if err := m.NewGroup(&pb.NewGroupRequest{
 			Name:    groupName,

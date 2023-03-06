@@ -1,35 +1,44 @@
 package pkg
 
 import (
+	"fmt"
+
+	"github.com/go-ldap/ldap/v3"
+
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
+	log "github.com/sirupsen/logrus"
 )
 
 // IsGroupMember checks if a user is member of a group
 func (m *LDAPManager) IsGroupMember(req *pb.IsGroupMemberRequest) (*pb.GroupMemberStatus, error) {
-	group, err := m.GetGroupByName(req.GetGroup())
+	if _, err := m.GetGroupByName(req.GetGroup()); err != nil {
+		return nil, err
+	}
+	conn, err := m.Pool.Get()
 	if err != nil {
 		return nil, err
 	}
-	// todo: use memberOf overlay here (muchhhhh more efficient)
-	// todo: first we need to get it to work with the ldapadmin user out of the box
-	memberDN := m.GroupMemberDN(req.GetUsername())
-	// username := req.GetUsername()
-	// if !m.GroupMembershipUsesUID {
-	// 	username = fmt.Sprintf(
-	// 		"%s=%s,%s",
-	// 		m.AccountAttribute,
-	// 		username,
-	// 		m.UserGroupDN,
-	// 	)
-	// }
-	for _, member := range group.GetMembers() {
-		if member == memberDN {
-			return &pb.GroupMemberStatus{
-				IsMember: true,
-			}, nil
-		}
+	defer conn.Close()
+	filter := fmt.Sprintf(
+		"(&(objectClass=posixAccount)(%s=%s)(memberOf=%s))",
+		m.AccountAttribute,
+		EscapeFilter(req.GetUsername()),
+		m.GroupDN(req.GetGroup()),
+	)
+	log.Info(filter)
+	log.Info(m.BaseDN)
+	result, err := conn.Search(ldap.NewSearchRequest(
+		m.BaseDN,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		filter,
+		m.userFields(),
+		[]ldap.Control{},
+	))
+	if err != nil {
+		return nil, err
 	}
+	log.Info(result.Entries)
 	return &pb.GroupMemberStatus{
-		IsMember: false,
+		IsMember: len(result.Entries) > 0,
 	}, nil
 }

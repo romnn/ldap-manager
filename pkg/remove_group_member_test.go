@@ -1,23 +1,49 @@
 package pkg
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	pb "github.com/romnn/ldap-manager/pkg/grpc/gen"
 )
 
-func (test *Test) isGroupMember(t *testing.T, username, group string) *pb.GroupMemberStatus {
-	memberStatus, err := test.Manager.IsGroupMember(&pb.IsGroupMemberRequest{
-		Username: username,
-		Group:    group,
-	})
-	if err != nil {
-		t.Fatalf(
-			"error getting member status of user %q of group %q: %v",
-			username, group, err,
+func (test *Test) isGroupMember(
+	t *testing.T,
+	username string,
+	group string,
+	expected bool,
+) (*pb.GroupMemberStatus, error) {
+	// retry a few times (memberOf can take some time to become available)
+	b := backoff.WithMaxRetries(&backoff.ConstantBackOff{
+		Interval: 10 * time.Second,
+	}, 10)
+
+	var memberStatus *pb.GroupMemberStatus
+	err := backoff.Retry(func() error {
+		var err error
+		memberStatus, err = test.Manager.IsGroupMember(
+			&pb.IsGroupMemberRequest{
+				Username: username,
+				Group:    group,
+			},
 		)
-	}
-	return memberStatus
+		if err != nil {
+			return fmt.Errorf(
+				"error getting member status of user %q of group %q: %v",
+				username, group, err,
+			)
+		}
+		if memberStatus.IsMember != expected {
+			return fmt.Errorf(
+				"unexpected member status for user %q of group %q (expected %v but got %v)",
+				username, group, expected, memberStatus.IsMember,
+			)
+		}
+		return nil
+	}, b)
+	return memberStatus, err
 }
 
 // TestRemoveGroupMember tests removing a group member
@@ -55,7 +81,7 @@ func TestRemoveGroupMember(t *testing.T) {
 		}
 	}
 
-	memberStatus := test.isGroupMember(t, usernames[0], groupName)
+	memberStatus, _ := test.isGroupMember(t, usernames[0], groupName, true)
 	if !memberStatus.GetIsMember() {
 		t.Fatalf(
 			"expected user %q to be a member of group %q",
@@ -73,7 +99,7 @@ func TestRemoveGroupMember(t *testing.T) {
 			usernames[0], groupName, err,
 		)
 	}
-	memberStatus = test.isGroupMember(t, usernames[0], groupName)
+	memberStatus, _ = test.isGroupMember(t, usernames[0], groupName, false)
 	if memberStatus.GetIsMember() {
 		t.Fatalf(
 			"expected user %q to be no longer a member of group %q",

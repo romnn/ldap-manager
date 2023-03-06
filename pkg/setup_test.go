@@ -42,7 +42,7 @@ func TestSetup(t *testing.T) {
 	}
 
 	// assert the default admin user is in the admins group
-	memberStatus := test.isGroupMember(t, adminUsername, adminGroup)
+	memberStatus, _ := test.isGroupMember(t, adminUsername, adminGroup, true)
 	if !memberStatus.GetIsMember() {
 		t.Fatalf(
 			"expected user %q to be a member of group %q",
@@ -51,7 +51,7 @@ func TestSetup(t *testing.T) {
 	}
 
 	// assert the default admin user is in the users group as well
-	memberStatus = test.isGroupMember(t, adminUsername, userGroup)
+	memberStatus, _ = test.isGroupMember(t, adminUsername, userGroup, true)
 	if !memberStatus.GetIsMember() {
 		t.Fatalf(
 			"expected user %q to be a member of group %q",

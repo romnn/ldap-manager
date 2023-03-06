@@ -131,38 +131,6 @@ func ValidateNewUser(req *pb.NewUserRequest) *InvalidUserError {
 	return nil
 }
 
-//// GetUserGroup gets or creates the user group
-////
-//// If there exist no users yet, the default user groups is created with
-//// the given user as the initial member
-//func (m *LDAPManager) GetUserGroup(username string) (*pb.Group, error) {
-//	// fast path: the user group already exists
-//	groupName := m.DefaultUserGroup
-//	if group, err := m.GetGroupByName(groupName); err == nil {
-//		return group, nil
-//	}
-//	// slow path: the default user group might not yet exist
-//	// note that a group can only be created with at least one member
-//	// when using RFC2307BIS
-//	strict := false
-//	if err := m.NewGroup(&pb.NewGroupRequest{
-//		Name:    groupName,
-//    // note: user must already exist for memberOf overlay to work correctly
-//		Members: []string{username},
-//	}, strict); err != nil {
-//		return nil, err
-//	}
-
-//	group, err := m.GetGroupByName(groupName)
-//	if err != nil {
-//		return nil, fmt.Errorf(
-//			"failed to get group %q: %v",
-//			groupName, err,
-//		)
-//	}
-//	return group, nil
-//}
-
 func (m *LDAPManager) checkUserExists(username string) error {
 	_, err := m.GetUser(username)
 	if err != nil {

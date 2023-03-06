@@ -8,13 +8,14 @@ import (
 
 	"github.com/docker/go-connections/nat"
 	ldapconfig "github.com/romnn/ldap-manager/pkg/config"
+	log "github.com/sirupsen/logrus"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 var (
 	timeout  = 5 * time.Minute
-	imageTag = "latest"
+	imageTag = "1.5.0"
 )
 
 // ContainerOptions describes options for the container
@@ -57,10 +58,9 @@ func StartOpenLDAP(ctx context.Context, options ContainerOptions) (Container, er
 
 	env["LDAP_ADMIN_PASSWORD"] = options.AdminPassword
 
-	env["LDAP_READONLY_USER"] = "true" // strconv.FormatBool(options.ReadOnlyUser)
+	env["LDAP_READONLY_USER"] = strconv.FormatBool(options.ReadOnlyUser)
 	env["LDAP_READONLY_USER_USERNAME"] = options.ReadOnlyUsername
 	env["LDAP_READONLY_USER_PASSWORD"] = options.ReadOnlyPassword
-	// env["LDAP_CONFIG_PASSWORD"] = "blabla123"
 
 	env["CONTAINER_LOG_LEVEL"] = strconv.Itoa(16)
 
@@ -68,6 +68,8 @@ func StartOpenLDAP(ctx context.Context, options ContainerOptions) (Container, er
 	env["LDAP_LOG_LEVEL"] = strconv.Itoa(-1) // 16
 	env["LDAP_TLS"] = strconv.FormatBool(options.TLS)
 	env["LDAP_RFC2307BIS_SCHEMA"] = strconv.FormatBool(options.UseRFC2307BISSchema)
+
+	log.Info(PrettyPrint(env))
 
 	req := testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
@@ -91,6 +93,10 @@ func StartOpenLDAP(ctx context.Context, options ContainerOptions) (Container, er
 		)
 	}
 	container.Container = openLDAPContainer
+
+	// we sleep for a while here, as the container is still
+	// preparing e.g. the `memberOf` overlay...
+	time.Sleep(30 * time.Second)
 
 	host, err := openLDAPContainer.Host(ctx)
 	if err != nil {
