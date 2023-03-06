@@ -3,7 +3,7 @@ entries:
   ldap-manager:
   - apiVersion: v2
     appVersion: 0.0.5
-    created: "2023-03-06T04:51:00.591869528Z"
+    created: "2023-03-06T18:52:01.945269274Z"
     dependencies:
     - condition: openldap.enabled
       name: openldap
@@ -20,18 +20,24 @@ entries:
   ldapmanager:
   - apiVersion: v2
     appVersion: v0.0.33
-    created: "2023-03-06T04:51:00.59317723Z"
-    dependencies:
-    - condition: openldap.enabled
-      name: openldap
-      repository: https://fluktuid.github.io/helm-charts/
-      version: 0.1.1
-    description: cloud-native LDAP management service with a web interface
-    digest: f92a038ba8d905c45944fb928900b67cefb8fe5bc8fb143e50a2c2e8193fe9ec
+    created: "2023-03-06T18:52:01.946719796Z"
+    description: cloud-native LDAP management service with a web interface.
+    digest: 02a219ec5c60d289878f0c52937bbaa8de332829cbce865cd714185fd12f3147
+    home: https://github.com/romnn/ldap-manager
     icon: https://romnn.github.io/ldap-manager/icon/icon_lg.jpg
+    keywords:
+    - ldap
+    - openldap
+    - user-management
+    - web
+    maintainers:
+    - name: romnn
+      url: https://github.com/romnn/
     name: ldapmanager
+    sources:
+    - https://github.com/romnn/ldap-manager
     type: application
     urls:
     - https://romnn.github.io/ldap-manager/charts/ldapmanager-v0.0.33.tgz
     version: v0.0.33
-generated: "2023-03-06T04:51:00.590231526Z"
+generated: "2023-03-06T18:52:01.942782737Z"
