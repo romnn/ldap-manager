@@ -192,7 +192,25 @@ func (m *LDAPManager) setupReadOnlyUser() error {
 }
 
 func (m *LDAPManager) setupAdmin() error {
-	// important: create the admin user before the groups
+	// get the admin group (if already exists)
+	adminGroup, err := m.GetGroupByName(m.DefaultAdminGroup)
+
+	var presentAdmins []string
+	if err == nil {
+		presentAdmins = adminGroup.Members
+	}
+
+	// if 1 or more admins in the admin group exist, we cannot
+	// assume their credentials are still the same unless forced..
+	if !m.ForceCreateAdmin && len(presentAdmins) > 0 {
+		log.Infof(
+			"found existing admins %v: skip create default admin",
+			presentAdmins,
+		)
+		return nil
+	}
+
+	// IMPORTANT: create the admin user before the groups
 	// otherwise, the memberOf overlay will never pick up that
 	// the admin user belongs to the users and admins groups
 	// see: https://github.com/osixia/docker-openldap/issues/635
@@ -203,22 +221,7 @@ func (m *LDAPManager) setupAdmin() error {
 		LastName:  "changeme",
 		Email:     "changeme@changeme.com",
 	}
-
-	// get the admin group (if already exists)
-	adminGroup, err := m.GetGroupByName(m.DefaultAdminGroup)
-
-	var presentAdmins []string
-	if err == nil {
-		presentAdmins = adminGroup.Members
-	}
-
-	// if 1 or more admins in the admin group exist,
-	// we cannot assume their credentials are still the same unless forced
-	if !m.ForceCreateAdmin && len(presentAdmins) > 0 {
-		return nil
-	}
-
-	// create the initial admin from scratch
+	log.Infof("creating default admin %q", admin.GetUsername())
 	if err := m.NewUser(&admin); err != nil {
 		if _, exists := err.(*UserAlreadyExistsError); !exists {
 			return fmt.Errorf(
@@ -258,6 +261,26 @@ func (m *LDAPManager) setupAdmin() error {
 				)
 			}
 		}
+	}
+
+	// make sure default admin has admin status
+	memberStatus, err := m.IsGroupMember(
+		&pb.IsGroupMemberRequest{
+			Username: admin.GetUsername(),
+			Group:    m.DefaultAdminGroup,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to check admin status for default admin %q: %v",
+			admin.GetUsername(), err,
+		)
+	}
+	if !memberStatus.GetIsMember() {
+		return fmt.Errorf(
+			"default admin %q does not have admin privileges",
+			admin.GetUsername(),
+		)
 	}
 	return nil
 }

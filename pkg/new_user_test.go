@@ -32,7 +32,7 @@ func TestNewUser(t *testing.T) {
 			"uid=%s,ou=users,dc=example,dc=org",
 			username,
 		),
-		GID:           2001,
+		GID:           2000,
 		LoginShell:    "/bin/bash",
 		HomeDirectory: "/home/romnn",
 		Email:         "a@b.de",

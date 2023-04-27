@@ -143,8 +143,8 @@ func TestIsGroupMemberMissing(t *testing.T) {
 	username = test.Manager.DefaultAdminUsername
 	groupName = "group-that-is-ficticious"
 	memberStatus, err := test.isGroupMember(t, username, groupName, false)
-	_, missing := err.(*ZeroOrMultipleGroupsError)
-	if err == nil || !missing {
+	_, missingGroup := err.(*ZeroOrMultipleGroupsError)
+	if err == nil || !missingGroup {
 		t.Fatalf(
 			"expected error due to missing group %q",
 			groupName,

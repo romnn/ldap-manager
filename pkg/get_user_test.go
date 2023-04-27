@@ -98,7 +98,7 @@ func TestGetUser(t *testing.T) {
 			"uid=%s,ou=users,dc=example,dc=org",
 			username,
 		),
-		GID:           2001,
+		GID:           2000,
 		LoginShell:    "/bin/bash",
 		HomeDirectory: "/home/felix",
 		Email:         "felix@web.de",

@@ -99,11 +99,19 @@ func TestNewGroup(t *testing.T) {
 	expected := &pb.GroupList{
 		Groups: []*pb.Group{
 			{
+				Name: "users",
+				Members: []string{
+					"uid=ldapadmin,ou=users,dc=example,dc=org",
+					"uid=some-user,ou=users,dc=example,dc=org",
+				},
+				GID: 2000,
+			},
+			{
 				Name: "admins",
 				Members: []string{
 					"uid=ldapadmin,ou=users,dc=example,dc=org",
 				},
-				GID: 2000,
+				GID: 2001,
 			},
 			{
 				Name: "my-group",
@@ -111,14 +119,6 @@ func TestNewGroup(t *testing.T) {
 					"uid=some-user,ou=users,dc=example,dc=org",
 				},
 				GID: 2002,
-			},
-			{
-				Name: "users",
-				Members: []string{
-					"uid=ldapadmin,ou=users,dc=example,dc=org",
-					"uid=some-user,ou=users,dc=example,dc=org",
-				},
-				GID: 2001,
 			},
 		},
 		Total: 3,

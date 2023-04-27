@@ -72,19 +72,20 @@ func TestGetDefaultGroup(t *testing.T) {
 		expected *pb.Group
 	}{
 		{
-			name: test.Manager.DefaultAdminGroup,
+			name: test.Manager.DefaultUserGroup,
 			expected: &pb.Group{
-				Name: "admins",
+				Name: "users",
 				Members: []string{
 					"uid=ldapadmin,ou=users,dc=example,dc=org",
 				},
 				GID: 2000,
 			},
 		},
+
 		{
-			name: test.Manager.DefaultUserGroup,
+			name: test.Manager.DefaultAdminGroup,
 			expected: &pb.Group{
-				Name: "users",
+				Name: "admins",
 				Members: []string{
 					"uid=ldapadmin,ou=users,dc=example,dc=org",
 				},

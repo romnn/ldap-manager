@@ -97,11 +97,20 @@ func TestUpdateUser(t *testing.T) {
 	expected := &pb.GroupList{
 		Groups: []*pb.Group{
 			{
+				Name: "users",
+				Members: []string{
+					"uid=ldapadmin,ou=users,dc=example,dc=org",
+					test.Manager.UserDN(newUsername),
+				},
+				GID: 2000,
+			},
+
+			{
 				Name: "admins",
 				Members: []string{
 					"uid=ldapadmin,ou=users,dc=example,dc=org",
 				},
-				GID: 2000,
+				GID: 2001,
 			},
 			{
 				Name: groupName,
@@ -109,14 +118,6 @@ func TestUpdateUser(t *testing.T) {
 					test.Manager.UserDN(newUsername),
 				},
 				GID: 2002,
-			},
-			{
-				Name: "users",
-				Members: []string{
-					"uid=ldapadmin,ou=users,dc=example,dc=org",
-					test.Manager.UserDN(newUsername),
-				},
-				GID: 2001,
 			},
 		},
 		Total: 3,

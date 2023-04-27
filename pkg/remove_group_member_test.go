@@ -30,10 +30,7 @@ func (test *Test) isGroupMember(
 			},
 		)
 		if err != nil {
-			return fmt.Errorf(
-				"error getting member status of user %q of group %q: %v",
-				username, group, err,
-			)
+			return err
 		}
 		if memberStatus.IsMember != expected {
 			return fmt.Errorf(
@@ -60,15 +57,8 @@ func TestRemoveGroupMember(t *testing.T) {
 		t.Error("expected removing member of the users group to fail")
 	}
 
-	strict := false
 	groupName := "test-group"
 	usernames := []string{"user1", "user2"}
-	if err := test.Manager.NewGroup(&pb.NewGroupRequest{
-		Name:    groupName,
-		Members: usernames,
-	}, strict); err != nil {
-		t.Fatalf("failed to add new group: %v", err)
-	}
 	for _, username := range usernames {
 		if err := test.Manager.NewUser(&pb.NewUserRequest{
 			Username:  username,
@@ -80,8 +70,19 @@ func TestRemoveGroupMember(t *testing.T) {
 			t.Fatalf("failed to add new user: %v", err)
 		}
 	}
+	strict := false
+	if err := test.Manager.NewGroup(&pb.NewGroupRequest{
+		Name:    groupName,
+		Members: usernames,
+	}, strict); err != nil {
+		t.Fatalf("failed to add new group: %v", err)
+	}
 
-	memberStatus, _ := test.isGroupMember(t, usernames[0], groupName, true)
+
+	memberStatus, _ := test.isGroupMember(
+		t,
+		usernames[0], groupName, true,
+	)
 	if !memberStatus.GetIsMember() {
 		t.Fatalf(
 			"expected user %q to be a member of group %q",

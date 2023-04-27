@@ -39,19 +39,19 @@ func TestGetUserGroups(t *testing.T) {
 	expected := &pb.GroupList{
 		Groups: []*pb.Group{
 			{
-				Name: groupName,
-				Members: []string{
-					test.Manager.UserDN(username),
-				},
-				GID: 2002,
-			},
-			{
 				Name: "users",
 				Members: []string{
 					"uid=ldapadmin,ou=users,dc=example,dc=org",
 					test.Manager.UserDN(username),
 				},
-				GID: 2001,
+				GID: 2000,
+			},
+			{
+				Name: groupName,
+				Members: []string{
+					test.Manager.UserDN(username),
+				},
+				GID: 2002,
 			},
 		},
 		Total: 2,

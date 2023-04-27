@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -121,7 +122,7 @@ func versionString(version string, buildTime string) string {
 
 func setupLogging(cliCtx *cli.Context) {
 	level := log.InfoLevel
-	switch cliCtx.String(flags.LogLevel.Name) {
+	switch strings.ToLower(cliCtx.String(flags.LogLevel.Name)) {
 	case "debug":
 		level = log.DebugLevel
 		break
