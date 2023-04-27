@@ -12,10 +12,6 @@ jobs:
       - name: Lint helm chart
         run: helm lint deployment/helm/charts/ldapmanager/
 
-      - run: |
-          echo "REPO_USER=$(echo ${GITHUB_REPOSITORY} | awk -F / '{print $1}' )" >> $GITHUB_ENV
-          echo "REPO_NAME=$(echo ${GITHUB_REPOSITORY} | awk -F / '{print $2}' )" >> $GITHUB_ENV
-
       - name: Package helm chart
         run: >
           helm package
@@ -27,7 +23,7 @@ jobs:
       - name: Package helm chart
         run: >
           helm repo index
-          --url https://${{ env.REPO_USER }}.github.io/${{ env.REPO_NAME }}/charts
+          --url https://${{ steps.query.outputs.github_repo_user }}.github.io/${{ steps.query.outputs.github_repo_name }}/charts
           ./website/charts
 
       - name: Deploy to pages
@@ -75,7 +71,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: "18"
 
