@@ -53,6 +53,13 @@ spec:
             - name: data
               mountPath: /var/lib/ldap
               subPath: data
+            - name: data
+              mountPath: /etc/ldap/slapd.d
+              subPath: config-data
+          {{- if .Values.tls.enabled }}
+            - name: certs
+              mountPath: /container/service/slapd/assets/certs
+          {{- end }}
           livenessProbe:
             tcpSocket:
               port: ldap
@@ -80,6 +87,19 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+        {{- if .Values.tls.enabled }}
+        - name: tls
+          secret:
+            secretName: {{ .Values.tls.secret }}
+        {{- if .Values.tls.CA.enabled }}
+        - name: catls
+          secret:
+            secretName: {{ .Values.tls.CA.secret }}
+        {{- end }}
+        {{- end }}
+        - name: certs 
+          emptyDir:
+            medium: Memory
         - name: data
           {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:

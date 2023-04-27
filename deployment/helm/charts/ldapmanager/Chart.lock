@@ -1,0 +1,6 @@
+dependencies:
+- name: openldap
+  repository: ""
+  version: '>=0.0.0'
+digest: sha256:c1c492999ca21e37eddea3d5358b2c5d8f0100cb037b005180c4be92f1fef87a
+generated: "2023-04-27T17:23:51.909696853+02:00"
