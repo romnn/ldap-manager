@@ -124,8 +124,8 @@ func (m *LDAPManager) NewGroup(req *pb.NewGroupRequest, strict bool) error {
 		return err
 	}
 	log.Infof(
-		"added new group %q with %d members (gid=%d)",
-		groupName, len(memberList), GID,
+		"added new group %q (gid=%d) with members %v",
+		groupName, memberList, GID,
 	)
 	return nil
 }
