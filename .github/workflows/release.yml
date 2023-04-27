@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - id: query
-        uses: romnn/query-git-action@master
+        uses: romnn/query-git-action@main
 
       - name: Lint helm chart
         run: helm lint deployment/helm/charts/ldapmanager/
@@ -23,8 +23,8 @@ jobs:
         run: >
           helm package
           --dependency-update
-          --app-version=${{ steps.query.outputs.stable_semver_version }}
-          --version=${{ steps.query.outputs.stable_semver_version }}
+          --app-version=${{ steps.query.outputs.semver_version }}
+          --version=${{ steps.query.outputs.semver_version }}
           --destination ./website/charts deployment/helm/charts/ldapmanager
 
       - name: Package helm chart
@@ -64,7 +64,7 @@ jobs:
           go-version: 1.19.x
 
       - id: query
-        uses: romnn/query-git-action@master
+        uses: romnn/query-git-action@main
 
       - name: Set binary name
         id: bin_name
@@ -84,8 +84,8 @@ jobs:
           LDFLAGS: >
             -w
             -s
-            -X main.Version=${{ steps.query.outputs.stable_semver_version }}
-            -X main.Rev=${{ steps.query.outputs.stable_build_git_commit }}
+            -X main.Version=${{ steps.query.outputs.semver_version }}
+            -X main.Rev=${{ steps.query.outputs.git_commit }}
         run: >
           go build -a 
           -ldflags="$LDFLAGS"
@@ -96,10 +96,10 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          body: ldap-manager ${{ steps.query.outputs.stable_semver_version }}
+          body: ldap-manager ${{ steps.query.outputs.semver_version }}
           file: build/*
-          tag: ${{ steps.query.outputs.stable_semver_version }}
-          release_name: ${{ steps.query.outputs.stable_semver_version }}
+          tag: ${{ steps.query.outputs.semver_version }}
+          release_name: ${{ steps.query.outputs.semver_version }}
           overwrite: true
           file_glob: true
 
@@ -110,7 +110,7 @@ jobs:
       - uses: docker/setup-qemu-action@v2
       - uses: docker/setup-buildx-action@v2
       - id: query
-        uses: romnn/query-git-action@master
+        uses: romnn/query-git-action@main
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
@@ -126,7 +126,7 @@ jobs:
           platforms: linux/amd64
           push: true
           build-args: |
-            version=${{ steps.query.outputs.stable_semver_version }}
+            version=${{ steps.query.outputs.semver_version }}
           tags: |
             romnn/ldap-manager:latest
-            romnn/ldap-manager:${{ steps.query.outputs.stable_docker_tag }}
+            romnn/ldap-manager:${{ steps.query.outputs.docker_tag }}

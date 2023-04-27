@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - id: query
-        uses: romnn/query-git-action@master
+        uses: romnn/query-git-action@main
 
       - name: Lint helm chart
         run: helm lint deployment/helm/charts/ldapmanager/
@@ -20,8 +20,8 @@ jobs:
         run: >
           helm package
           --dependency-update
-          --app-version=${{ steps.query.outputs.stable_semver_version }}
-          --version=${{ steps.query.outputs.stable_semver_version }}
+          --app-version=${{ steps.query.outputs.semver_version }}
+          --version=${{ steps.query.outputs.semver_version }}
           --destination ./website/charts deployment/helm/charts/ldapmanager
 
       - name: Package helm chart
@@ -100,7 +100,7 @@ jobs:
       - uses: docker/setup-qemu-action@v2
       - uses: docker/setup-buildx-action@v2
       - id: query
-        uses: romnn/query-git-action@master
+        uses: romnn/query-git-action@main
 
       - name: Build docker container
         uses: docker/build-push-action@v3
@@ -110,7 +110,7 @@ jobs:
           platforms: linux/amd64
           push: false
           build-args: |
-            version=${{ steps.query.outputs.stable_semver_version }}
+            version=${{ steps.query.outputs.semver_version }}
           tags: |
             romnn/ldap-manager:latest
 
@@ -121,7 +121,7 @@ jobs:
       - uses: docker/setup-qemu-action@v2
       - uses: docker/setup-buildx-action@v2
       - id: query
-        uses: romnn/query-git-action@master
+        uses: romnn/query-git-action@main
 
       - name: Build docker container
         uses: docker/build-push-action@v3
@@ -131,6 +131,6 @@ jobs:
           platforms: linux/amd64
           push: false
           build-args: |
-            version=${{ steps.query.outputs.stable_semver_version }}
+            version=${{ steps.query.outputs.semver_version }}
           tags: |
             romnn/ldap-manager-screenshot:latest
