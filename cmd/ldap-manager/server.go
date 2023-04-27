@@ -148,6 +148,10 @@ func setupLogging(cliCtx *cli.Context) {
 		break
 	}
 	log.SetLevel(level)
+	log.SetFormatter(&log.TextFormatter{
+		ForceColors:  cliCtx.Bool(flags.ForceColors.Name),
+		DisableQuote: cliCtx.Bool(flags.DisableQuote.Name),
+	})
 }
 
 func serve(cliCtx *cli.Context) error {

@@ -24,6 +24,21 @@ var (
 		EnvVars: []string{"LOG", "LOG_LEVEL"},
 		Usage:   "Log level",
 	}
+	// ForceColors forces colors output
+	ForceColors = cli.BoolFlag{
+		Name:    "force-colors",
+		Value:   true,
+		Aliases: []string{"colors"},
+		EnvVars: []string{"FORCE_COLORS"},
+		Usage:   "Force colors",
+	}
+	// DisableQuote disables quoting log messages (preserves newlines)
+	DisableQuote = cli.BoolFlag{
+		Name:    "disable-quotes",
+		Value:   true,
+		EnvVars: []string{"DISABLE_QUOTES"},
+		Usage:   "Disable quoting log messages (preserves newlines)",
+	}
 	// GRPCPort configures the port to serve GRPC
 	GRPCPort = cli.IntFlag{
 		Name:    "grpc-port",
@@ -57,6 +72,8 @@ var (
 	// ServiceFlags is the set of all service CLI flags
 	ServiceFlags = []cli.Flag{
 		&LogLevel,
+		&ForceColors,
+		&DisableQuote,
 		&GRPCPort,
 		&HTTPPort,
 		&NoStatic,

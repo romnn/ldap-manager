@@ -43,8 +43,7 @@ For a list of options, run with `--help`. If you want to deploy OpenLDAP with LD
 ### Deployment
 
 ```bash
-helm repo add fluktuid https://fluktuid.github.io/helm-charts/
-helm dependency build deployment/helm/charts/ldapmanager/
+helm dependency update deployment/helm/charts/ldapmanager/
 ```
 
 ##### docker-compose
