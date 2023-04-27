@@ -3,7 +3,7 @@ entries:
   ldap-manager:
   - apiVersion: v2
     appVersion: 0.0.5
-    created: "2023-04-27T17:06:40.872139582Z"
+    created: "2023-04-27T17:06:43.568653775Z"
     dependencies:
     - condition: openldap.enabled
       name: openldap
@@ -20,14 +20,14 @@ entries:
   ldapmanager:
   - apiVersion: v2
     appVersion: v0.0.36
-    created: "2023-04-27T17:06:40.873528009Z"
+    created: "2023-04-27T17:06:43.571509456Z"
     dependencies:
     - condition: openldap.enabled
       name: openldap
       repository: ""
       version: '>=0.0.0'
     description: cloud-native LDAP management service with a web interface.
-    digest: 485756be593cd0e30ce918925fdf1f22e65a8601e0ab825e1dfd9461d217fdb9
+    digest: b2939d46f998140f4676406a705fa5672f6bea3dd1b0c12f617fc9033eb69dbc
     home: https://github.com/romnn/ldap-manager
     icon: https://romnn.github.io/ldap-manager/icon/icon_lg.jpg
     keywords:
@@ -45,4 +45,4 @@ entries:
     urls:
     - https://romnn.github.io/ldap-manager/charts/ldapmanager-v0.0.36.tgz
     version: v0.0.36
-generated: "2023-04-27T17:06:40.87047373Z"
+generated: "2023-04-27T17:06:43.567112085Z"
