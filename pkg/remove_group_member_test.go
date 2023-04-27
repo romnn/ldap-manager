@@ -78,7 +78,6 @@ func TestRemoveGroupMember(t *testing.T) {
 		t.Fatalf("failed to add new group: %v", err)
 	}
 
-
 	memberStatus, _ := test.isGroupMember(
 		t,
 		usernames[0], groupName, true,

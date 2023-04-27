@@ -35,22 +35,6 @@ func TestGetUserList(t *testing.T) {
 	expected := &pb.UserList{
 		Users: []*pb.User{
 			{
-				Username:    req.GetUsername(),
-				FirstName:   req.GetFirstName(),
-				LastName:    req.GetLastName(),
-				DisplayName: "roman d",
-				CN:          "roman d",
-				DN: fmt.Sprintf(
-					"uid=%s,ou=users,dc=example,dc=org",
-					req.GetUsername(),
-				),
-				Email:         req.GetEmail(),
-				UID:           2001,
-				GID:           2001,
-				LoginShell:    "/bin/bash",
-				HomeDirectory: "/home/test-user",
-			},
-			{
 				Username:    test.Manager.DefaultAdminUsername,
 				FirstName:   "changeme",
 				LastName:    "changeme",
@@ -62,15 +46,31 @@ func TestGetUserList(t *testing.T) {
 				),
 				Email:         "changeme@changeme.com",
 				UID:           2000,
-				GID:           2001,
+				GID:           2000,
 				LoginShell:    "/bin/bash",
 				HomeDirectory: "/home/ldapadmin",
+			},
+			{
+				Username:    req.GetUsername(),
+				FirstName:   req.GetFirstName(),
+				LastName:    req.GetLastName(),
+				DisplayName: "roman d",
+				CN:          "roman d",
+				DN: fmt.Sprintf(
+					"uid=%s,ou=users,dc=example,dc=org",
+					req.GetUsername(),
+				),
+				Email:         req.GetEmail(),
+				UID:           2001,
+				GID:           2000,
+				LoginShell:    "/bin/bash",
+				HomeDirectory: "/home/test-user",
 			},
 		},
 		Total: 2,
 	}
 
-	sort := recursivesort.RecursiveSort{StructSortField: "GID"}
+	sort := recursivesort.RecursiveSort{StructSortField: "UID"}
 	sort.Sort(&users)
 	sort.Sort(&expected)
 
