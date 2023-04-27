@@ -1,0 +1,21 @@
+apiVersion: v2
+name: openldap
+description: OpenLDAP helm chart.
+home: https://www.openldap.org
+icon: http://www.openldap.org/images/headers/LDAPworm.gif
+keywords:
+  - ldap
+  - openldap
+
+type: application
+
+version: 0.0.0
+
+appVersion: "1.5.0"
+
+sources:
+  - https://github.com/romnn/registry
+
+maintainers:
+  - name: romnn
+    url: https://github.com/romnn/

@@ -1,0 +1,12 @@
+#
+# A ConfigMap spec for openldap that maps the initial data to the pod
+#
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "openldap.fullname" . }}-env
+  labels:
+    {{- include "openldap.labels" . | nindent 4 }}
+data:
+  {{ toYaml .Values.env | nindent 2 }}

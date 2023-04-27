@@ -1,6 +1,0 @@
-dependencies:
-- name: openldap
-  repository: https://fluktuid.github.io/helm-charts/
-  version: 0.1.1
-digest: sha256:96ddbf47ba75a142230b5115bd8ed9ac73f7529169c3c8d6fb784d73287699a5
-generated: "2023-01-13T13:34:41.382004603+01:00"

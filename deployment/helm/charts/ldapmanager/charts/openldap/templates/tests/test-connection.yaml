@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "openldap.fullname" . }}-test-connection
+  labels:
+    {{- include "openldap.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    # ldapsearch -x -H ldap://localhost:389 -D "cn=admin,dc=example,dc=org" -w "admin"
+    - name: ldapsearch
+      image: bitnami/openldap
+      command: ["ldapsearch"]
+      args:
+        - "-x"
+        - "-H"
+        - {{ printf "ldap://%s:%v" (include "openldap.fullname" .) .Values.service.ldapPort | quote }}
+        - "-D"
+        - {{ printf "cn=admin,%s" .Values.env.LDAP_BASE_DN | quote }}
+        - "-w"
+        - {{ .Values.auth.adminPassword | quote }}
+  restartPolicy: Never

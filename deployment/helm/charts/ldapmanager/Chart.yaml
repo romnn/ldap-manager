@@ -21,3 +21,8 @@ sources:
 maintainers:
   - name: romnn
     url: https://github.com/romnn/
+
+dependencies:
+  - name: openldap
+    version: ">=0.0.0"
+    condition: openldap.enabled
