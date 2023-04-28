@@ -44,7 +44,7 @@ spec:
               containerPort: 636
               protocol: TCP
 
-          {{- if .Values.persistence.enabled }}
+          {{- if (and .Values.persistence.enabled false) }}
           # use single pvc for data and config using soft-links
           lifecycle:
             postStart:
