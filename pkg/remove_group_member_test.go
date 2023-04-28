@@ -15,7 +15,8 @@ func (test *Test) isGroupMember(
 	group string,
 	expected bool,
 ) (*pb.GroupMemberStatus, error) {
-	// retry a few times (memberOf can take some time to become available)
+	// retry a few times
+	// (memberOf can take some time to become available)
 	b := backoff.WithMaxRetries(&backoff.ConstantBackOff{
 		Interval: 10 * time.Second,
 	}, 10)

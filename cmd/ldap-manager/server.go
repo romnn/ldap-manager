@@ -182,6 +182,7 @@ func serve(cliCtx *cli.Context) error {
 	log.Debug(ldapmanager.PrettyPrint(manager.Config))
 
 	if err := manager.Setup(); err != nil {
+		log.Error(err)
 		return err
 	}
 

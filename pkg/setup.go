@@ -202,86 +202,92 @@ func (m *LDAPManager) setupAdmin() error {
 
 	// if 1 or more admins in the admin group exist, we cannot
 	// assume their credentials are still the same unless forced..
-	if !m.ForceCreateAdmin && len(presentAdmins) > 0 {
+	if m.ForceCreateAdmin || len(presentAdmins) < 1 {
+		// IMPORTANT: create the admin user before the groups
+		// otherwise, the memberOf overlay will never pick up that
+		// the admin user belongs to the users and admins groups
+		// see: https://github.com/osixia/docker-openldap/issues/635
+		admin := pb.NewUserRequest{
+			Username:  m.DefaultAdminUsername,
+			Password:  m.DefaultAdminPassword,
+			FirstName: "changeme",
+			LastName:  "changeme",
+			Email:     "changeme@changeme.com",
+		}
+		presentAdmins = append(presentAdmins, admin.GetUsername())
+		log.Infof("creating default admin %q", admin.GetUsername())
+		if err := m.NewUser(&admin); err != nil {
+			_, exists := err.(*UserAlreadyExistsError)
+			if !exists {
+				return fmt.Errorf(
+					"failed to create initial admin user: %v",
+					err,
+				)
+			}
+		}
+	} else {
 		log.Infof(
 			"found existing admins %v: skip create default admin",
 			presentAdmins,
 		)
-		return nil
 	}
 
-	// IMPORTANT: create the admin user before the groups
-	// otherwise, the memberOf overlay will never pick up that
-	// the admin user belongs to the users and admins groups
-	// see: https://github.com/osixia/docker-openldap/issues/635
-	admin := pb.NewUserRequest{
-		Username:  m.DefaultAdminUsername,
-		Password:  m.DefaultAdminPassword,
-		FirstName: "changeme",
-		LastName:  "changeme",
-		Email:     "changeme@changeme.com",
-	}
-	log.Infof("creating default admin %q", admin.GetUsername())
-	if err := m.NewUser(&admin); err != nil {
-		if _, exists := err.(*UserAlreadyExistsError); !exists {
-			return fmt.Errorf(
-				"failed to create initial admin user: %v",
-				err,
+	// create initial groups and add admin users to them
+	for _, admin := range presentAdmins {
+		for _, groupName := range []string{
+			m.DefaultAdminGroup,
+			m.DefaultUserGroup,
+		} {
+			strict := false
+			if err := m.NewGroup(&pb.NewGroupRequest{
+				Name:    groupName,
+				Members: []string{admin},
+			}, strict); err != nil {
+				_, exists := err.(*GroupAlreadyExistsError)
+				if !exists {
+					return fmt.Errorf(
+						"failed to create %q group: %v",
+						groupName, err,
+					)
+				}
+			}
+
+			allowNonExistent := false
+			if err := m.AddGroupMember(&pb.GroupMember{
+				Username: admin,
+				Group:    groupName,
+			}, allowNonExistent); err != nil {
+				_, exists := err.(*MemberAlreadyExistsError)
+				if !exists {
+					return fmt.Errorf(
+						"failed to add admin user %q to group %q: %v",
+						admin, groupName, err,
+					)
+				}
+			}
+
+			// make sure default admin has admin status
+			memberStatus, err := m.IsGroupMember(
+				&pb.IsGroupMemberRequest{
+					Username: admin,
+					Group:    m.DefaultAdminGroup,
+				},
 			)
-		}
-	}
-
-	// create initial groups and add admin user to them
-	for _, groupName := range []string{
-		m.DefaultAdminGroup,
-		m.DefaultUserGroup,
-	} {
-		strict := false
-		if err := m.NewGroup(&pb.NewGroupRequest{
-			Name:    groupName,
-			Members: []string{admin.GetUsername()},
-		}, strict); err != nil {
-			if _, exists := err.(*GroupAlreadyExistsError); !exists {
+			if err != nil {
 				return fmt.Errorf(
-					"failed to create %q group: %v",
-					groupName, err,
+					"failed to check admin status for default admin %q: %v",
+					admin, err,
 				)
 			}
-		}
-
-		allowNonExistent := false
-		if err := m.AddGroupMember(&pb.GroupMember{
-			Username: admin.GetUsername(),
-			Group:    groupName,
-		}, allowNonExistent); err != nil {
-			if _, exists := err.(*MemberAlreadyExistsError); !exists {
+			if !memberStatus.GetIsMember() {
 				return fmt.Errorf(
-					"failed to add admin user %q to group %q: %v",
-					admin.GetUsername(), groupName, err,
+					"default admin %q does not have admin privileges",
+					admin,
 				)
 			}
 		}
 	}
 
-	// make sure default admin has admin status
-	memberStatus, err := m.IsGroupMember(
-		&pb.IsGroupMemberRequest{
-			Username: admin.GetUsername(),
-			Group:    m.DefaultAdminGroup,
-		},
-	)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to check admin status for default admin %q: %v",
-			admin.GetUsername(), err,
-		)
-	}
-	if !memberStatus.GetIsMember() {
-		return fmt.Errorf(
-			"default admin %q does not have admin privileges",
-			admin.GetUsername(),
-		)
-	}
 	return nil
 }
 
