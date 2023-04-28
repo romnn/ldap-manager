@@ -32,7 +32,7 @@ var Rev = ""
 
 // newLDAPManager configures the LDAP manager based on the CLI config
 func newLDAPManager(ctx *cli.Context) ldapmanager.LDAPManager {
-	hasReadOnlyUser := ctx.String(flags.LdapReadOnlyUser.Name) != ""
+	hasReadOnlyUser := ctx.String(flags.LdapReadOnlyUsername.Name) != ""
 	baseDN := ctx.String(flags.LdapBaseDn.Name)
 	groupsOU := ctx.String(flags.GroupsOu.Name)
 	usersOU := ctx.String(flags.UsersOu.Name)
@@ -62,8 +62,9 @@ func newLDAPManager(ctx *cli.Context) ldapmanager.LDAPManager {
 		AdminUsername:       ctx.String(flags.LdapAdminUsername.Name),
 		AdminPassword:       ctx.String(flags.LdapAdminPassword.Name),
 		ReadOnlyUser:        hasReadOnlyUser,
-		ReadOnlyUsername:    ctx.String(flags.LdapReadOnlyUser.Name),
+		ReadOnlyUsername:    ctx.String(flags.LdapReadOnlyUsername.Name),
 		ReadOnlyPassword:    ctx.String(flags.LdapReadOnlyPassword.Name),
+		ConfigPassword:      ctx.String(flags.LdapConfigPassword.Name),
 		TLS:                 ctx.Bool(flags.LdapTLS.Name),
 		UseRFC2307BISSchema: ctx.Bool(flags.LdapUseRfc2307Bis.Name),
 	}
@@ -182,7 +183,6 @@ func serve(cliCtx *cli.Context) error {
 	log.Debug(ldapmanager.PrettyPrint(manager.Config))
 
 	if err := manager.Setup(); err != nil {
-		log.Error(err)
 		return err
 	}
 

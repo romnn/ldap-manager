@@ -40,9 +40,6 @@ spec:
               containerPort: {{ .Values.service.grpcPort }}
 
           readinessProbe:
-            # httpGet:
-            #   path: /healthz
-            #   port: {{ .Values.service.httpPort }}
             grpc:
               port: {{ .Values.service.grpcPort }}
             initialDelaySeconds: 5
@@ -50,9 +47,6 @@ spec:
             failureThreshold: 3
 
           livenessProbe:
-            # httpGet:
-            #   path: /healthz
-            #   port: {{ .Values.service.httpPort }}
             grpc:
               port: {{ .Values.service.grpcPort }}
             initialDelaySeconds: 5
@@ -123,11 +117,11 @@ spec:
             value: {{ .Values.ldap.adminPassword | quote }}
           {{- end }}
           {{- if .Values.ldap.configPassword }}
-          - name: OPENLDAP_CONFIG_PASSWORD
+          - name: LDAP_CONFIG_PASSWORD
             value: {{ .Values.ldap.configPassword | quote }}
           {{- end }}
           {{- if .Values.ldap.readonly.username }}
-          - name: LDAP_READONLY_USER
+          - name: LDAP_READONLY_USERNAME
             value: {{ .Values.ldap.readonly.username | quote }}
           {{- end }}
           {{- if .Values.ldap.readonly.password }}

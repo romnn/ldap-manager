@@ -402,9 +402,76 @@ func (m *LDAPManager) Connect() error {
 	return err
 }
 
+// CheckServerCapabilities probes the LDAP server for sufficient capabilities.
+func (m *LDAPManager) CheckServerCapabilities() error {
+	// inside LDAP container:
+	//
+	//	$ slapcat -n 0
+	//
+	// dn: cn=module{0},cn=config
+	// objectClass: olcModuleList
+	// cn: module{0}
+	// olcModulePath: /usr/lib/ldap
+	// olcModuleLoad: {0}back_mdb
+	// olcModuleLoad: {1}memberof
+	// olcModuleLoad: {2}refint
+	// structuralObjectClass: olcModuleList
+
+	conn, err := m.Pool.Get()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	// bind for the config CN
+	configDN := fmt.Sprintf(
+		"cn=%s,cn=config",
+		m.Config.AdminUsername,
+	)
+	if err := conn.Bind(configDN, m.Config.ConfigPassword); err != nil {
+		return fmt.Errorf(
+			"unable to bind as config user %q: %v",
+			configDN, err,
+		)
+	}
+
+	result, err := conn.Search(ldap.NewSearchRequest(
+		"cn=module{0},cn=config",
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		"(objectClass=olcModuleList)",
+		[]string{"olcModuleLoad"},
+		[]ldap.Control{},
+	))
+	if err != nil {
+		return fmt.Errorf("failed to check olc module list: %v", err)
+	}
+	var loadedModules []string
+	for _, entry := range result.Entries {
+		loadedModules = append(
+			loadedModules,
+			entry.GetAttributeValues("olcModuleLoad")...,
+		)
+	}
+	hasMemberOf := false
+	for _, mod := range loadedModules {
+		if strings.Contains(strings.ToLower(mod), "memberof") {
+			hasMemberOf = true
+		}
+	}
+	if !hasMemberOf {
+		return fmt.Errorf(
+			"memberof is not (yet) available for LDAP server",
+		)
+	}
+	return nil
+}
+
 // Setup sets up the LDAP server
 func (m *LDAPManager) Setup() error {
 	if err := m.Connect(); err != nil {
+		return err
+	}
+	if err := m.CheckServerCapabilities(); err != nil {
 		return err
 	}
 	if err := m.SetupLDAP(); err != nil {

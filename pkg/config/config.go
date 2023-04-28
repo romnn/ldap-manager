@@ -18,6 +18,7 @@ type Config struct {
 	ReadOnlyUser        bool
 	ReadOnlyUsername    string
 	ReadOnlyPassword    string
+	ConfigPassword      string
 	TLS                 bool
 	UseRFC2307BISSchema bool
 }

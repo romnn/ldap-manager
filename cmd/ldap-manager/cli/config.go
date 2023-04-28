@@ -40,11 +40,11 @@ var (
 		EnvVars: []string{"LDAP_ADMIN_PASSWORD"},
 		Usage:   "LDAP admin password",
 	}
-	// LdapReadOnlyUser configures the LDAP read-only user
-	LdapReadOnlyUser = cli.StringFlag{
-		Name:    "ldap-readonly-user",
+	// LdapReadOnlyUsername configures the LDAP read-only user
+	LdapReadOnlyUsername = cli.StringFlag{
+		Name:    "ldap-readonly-username",
 		Value:   "", // no read-only user
-		EnvVars: []string{"LDAP_READONLY_USER"},
+		EnvVars: []string{"LDAP_READONLY_USERNAME"},
 		Usage:   "LDAP read-only user",
 	}
 	// LdapReadOnlyPassword configures the LDAP read-only user
@@ -53,6 +53,20 @@ var (
 		Value:   "", // no read-only user
 		EnvVars: []string{"LDAP_READONLY_PASSWORD"},
 		Usage:   "LDAP read-only password",
+	}
+	// LdapConfigUsername configures the LDAP config user
+	LdapConfigUsername = cli.StringFlag{
+		Name:    "ldap-config-username",
+		Value:   "config",
+		EnvVars: []string{"LDAP_CONFIG_USERNAME"},
+		Usage:   "LDAP config user",
+	}
+	// LdapConfigPassword configures the LDAP config user
+	LdapConfigPassword = cli.StringFlag{
+		Name:    "ldap-config-password",
+		Value:   "", // no read-only user
+		EnvVars: []string{"LDAP_CONFIG_PASSWORD"},
+		Usage:   "LDAP config password",
 	}
 	// LdapOrganization configures the LDAP organization
 	LdapOrganization = cli.StringFlag{
@@ -96,8 +110,9 @@ var (
 		&LdapProtocol,
 		&LdapAdminUsername,
 		&LdapAdminPassword,
-		&LdapReadOnlyUser,
+		&LdapReadOnlyUsername,
 		&LdapReadOnlyPassword,
+		&LdapConfigPassword,
 		&LdapOrganization,
 		&LdapDomain,
 		&LdapBaseDn,
