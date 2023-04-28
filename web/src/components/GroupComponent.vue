@@ -178,6 +178,7 @@ async function removeAccount(
     await memberStore.removeGroupMember({
       username: user.username,
       group: groupName,
+      dn: "", // ignored
     });
     successAlert(`${user.username} was removed from ${groupName}`);
     form.value.members = form.value.members.filter(
@@ -213,6 +214,7 @@ async function addAccount(user: User, group: string | undefined = undefined) {
     await memberStore.addGroupMember({
       username: user.username,
       group: groupName,
+      dn: "", // ignored
     });
     successAlert(`${user.username} was added to ${groupName}`);
     form.value.members.push(user);
@@ -310,7 +312,7 @@ async function loadGroupData(name: string | undefined = undefined) {
     form.value.name = group.name;
     // todo: find them in the available users
     form.value.members = group.members
-      .map((dn) => availableMap.value.get(dn))
+      .map((member) => availableMap.value.get(member.dn))
       .filter((member): member is User => !!member);
     console.log(group.members);
   } catch (err: unknown) {

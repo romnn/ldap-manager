@@ -245,6 +245,7 @@ async function removeFromGroup(username: string, group: string) {
     await membersStore.removeGroupMember({
       username,
       group,
+      dn: "", // ignore
     });
     userGroups.value = userGroups.value.filter((g: Group) => g.name !== group);
     successAlert(`${username} was removed from ${group}`);
@@ -268,6 +269,7 @@ async function addToGroup(username: string, group: string) {
     await membersStore.addGroupMember({
       username: username,
       group: group,
+      dn: "", // ignore
     });
 
     // add to userGroups
