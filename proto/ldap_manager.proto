@@ -131,14 +131,14 @@ message GetUserGroupsRequest {
 
 message Group {
   string name = 1;
-  repeated string members = 2;
-  /* repeated User members = 2; */
+  repeated GroupMember members = 2;
   int64 GID = 3;
 }
 
 message GroupMember {
   string group = 1;
   string username = 2;
+  string dn = 3;
 }
 
 message ChangePasswordRequest {

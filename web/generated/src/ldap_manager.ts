@@ -147,14 +147,14 @@ export interface GetUserGroupsRequest {
 
 export interface Group {
   name: string;
-  members: string[];
-  /** repeated User members = 2; */
+  members: GroupMember[];
   GID: number;
 }
 
 export interface GroupMember {
   group: string;
   username: string;
+  dn: string;
 }
 
 export interface ChangePasswordRequest {
@@ -617,7 +617,7 @@ export const Group = {
   fromJSON(object: any): Group {
     return {
       name: isSet(object.name) ? String(object.name) : "",
-      members: Array.isArray(object?.members) ? object.members.map((e: any) => String(e)) : [],
+      members: Array.isArray(object?.members) ? object.members.map((e: any) => GroupMember.fromJSON(e)) : [],
       GID: isSet(object.GID) ? Number(object.GID) : 0,
     };
   },
@@ -626,7 +626,7 @@ export const Group = {
     const obj: any = {};
     message.name !== undefined && (obj.name = message.name);
     if (message.members) {
-      obj.members = message.members.map((e) => e);
+      obj.members = message.members.map((e) => e ? GroupMember.toJSON(e) : undefined);
     } else {
       obj.members = [];
     }
@@ -636,7 +636,7 @@ export const Group = {
 };
 
 function createBaseGroupMember(): GroupMember {
-  return { group: "", username: "" };
+  return { group: "", username: "", dn: "" };
 }
 
 export const GroupMember = {
@@ -644,6 +644,7 @@ export const GroupMember = {
     return {
       group: isSet(object.group) ? String(object.group) : "",
       username: isSet(object.username) ? String(object.username) : "",
+      dn: isSet(object.dn) ? String(object.dn) : "",
     };
   },
 
@@ -651,6 +652,7 @@ export const GroupMember = {
     const obj: any = {};
     message.group !== undefined && (obj.group = message.group);
     message.username !== undefined && (obj.username = message.username);
+    message.dn !== undefined && (obj.dn = message.dn);
     return obj;
   },
 };

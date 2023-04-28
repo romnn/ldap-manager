@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/go-ldap/ldap/v3"
@@ -26,6 +27,21 @@ const (
 	// MinGID for POSIX accounts, reserved for the users group
 	MinGID = 2000
 )
+
+// ParseDN parses a DN into its parts.
+func ParseDN(dn string) map[string][]string {
+	parsed := make(map[string][]string)
+	re := regexp.MustCompile("([^,]+)=([^,]+)")
+	parts := re.FindAllStringSubmatch(dn, -1)
+	for _, part := range parts {
+		_, present := parsed[part[1]]
+		if !present {
+			parsed[part[1]] = []string{}
+		}
+		parsed[part[1]] = append(parsed[part[1]], part[2])
+	}
+	return parsed
+}
 
 // GroupDN returns the full group DN for a group name
 func (m *LDAPManager) GroupDN(name string) string {

@@ -46,23 +46,40 @@ func TestGetGroupList(t *testing.T) {
 		Groups: []*pb.Group{
 			{
 				Name: "users",
-				Members: []string{
-					"uid=ldapadmin,ou=users,dc=example,dc=org",
-					test.Manager.UserDN(username),
+				Members: []*pb.GroupMember{
+					{
+						Username: "ldapadmin",
+						Dn:       test.Manager.UserDN("ldapadmin"),
+						Group:    "users",
+						// Dn: "uid=ldapadmin,ou=users,dc=example,dc=org",
+					},
+					{
+						Username: username,
+						Dn:       test.Manager.UserDN(username),
+						Group:    "users",
+					},
 				},
 				GID: 2000,
 			},
 			{
 				Name: "admins",
-				Members: []string{
-					"uid=ldapadmin,ou=users,dc=example,dc=org",
+				Members: []*pb.GroupMember{
+					{
+						Username: "ldapadmin",
+						Dn:       test.Manager.UserDN("ldapadmin"),
+						Group:    "admins",
+					},
 				},
 				GID: 2001,
 			},
 			{
 				Name: groupName,
-				Members: []string{
-					test.Manager.UserDN(username),
+				Members: []*pb.GroupMember{
+					{
+						Username: username,
+						Dn:       test.Manager.UserDN(username),
+						Group:    groupName,
+					},
 				},
 				GID: 2002,
 			},

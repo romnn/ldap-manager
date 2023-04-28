@@ -44,8 +44,12 @@ func TestAddGroupMember(t *testing.T) {
 
 	expected := &pb.Group{
 		Name: groupName,
-		Members: []string{
-			test.Manager.UserDN(usernames[0]),
+		Members: []*pb.GroupMember{
+			{
+				Group:    groupName,
+				Username: usernames[0],
+				Dn:       test.Manager.UserDN(usernames[0]),
+			},
 		},
 		GID: 2002,
 	}

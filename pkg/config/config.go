@@ -37,6 +37,7 @@ func NewConfig() Config {
 		ReadOnlyUser:        true,
 		ReadOnlyUsername:    "readonly",
 		ReadOnlyPassword:    "readonly",
+		ConfigPassword:      "config",
 		TLS:                 false,
 		UseRFC2307BISSchema: true,
 	}

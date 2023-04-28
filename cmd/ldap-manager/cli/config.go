@@ -64,7 +64,7 @@ var (
 	// LdapConfigPassword configures the LDAP config user
 	LdapConfigPassword = cli.StringFlag{
 		Name:    "ldap-config-password",
-		Value:   "", // no read-only user
+		Value:   "config",
 		EnvVars: []string{"LDAP_CONFIG_PASSWORD"},
 		Usage:   "LDAP config password",
 	}

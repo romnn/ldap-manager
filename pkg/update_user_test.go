@@ -98,24 +98,40 @@ func TestUpdateUser(t *testing.T) {
 		Groups: []*pb.Group{
 			{
 				Name: "users",
-				Members: []string{
-					"uid=ldapadmin,ou=users,dc=example,dc=org",
-					test.Manager.UserDN(newUsername),
+				Members: []*pb.GroupMember{
+					{
+						Dn:       test.Manager.UserDN("ldapadmin"),
+						Username: "ldapadmin",
+						Group:    "users",
+					},
+					{
+						Dn:       test.Manager.UserDN(newUsername),
+						Username: newUsername,
+						Group:    "users",
+					},
 				},
 				GID: 2000,
 			},
 
 			{
 				Name: "admins",
-				Members: []string{
-					"uid=ldapadmin,ou=users,dc=example,dc=org",
+				Members: []*pb.GroupMember{
+					{
+						Dn:       test.Manager.UserDN("ldapadmin"),
+						Username: "ldapadmin",
+						Group:    "admins",
+					},
 				},
 				GID: 2001,
 			},
 			{
 				Name: groupName,
-				Members: []string{
-					test.Manager.UserDN(newUsername),
+				Members: []*pb.GroupMember{
+					{
+						Dn:       test.Manager.UserDN(newUsername),
+						Username: newUsername,
+						Group:    groupName,
+					},
 				},
 				GID: 2002,
 			},

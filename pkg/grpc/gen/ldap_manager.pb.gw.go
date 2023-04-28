@@ -721,6 +721,10 @@ func local_request_LDAPManager_AddGroupMember_0(ctx context.Context, marshaler r
 
 }
 
+var (
+	filter_LDAPManager_RemoveGroupMember_0 = &utilities.DoubleArray{Encoding: map[string]int{"group": 0, "username": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
+)
+
 func request_LDAPManager_RemoveGroupMember_0(ctx context.Context, marshaler runtime.Marshaler, client LDAPManagerClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GroupMember
 	var metadata runtime.ServerMetadata
@@ -750,6 +754,13 @@ func request_LDAPManager_RemoveGroupMember_0(ctx context.Context, marshaler runt
 	protoReq.Username, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "username", err)
+	}
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LDAPManager_RemoveGroupMember_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.RemoveGroupMember(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -786,6 +797,13 @@ func local_request_LDAPManager_RemoveGroupMember_0(ctx context.Context, marshale
 	protoReq.Username, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "username", err)
+	}
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LDAPManager_RemoveGroupMember_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := server.RemoveGroupMember(ctx, &protoReq)

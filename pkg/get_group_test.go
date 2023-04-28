@@ -38,8 +38,12 @@ func TestGetGroup(t *testing.T) {
 
 	expected := &pb.Group{
 		Name: groupName,
-		Members: []string{
-			test.Manager.UserDN(username),
+		Members: []*pb.GroupMember{
+			{
+				Username: username,
+				Dn:       test.Manager.UserDN(username),
+				Group:    groupName,
+			},
 		},
 		GID: 2002,
 	}
@@ -75,8 +79,12 @@ func TestGetDefaultGroup(t *testing.T) {
 			name: test.Manager.DefaultUserGroup,
 			expected: &pb.Group{
 				Name: "users",
-				Members: []string{
-					"uid=ldapadmin,ou=users,dc=example,dc=org",
+				Members: []*pb.GroupMember{
+					{
+						Username: "ldapadmin",
+						Dn:       test.Manager.UserDN("ldapadmin"),
+						Group:    "users",
+					},
 				},
 				GID: 2000,
 			},
@@ -86,8 +94,12 @@ func TestGetDefaultGroup(t *testing.T) {
 			name: test.Manager.DefaultAdminGroup,
 			expected: &pb.Group{
 				Name: "admins",
-				Members: []string{
-					"uid=ldapadmin,ou=users,dc=example,dc=org",
+				Members: []*pb.GroupMember{
+					{
+						Username: "ldapadmin",
+						Dn:       test.Manager.UserDN("ldapadmin"),
+						Group:    "admins",
+					},
 				},
 				GID: 2001,
 			},

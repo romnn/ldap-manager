@@ -11,12 +11,6 @@ func TestUpdateGroup(t *testing.T) {
 	test := new(Test).Start(t).Setup(t)
 	defer test.Teardown()
 
-	// stop now to check if retries work
-	// test.Container.Terminate(context.Background())
-
-	// mess up the port
-	// test.Container.Config.Port = 9000
-
 	// add a user
 	username := "some-user"
 	if err := test.Manager.NewUser(&pb.NewUserRequest{
@@ -75,12 +69,15 @@ func TestUpdateGroup(t *testing.T) {
 	}
 	t.Log(PrettyPrint(after))
 
-	expected := &pb.Group{
-		Name:    newGroupName,
-		Members: before.GetMembers(),
-		GID:     newGID,
+	members := before.GetMembers()
+	for _, member := range members {
+		member.Group = newGroupName
 	}
-	if equal, diff := EqualProto(expected, after); !equal {
+	if equal, diff := EqualProto(&pb.Group{
+		Name:    newGroupName,
+		Members: members,
+		GID:     newGID,
+	}, after); !equal {
 		t.Fatalf("unexpected group: \n%s", diff)
 	}
 

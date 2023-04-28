@@ -40,16 +40,28 @@ func TestGetUserGroups(t *testing.T) {
 		Groups: []*pb.Group{
 			{
 				Name: "users",
-				Members: []string{
-					"uid=ldapadmin,ou=users,dc=example,dc=org",
-					test.Manager.UserDN(username),
+				Members: []*pb.GroupMember{
+					{
+						Dn:       test.Manager.UserDN("ldapadmin"),
+						Username: "ldapadmin",
+						Group:    "users",
+					},
+					{
+						Dn:       test.Manager.UserDN(username),
+						Username: username,
+						Group:    "users",
+					},
 				},
 				GID: 2000,
 			},
 			{
 				Name: groupName,
-				Members: []string{
-					test.Manager.UserDN(username),
+				Members: []*pb.GroupMember{
+					{
+						Dn:       test.Manager.UserDN(username),
+						Username: username,
+						Group:    groupName,
+					},
 				},
 				GID: 2002,
 			},
@@ -67,7 +79,7 @@ func TestGetUserGroups(t *testing.T) {
 		)
 	}
 
-	sort := recursivesort.RecursiveSort{StructSortField: "GID"}
+	sort := recursivesort.RecursiveSort{}
 	sort.Sort(&groups)
 	sort.Sort(&expected)
 

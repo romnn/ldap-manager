@@ -192,12 +192,16 @@ func (m *LDAPManager) setupReadOnlyUser() error {
 }
 
 func (m *LDAPManager) setupAdmin() error {
-	// get the admin group (if already exists)
-	adminGroup, err := m.GetGroupByName(m.DefaultAdminGroup)
-
+	// var presentAdmins []*pb.GroupMember
 	var presentAdmins []string
-	if err == nil {
-		presentAdmins = adminGroup.Members
+
+	// get the admin group (if already exists)
+	if adminGroup, err := m.GetGroupByName(m.DefaultAdminGroup); err == nil {
+		for _, presentAdmin := range adminGroup.Members {
+			presentAdmins = append(
+				presentAdmins, presentAdmin.GetUsername(),
+			)
+		}
 	}
 
 	// if 1 or more admins in the admin group exist, we cannot
@@ -233,6 +237,7 @@ func (m *LDAPManager) setupAdmin() error {
 	}
 
 	// create initial groups and add admin users to them
+	// present admin is already in correct format
 	for _, admin := range presentAdmins {
 		for _, groupName := range []string{
 			m.DefaultAdminGroup,

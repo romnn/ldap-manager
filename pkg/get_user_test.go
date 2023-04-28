@@ -55,19 +55,35 @@ func TestGetUser(t *testing.T) {
 			userGroupName, err,
 		)
 	}
+	expectedMember := &pb.GroupMember{
+		Dn:       test.Manager.UserDN(username),
+		Username: username,
+		Group:    userGroupName,
+	}
+
 	t.Log(PrettyPrint(group))
-	if !Contains(group.Members, test.Manager.UserDN(username)) {
+	t.Log(PrettyPrint(expectedMember))
+
+	found := false
+	for _, member := range group.GetMembers() {
+		if equal, _ := EqualProto(member, expectedMember); equal {
+			found = true
+		}
+	}
+	if !found {
 		t.Fatalf(
-			"expected new user %q to be a member of the default user group %q",
+			"expected new user %q to be member of group %q",
 			username, userGroupName,
 		)
 	}
 
 	// assert that the new user is member of the user group
-	memberStatus, err := test.Manager.IsGroupMember(&pb.IsGroupMemberRequest{
-		Username: username,
-		Group:    userGroupName,
-	})
+	memberStatus, err := test.Manager.IsGroupMember(
+		&pb.IsGroupMemberRequest{
+			Username: username,
+			Group:    userGroupName,
+		},
+	)
 	if err != nil {
 		t.Fatalf(
 			"failed to check if user %q is member of group %q: %v",

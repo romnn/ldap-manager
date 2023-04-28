@@ -8,6 +8,35 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+// TestParseDN tests parsing a DN into its parts
+func TestParseDN(t *testing.T) {
+	for _, c := range []struct {
+		dn       string
+		expected map[string][]string
+	}{
+		{
+			dn: "uid=romnn,ou=users,dc=romnn,dc=com",
+			expected: map[string][]string{
+				"uid": []string{"romnn"},
+				"ou":  []string{"users"},
+				"dc":  []string{"romnn", "com"},
+			},
+		},
+	} {
+		parsed := ParseDN(c.dn)
+		equal := cmp.Equal(parsed, c.expected)
+		diff := cmp.Diff(ParseDN(c.dn), c.expected)
+		if !equal {
+			t.Log(parsed)
+			t.Log(c.expected)
+			t.Errorf(
+				"unexpected parsed parts for dn %q: %s",
+				c.dn, diff,
+			)
+		}
+	}
+}
+
 // TestEscapeDN tests escaping LDAP DN's to avoid LDAP injection attacks
 func TestEscapeDN(t *testing.T) {
 	// https://github.com/tcort/ldap-escape/blob/master/test/ldap-escape.test.js

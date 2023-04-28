@@ -428,7 +428,7 @@ exports.Group = {
     fromJSON: function (object) {
         return {
             name: isSet(object.name) ? String(object.name) : "",
-            members: Array.isArray(object === null || object === void 0 ? void 0 : object.members) ? object.members.map(function (e) { return String(e); }) : [],
+            members: Array.isArray(object === null || object === void 0 ? void 0 : object.members) ? object.members.map(function (e) { return exports.GroupMember.fromJSON(e); }) : [],
             GID: isSet(object.GID) ? Number(object.GID) : 0,
         };
     },
@@ -436,7 +436,7 @@ exports.Group = {
         var obj = {};
         message.name !== undefined && (obj.name = message.name);
         if (message.members) {
-            obj.members = message.members.map(function (e) { return e; });
+            obj.members = message.members.map(function (e) { return e ? exports.GroupMember.toJSON(e) : undefined; });
         }
         else {
             obj.members = [];
@@ -446,19 +446,21 @@ exports.Group = {
     },
 };
 function createBaseGroupMember() {
-    return { group: "", username: "" };
+    return { group: "", username: "", dn: "" };
 }
 exports.GroupMember = {
     fromJSON: function (object) {
         return {
             group: isSet(object.group) ? String(object.group) : "",
             username: isSet(object.username) ? String(object.username) : "",
+            dn: isSet(object.dn) ? String(object.dn) : "",
         };
     },
     toJSON: function (message) {
         var obj = {};
         message.group !== undefined && (obj.group = message.group);
         message.username !== undefined && (obj.username = message.username);
+        message.dn !== undefined && (obj.dn = message.dn);
         return obj;
     },
 };

@@ -99,13 +99,13 @@ export interface GetUserGroupsRequest {
 }
 export interface Group {
     name: string;
-    members: string[];
-    /** repeated User members = 2; */
+    members: GroupMember[];
     GID: number;
 }
 export interface GroupMember {
     group: string;
     username: string;
+    dn: string;
 }
 export interface ChangePasswordRequest {
     username: string;

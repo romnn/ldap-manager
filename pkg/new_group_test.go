@@ -100,23 +100,39 @@ func TestNewGroup(t *testing.T) {
 		Groups: []*pb.Group{
 			{
 				Name: "users",
-				Members: []string{
-					"uid=ldapadmin,ou=users,dc=example,dc=org",
-					"uid=some-user,ou=users,dc=example,dc=org",
+				Members: []*pb.GroupMember{
+					{
+						Username: "ldapadmin",
+						Dn:       test.Manager.UserDN("ldapadmin"),
+						Group:    "users",
+					},
+					{
+						Username: "some-user",
+						Dn:       test.Manager.UserDN("some-user"),
+						Group:    "users",
+					},
 				},
 				GID: 2000,
 			},
 			{
 				Name: "admins",
-				Members: []string{
-					"uid=ldapadmin,ou=users,dc=example,dc=org",
+				Members: []*pb.GroupMember{
+					{
+						Username: "ldapadmin",
+						Dn:       test.Manager.UserDN("ldapadmin"),
+						Group:    "admins",
+					},
 				},
 				GID: 2001,
 			},
 			{
 				Name: "my-group",
-				Members: []string{
-					"uid=some-user,ou=users,dc=example,dc=org",
+				Members: []*pb.GroupMember{
+					{
+						Username: "some-user",
+						Dn:       test.Manager.UserDN("some-user"),
+						Group:    "my-group",
+					},
 				},
 				GID: 2002,
 			},

@@ -54,7 +54,25 @@ const (
 
 // ParseGroup parses an ldap.Entry as a group
 func (m *LDAPManager) parseGroup(entry *ldap.Entry) (*pb.Group, error) {
-	members := entry.GetAttributeValues(m.GroupMembershipAttribute)
+	groupName := entry.GetAttributeValue(groupCN)
+	memberDNlist := entry.GetAttributeValues(m.GroupMembershipAttribute)
+	var members []*pb.GroupMember
+	for _, memberDN := range memberDNlist {
+		parts := ParseDN(memberDN)
+		usernames, ok := parts[m.AccountAttribute]
+		if !ok || ok && len(usernames) != 1 {
+			return nil, fmt.Errorf(
+				"failed to get username for group member %q",
+				memberDN,
+			)
+		}
+		members = append(members, &pb.GroupMember{
+			Username: usernames[0],
+			Dn:       memberDN,
+			Group:    groupName,
+		})
+	}
+
 	GID, err := strconv.Atoi(entry.GetAttributeValue(groupGidNumber))
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -64,7 +82,7 @@ func (m *LDAPManager) parseGroup(entry *ldap.Entry) (*pb.Group, error) {
 	}
 	return &pb.Group{
 		Members: members,
-		Name:    entry.GetAttributeValue(groupCN),
+		Name:    groupName,
 		GID:     int64(GID),
 	}, nil
 }
