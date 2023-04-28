@@ -52,7 +52,7 @@ spec:
                 command:
                 - /bin/bash
                 - -c
-                - rm -rf /etc/ldap/slapd.d /var/lib/ldap && ln /pvc/etc/ldap/slapd.d /etc/ldap/slapd.d && ln /pvc/var/lib/ldap /var/lib/ldap
+                - rm -rf /etc/ldap/slapd.d /var/lib/ldap && mkdir -p /pvc/etc/ldap/slapd.d && ln -s /pvc/etc/ldap/slapd.d /etc/ldap/slapd.d && mkdir -p /pvc/var/lib/ldap && ln -s /pvc/var/lib/ldap /var/lib/ldap
           {{- end }}
 
           envFrom:
