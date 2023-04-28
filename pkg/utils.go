@@ -69,14 +69,15 @@ func PrettyPrint(m interface{}) string {
 
 // Dedup is a generic function that removes duplicates in a slice.
 func Dedup[T comparable](list []T) []T {
-	allKeys := make(map[T]bool)
-	for _, item := range list {
-		if _, value := allKeys[item]; !value {
-			allKeys[item] = true
-			list = append(list, item)
+	seen := make(map[T]bool)
+	out := []T{}
+	for _, value := range list {
+		if _, present := seen[value]; !present {
+			seen[value] = true
+			out = append(out, value)
 		}
 	}
-	return list
+	return out
 }
 
 // Contains is a generic function that checks if a collection contains a value

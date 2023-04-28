@@ -192,7 +192,6 @@ func (m *LDAPManager) setupReadOnlyUser() error {
 }
 
 func (m *LDAPManager) setupAdmin() error {
-	// var presentAdmins []*pb.GroupMember
 	var presentAdmins []string
 
 	// get the admin group (if already exists)

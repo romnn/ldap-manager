@@ -30,6 +30,9 @@ var Version = ""
 // Rev is set during build
 var Rev = ""
 
+// BuildTime is set during build
+var BuildTime = ""
+
 // newLDAPManager configures the LDAP manager based on the CLI config
 func newLDAPManager(ctx *cli.Context) ldapmanager.LDAPManager {
 	hasReadOnlyUser := ctx.String(flags.LdapReadOnlyUsername.Name) != ""
@@ -111,11 +114,11 @@ func newAuthKeyConfig(ctx *cli.Context) auth.KeyConfig {
 	}
 }
 
-func versionString(version string, buildTime string) string {
-	if buildTime != "" {
+func versionString(version, commit, buildTime string) string {
+	if buildTime != "" && commit != "" {
 		return fmt.Sprintf(
-			"%s (built on %s)",
-			version, buildTime,
+			"%s #%s (built on %s)",
+			version, commit, buildTime,
 		)
 	}
 	return version
@@ -280,8 +283,8 @@ func serve(cliCtx *cli.Context) error {
 }
 
 func main() {
-	version := versionString(Version, Rev)
-	log.Infof("LDAPManager v%s", version)
+	version := versionString(Version, Rev, BuildTime)
+	log.Infof("LDAPManager %s", version)
 
 	app := &cli.App{
 		Name:    "LDAPManager",

@@ -107,6 +107,7 @@ jobs:
           build-args: |
             version=${{ steps.query.outputs.semver_version }}
             rev=${{ steps.query.outputs.git_commit }}
+            buildTime=${{ steps.query.outputs.build_date }}
           tags: |
             romnn/ldap-manager:latest
 
@@ -129,5 +130,6 @@ jobs:
           build-args: |
             version=${{ steps.query.outputs.semver_version }}
             rev=${{ steps.query.outputs.git_commit }}
+            buildTime=${{ steps.query.outputs.build_date }}
           tags: |
             romnn/ldap-manager-screenshot:latest

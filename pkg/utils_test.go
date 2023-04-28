@@ -25,13 +25,42 @@ func TestParseDN(t *testing.T) {
 	} {
 		parsed := ParseDN(c.dn)
 		equal := cmp.Equal(parsed, c.expected)
-		diff := cmp.Diff(ParseDN(c.dn), c.expected)
+		diff := cmp.Diff(parsed, c.expected)
 		if !equal {
 			t.Log(parsed)
 			t.Log(c.expected)
 			t.Errorf(
 				"unexpected parsed parts for dn %q: %s",
 				c.dn, diff,
+			)
+		}
+	}
+}
+
+// TestDedup tests deduplication of slices
+func TestDedup(t *testing.T) {
+	for _, c := range []struct {
+		values   []string
+		expected []string
+	}{
+		{
+			values:   []string{"roman", "roman", "bert"},
+			expected: []string{"roman", "bert"},
+		},
+		{
+			values:   []string{"roman", "Roman"},
+			expected: []string{"roman", "Roman"},
+		},
+	} {
+		dedup := Dedup(c.values)
+		equal := cmp.Equal(dedup, c.expected)
+		diff := cmp.Diff(dedup, c.expected)
+		if !equal {
+			t.Log(dedup)
+			t.Log(c.expected)
+			t.Errorf(
+				"unexpected dedup result for %v: %s",
+				c.values, diff,
 			)
 		}
 	}
