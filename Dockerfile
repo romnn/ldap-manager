@@ -20,6 +20,7 @@ RUN go build \
 # NODE_BUILD
 FROM node:18 AS NODE_BUILD
 
+ARG version
 ARG branding=true
 ENV VITE_APP_VERSION=$version
 ENV VITE_BRANDING=$branding
