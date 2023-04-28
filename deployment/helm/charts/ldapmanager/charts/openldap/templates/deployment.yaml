@@ -44,6 +44,17 @@ spec:
               containerPort: 636
               protocol: TCP
 
+          {{- if .Values.persistence.enabled }}
+          # use single pvc for data and config using soft-links
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                - /bin/bash
+                - -c
+                - rm -rf /etc/ldap/slapd.d /var/lib/ldap && ln /pvc/etc/ldap/slapd.d /etc/ldap/slapd.d && ln /pvc/var/lib/ldap /var/lib/ldap
+          {{- end }}
+
           envFrom:
             - configMapRef:
                 name: {{ template "openldap.fullname" . }}-env
@@ -52,11 +63,7 @@ spec:
           {{- if .Values.persistence.enabled }}
           volumeMounts:
             - name: data
-              mountPath: /var/lib/ldap
-              subPath: data
-            - name: data
-              mountPath: /etc/ldap/slapd.d
-              subPath: config-data
+              mountPath: /pvc
           {{- if .Values.tls.enabled }}
             - name: certs
               mountPath: /container/service/slapd/assets/certs
@@ -108,7 +115,6 @@ spec:
           persistentVolumeClaim:
             claimName: {{ .Values.persistence.existingClaim | default (include "openldap.fullname" .) }}
           {{- else }}
-          emptyDir:
-            medium: Memory
+          emptyDir: {}
           {{- end -}}
       {{- end -}}
