@@ -16,8 +16,10 @@ env:
   # LDAP_READONLY_USER_PASSWORD: readonly
   # LDAP_REMOVE_CONFIG_AFTER_SETUP: "false"
 
-  # NOTE: consider setting auth.adminPassword and auth.configPassword instead
-  #       (auth is stored as a secret rather than plain env variables)
+  # NOTE: consider setting auth.adminPassword and 
+  # auth.configPassword instead, as they are stored as a secret
+  # rather than plain env variables
+  #
   # LDAP_ADMIN_PASSWORD: insecure
   # LDAP_CONFIG_PASSWORD: insecure
 

@@ -10,14 +10,14 @@ openldap:
     LDAP_DOMAIN: "example.org"
     LDAP_BASE_DN: "dc=example,dc=org"
 
-    LDAP_TLS: "false"
-    LDAP_TLS_ENFORCE: "false"
-    LDAP_RFC2307BIS_SCHEMA: "true"
-
     LDAP_READONLY_USER: "true"
     LDAP_READONLY_USER_USERNAME: readonly
     LDAP_READONLY_USER_PASSWORD: readonly
     # LDAP_REMOVE_CONFIG_AFTER_SETUP: "false"
+
+    LDAP_TLS: "false"
+    # LDAP_TLS_ENFORCE: "false"
+    LDAP_RFC2307BIS_SCHEMA: "true"
 
   auth:
     adminPassword: "admin"
