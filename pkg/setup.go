@@ -203,6 +203,7 @@ func (m *LDAPManager) setupAdmin() error {
 			)
 		}
 	}
+	presentAdmins = Dedup(presentAdmins)
 
 	// if 1 or more admins in the admin group exist, we cannot
 	// assume their credentials are still the same unless forced..
@@ -230,11 +231,9 @@ func (m *LDAPManager) setupAdmin() error {
 			}
 		}
 	} else {
-		log.Infof(
-			"found existing admins %v: skip create default admin",
-			presentAdmins,
-		)
+		log.Infof("skip create default admin")
 	}
+	log.Infof("present admins: %v", presentAdmins)
 
 	// create initial groups and add admin users to them
 	// present admin is already in correct format
