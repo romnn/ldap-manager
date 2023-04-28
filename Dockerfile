@@ -1,6 +1,9 @@
 # GO_BUILD
 FROM golang:alpine AS GO_BUILD
 
+ARG version=0.0.1
+ARG rev
+
 WORKDIR /app
 COPY ./ /app
 
@@ -9,16 +12,14 @@ ENV GOARCH amd64
 ENV GOOS linux
 RUN go build \
   -a \
-  -ldflags="-w -s" \
+  -ldflags="-w -s -X main.Version=$version -X main.Rev=$rev" \
   -o app \
   "github.com/romnn/ldap-manager/cmd/ldap-manager"
 
 # NODE_BUILD
 FROM node:18 AS NODE_BUILD
 
-ARG version=0.0.1
 ARG branding=true
-
 ENV VITE_APP_VERSION=$version
 ENV VITE_BRANDING=$branding
 

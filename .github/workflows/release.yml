@@ -125,5 +125,7 @@ jobs:
           push: true
           build-args: |
             version=${{ steps.query.outputs.semver_version }}
+            rev=${{ steps.query.outputs.git_commit }}
+
           tags: |
             romnn/ldap-manager:${{ steps.query.outputs.docker_tag }}

@@ -106,6 +106,7 @@ jobs:
           push: true
           build-args: |
             version=${{ steps.query.outputs.semver_version }}
+            rev=${{ steps.query.outputs.git_commit }}
           tags: |
             romnn/ldap-manager:latest
 
@@ -127,5 +128,6 @@ jobs:
           push: false
           build-args: |
             version=${{ steps.query.outputs.semver_version }}
+            rev=${{ steps.query.outputs.git_commit }}
           tags: |
             romnn/ldap-manager-screenshot:latest
