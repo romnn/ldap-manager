@@ -126,5 +126,4 @@ jobs:
           build-args: |
             version=${{ steps.query.outputs.semver_version }}
           tags: |
-            romnn/ldap-manager:latest
             romnn/ldap-manager:${{ steps.query.outputs.docker_tag }}
